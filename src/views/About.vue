@@ -1,4 +1,11 @@
 <template>
+<p class="fs-1">.fs-1 text</p><h1>text 24</h1>
+<p class="fs-2">.fs-2 text</p><h2>text 24</h2>
+<p class="fs-3">.fs-3 text</p><h3>text</h3>
+<p class="fs-4">.fs-4 text</p><h4>text 16</h4>
+<p class="fs-5">.fs-5 text</p><h5>text 13.28</h5>
+<p class="fs-6">.fs-6 text</p><h6>text 12</h6>
+
   {{ $t("hello") }}
   <a-radio-group v-model:value="$i18n.locale">
     <a-radio-button

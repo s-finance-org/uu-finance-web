@@ -1,6 +1,11 @@
 // base
 import iDownOutlined from '../assets/base/downOutlined.svg';
 import iMenu from '../assets/base/menu.svg';
+import iLanguage from '../assets/base/language.svg';
+import iSelect from '../assets/base/select.svg';
+
+// art
+import iIntersect from '../assets/base/art/intersect.svg';
 
 // logo
 import iLogo from '../assets/base/logo/logo.svg';
@@ -32,6 +37,10 @@ export {
   // base
   iDownOutlined,
   iMenu,
+  iLanguage,
+  iSelect,
+  // art
+  iIntersect,
   // logo
   iLogo,
   // home

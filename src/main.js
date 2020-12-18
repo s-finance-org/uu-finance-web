@@ -2,8 +2,10 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import './registerServiceWorker'
 import router from './router'
-import 'bootstrap/dist/css/bootstrap-grid.min.css';
-import 'bootstrap/dist/css/bootstrap-utilities.min.css';
+// import 'bootstrap/dist/css/bootstrap-grid.min.css';
+// import 'bootstrap/dist/css/bootstrap-utilities.min.css';
+import '../public/libs/bootstrap/5.0.0.beta1/bootstrap-grid.min.css'
+import '../public/libs/bootstrap/5.0.0.beta1/bootstrap-utilities.min.css'
 
 import Antd from 'ant-design-vue';
 // import 'ant-design-vue/dist/antd.less';

@@ -13,7 +13,7 @@ const routes = [
     component: RootDefault,
     children: [
       {
-        path: '/',
+        path: '',
         name: 'Home',
         component: Home,
       },
@@ -23,11 +23,11 @@ const routes = [
         component: Cast,
       },
       {
-        path: '/exchange',
+        path: 'exchange',
         name: 'Exchange',
         component: Exchange
       },
-      { path: '/yield',
+      { path: 'yield',
         name: 'Yield',
         component: Yield
       }

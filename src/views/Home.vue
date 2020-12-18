@@ -19,7 +19,7 @@
   </a-layout-content>
   <a-layout-content class="container-lg px-0">
     <div class="trait d-flex">
-      <div class="d-flex flex-wrap px-2 mx-0 px-lg-5 mx-lg-4">
+      <div class="d-flex flex-wrap px-2 px-lg-5 mx-lg-4">
         <div class="col-12 col-lg-6 pb-5 px-3 d-flex flex-column align-items-center align-items-lg-start">
           <span class="line-frame p-2 d-flex justify-content-center align-items-center"><iHomeTrait1 /></span>
           <h4 class="fs-4 mb-1 mt-3">稳定币发行自由</h4>
@@ -42,9 +42,11 @@
         </div>
       </div>
     </div>
+  </a-layout-content>
 
-    <div class="d-flex flex-wrap justify-content-between align-items-center py-3 mt-4 px-4">
-      <div class="joinCommunity col-12 col-lg py-3 mx-3 px-5 d-flex flex-column align-items-center align-items-lg-start">
+  <a-layout-content class="container-lg px-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center py-3 mt-4">
+      <div class="col-12 col-lg py-3 mx-3 px-5 d-flex flex-column align-items-center align-items-lg-start">
         <h4 class="fs-4 mb-1">加入社区</h4>
         <span>深入了解 UU</span>
       </div>
@@ -80,10 +82,6 @@ import {
 import Icon from '@ant-design/icons-vue';
 
 export default {
-  data () {
-    return {
-    }
-  },
   components: {
     iHomeTrait1,
     iHomeTrait2,
@@ -109,7 +107,7 @@ export default {
         { href: '###', target: '_blank', name: 'GitHub', component: iHomeGithub },
       ]
     }
-  }
+  },
 };
 </script>
 <style scoped lang="less">
@@ -132,15 +130,12 @@ export default {
     height: 104px;
   }
 }
-.joinCommunity {
-  // padding: 0 84px;
-}
 .communityLinks {
   a {
     border-radius: 8px;
-    min-width: 78px;
+    min-width: 88px;
     &:hover {
-      background-color: #B4F5EE;
+      background-color: rgba(229,243,243,0.5);
     }
   }
 }
