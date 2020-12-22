@@ -4,8 +4,8 @@ import enUS from './en/en-US'
 import zhCN from './zh/zh-CN'
 
 /**
- *  项目拥有的语言包
- *  @type {!Object}
+ * 项目拥有的语言包
+ * @type {!Object}
  */
 const languages = {
   "en-US": enUS,
@@ -27,20 +27,22 @@ const __store__ = {
   supports
 }
 
+const $i18n = createI18n({
+  locale: __store__.locale,
+  fallbackLocale: __store__.fallbackLocale,
+  messages: languages,
+})
+
 export default {
   /**
-   *  Vue-i18n Object
-   *  @type {!Object}
+   * Vue-i18n Object
+   * @type {!Object}
    */
-  $i18n: createI18n({
-    locale: __store__.locale,
-    fallbackLocale: __store__.fallbackLocale,
-    messages: languages,
-  }),
+  $i18n,
 
   /**
-   *  获取当前语言的标识
-   *  @type {string}
+   * 获取当前语言的标识
+   * @type {string}
    */
   get locale () {
     // TODO:
@@ -48,8 +50,8 @@ export default {
     // return this.$i18n.locale
   },
   /**
-   *  变更语言环境
-   *  @type {string}
+   * 变更语言环境
+   * @type {string}
    */
   set locale (val) {
     const { cacheLocaleKey } = this
@@ -59,9 +61,9 @@ export default {
     localStorage.setItem(cacheLocaleKey, result)
   },
   /**
-   *  当前语言的 baseLang 信息
-   *  - 由 locale 维护
-   *  @type {Object}
+   * 当前语言的 baseLang 信息
+   * - 由 locale 维护
+   * @type {Object}
    */
   get baseLang () {
     // TODO: 要有缺省的 lang 结构
@@ -73,18 +75,25 @@ export default {
   },
 
   /**
-   *  支持的语言
-   *  @type {!Object}
+   * 支持的语言
+   * @type {!Object}
    */
   get supports () {
     return __store__.supports
   },
-  // TODO:
-  // isSupportLanguage () {
-  // },
   /**
-   *  获取当前的语言包
-   *  @type {Object}
+   * 项目是否支持的语言标识
+   * @param {*} id
+   * @return {boolean}
+   */
+  isSupportLanguage (id) {
+    const { supports } = __store__
+    // TODO: 需严格校验
+    return !!supports[id]
+  },
+  /**
+   * 获取当前的语言包
+   * @type {Object}
    */
   get language () {
     const { languages, locale } = this

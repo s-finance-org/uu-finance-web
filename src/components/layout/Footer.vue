@@ -1,4 +1,6 @@
 <template>
+{{ $i18n.locale }}
+{{ $t('hello')}}
   <a-layout-footer class="container-lg px-4 px-lg-0 d-flex justify-content-between align-items-center">
     <span>{{ $t('base.footer.slogan') }}</span>
     <a-dropdown placement="topRight">

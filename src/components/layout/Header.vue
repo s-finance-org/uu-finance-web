@@ -1,7 +1,9 @@
 <template>
   <a-layout-header class="container-fluid px-0">
     <div class="header container-lg py-3 px-4 px-lg-0 d-flex align-items-center">
-      <iLogo class="me-4" />
+      <router-link to="/" class="d-flex">
+        <iLogo class="me-4" />
+      </router-link>
       <a-menu
         v-model:selectedKeys="currentViewName"
         mode="horizontal"
