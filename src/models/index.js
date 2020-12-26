@@ -13,6 +13,11 @@ import ModelToken from './token'
 
 import ModelSwap from './swap'
 
+// import ModelBnOnboard from './blocknative/onboard'
+// import ModelBnNotify from './blocknative/notify'
+
+import ModelState from './helpers/state'
+
 export {
 //   ModelValueEther,
 //   ModelValueEther1,
@@ -27,5 +32,10 @@ export {
 //   ModelContractMinter,
   ModelToken,
 
-  ModelSwap
+  ModelSwap,
+
+  // ModelBnOnboard,
+  // ModelBnNotify
+
+  ModelState
 }

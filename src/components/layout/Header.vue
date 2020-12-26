@@ -47,6 +47,14 @@
       </a-menu-item>
     </a-menu>
   </a-drawer>
+
+
+<a href="###" @click="changeWallet">changeWallet</a>
+<a href="###" @click="resetWallet">resetWallet</a>
+<br/>
+address: {{ wallet.address }}<br/>
+networkId: {{ wallet.networkId }}<br/>
+name: {{ wallet.name }}<br/>
 </template>
 
 <script>
@@ -69,9 +77,15 @@ export default {
     showDrawer() {
       this.visible = true;
     },
-    change(affixed) {
-      console.log(affixed);
+    changeWallet () {
+      this.$store.wallet.changeWallet()
     },
+    switchAccount () {
+      this.$store.wallet.switchAccount()
+    },
+    resetWallet () {
+      this.$store.wallet.resetWallet()
+    }
   },
   computed: {
     navs () {
@@ -87,6 +101,11 @@ export default {
       get () {
         return [this.$route.name]
       }
+    },
+    wallet () {
+      const { wallet } = this.$store
+
+      return wallet
     }
   }
 }

@@ -1,4 +1,4 @@
-import web3 from '../../models/web3'
+// import web3 from '../../models/web3'
 
 import { ModelSwap } from '../../models'
 
@@ -126,7 +126,7 @@ export default ModelSwap.create({
       const result = await this.aggregate(targetQueues.map(item => item.call))
 console.log('batcher', targetQueues)
       targetQueues.forEach((item, idx) => {
-        item.result = web3.eth.abi.decodeParameter(item.decodeType, result.returnData[idx])
+        // item.result = web3.eth.abi.decodeParameter(item.decodeType, result.returnData[idx])
 
         if (item.target) {
           item.target.value = item.result

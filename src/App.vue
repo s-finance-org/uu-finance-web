@@ -1,20 +1,18 @@
 <template>
-  <!-- <a-config-provider :locale="i18n.language.ant"> -->
+  <a-config-provider :locale="i18n.language.ant">
     <a-layout class="container-fluid px-0">
       <router-view />
     </a-layout>
-  <!-- </a-config-provider> -->
+  </a-config-provider>
 </template>
 
 <script>
-import store from './store'
-
 export default {
   computed: {
     i18n () {
-      const { i18n } = store
+      const { i18n } = this.$store
       // TODO:
-      // i18n.locale = this.$i18n.locale
+      i18n.locale = this.$i18n.locale
 
       return i18n
     }

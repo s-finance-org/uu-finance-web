@@ -11,26 +11,6 @@ import './themes/index.less';
 
 import store from './store'
 
-
-import { createI18n } from 'vue-i18n'
-
-const messages = {
-  en: {
-      hello: 'hello world'
-  },
-  ja: {
-      hello: 'こんにちは、世界'
-  }
-}
-
-const i18n = createI18n({
-  locale: 'zh-CN', // set locale
-  fallbackLocale: 'en', // set fallback locale
-  messages, // set locale messages
-  // If you need to specify other options, you can set other options
-  // ...
-})
-
 createApp(App)
   .mixin({
     computed: {
@@ -40,7 +20,6 @@ createApp(App)
     }
   })
   .use(Antd)
-  // .use(store.i18n.$i18n)
-  .use(i18n)
+  .use(store.i18n.$i18n)
   .use(router)
   .mount('#app')

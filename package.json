@@ -12,6 +12,7 @@
     "ant-design-vue": "^2.0.0-rc.3",
     "bignumber.js": "^9.0.1",
     "bnc-notify": "^1.5.1",
+    "bnc-onboard": "^1.17.1",
     "core-js": "^3.6.5",
     "register-service-worker": "^1.7.1",
     "vue": "^3.0.0",
