@@ -1,4 +1,3 @@
-
 export default {
   create () {
     const __store__ = {

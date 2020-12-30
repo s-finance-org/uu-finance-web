@@ -1,11 +1,6 @@
 import BN from 'bignumber.js'
 
-import web3 from '../store/web3'
-
-// TODO: store.wallet.address
-
-// FIXME: temp
-// import wallet from '../../store/wallet'
+import storeWallet from '../store/wallet'
 
 import store from '../store'
 
@@ -13,22 +8,22 @@ import { multicall } from '../store/swaps'
 
 import ModelValueEther from './value/ether'
 import ModelValueEther1 from './value/ether1'
-import ModelWalletEther from './wallet/ether'
+import ModelValueWallet from './value/wallet'
 import ModelValueString from './value/string'
 import ModelValueBytes32 from './value/bytes32'
 import ModelValueUint8 from './value/uint8'
 import ModelValueError from './value/error'
 
+import { ERC20 } from './helpers/abi'
 import { TOKEN_MIN_AMOUNT_ETHER, TOKEN_MAX_AMOUNT_ETHER } from './helpers/constant'
 import { USD } from '../store/currencies'
 
 export default {
   /**
    * @param {Object} opts
-   * @param {string} opts.code
+   * @param {string} [opts.code] // TODO: 暂无作用
    * @param {string} opts.address
-   * @param {Array} opts.abi
-   * @param {Object=} opts.name
+   * @param {Array} [opts.abi=]
    * @param {number=} opts.decimal
    * @param {number=} opts.contDecimal
    * @param {Object=} opts.moneyOfAccount
@@ -42,9 +37,8 @@ export default {
   create ({
     code = '',
     address = '',
-    abi = [],
+    abi = ERC20,
     isLpToken = false,
-    name = ModelValueString.create(),
     decimal = 18,
     decimals = ModelValueUint8.create(),
     contDecimal = 4,
@@ -76,48 +70,35 @@ export default {
       contDecimal
     }
 
-    const mixin = {
+    // getApproveMethod: mixin.contract.methods[approveMethodName],
+    // getTransferFromMethod: mixin.contract.methods[transferFromMethodName],
+    // getTransferMethod: mixin.contract.methods[transferMethodName],
+
+    return {
+      /**
+       * Base
+       */
+      code,
       /** @type {string} */
       address,
-
+      /** @type {Array} */
+      abi,
       /** @type {Object}} */
-      name,
+      name: ModelValueString.create(),
       /** @type {Object} */
       symbol,
 
       /** @type {Object} */
       get contract () {
         const { contract } = __store__
+        const { abi, address } = this
 
         return contract
-          || (__store__.contract = new web3.eth.Contract(abi, address))
+          || (__store__.contract = new storeWallet.web3.eth.Contract(abi, address))
       },
 
       /** @type {string} */
       totalSupply: ModelValueEther1.create(valueOpts),
-    }
-
-    const methods = {
-      getNameMethod: mixin.contract.methods[nameMethodName],
-      getSymbolMethod: mixin.contract.methods[symbolMethodName],
-      getDecimalsMethod: mixin.contract.methods[decimalsMethodName],
-      getTotalSupplyMethod: mixin.contract.methods[totalSupplyMethodName],
-      getBalanceOfMethod: mixin.contract.methods[balanceOfMethodName],
-      getAllowanceMethod: mixin.contract.methods[allowanceMethodName],
-      getApproveMethod: mixin.contract.methods[approveMethodName],
-      getTransferFromMethod: mixin.contract.methods[transferFromMethodName],
-      getTransferMethod: mixin.contract.methods[transferMethodName],
-    }
-
-    return {
-      ...mixin,
-
-      /**
-       * Base
-       */
-
-      code,
-      abi,
 
       /**
        * 是否为 LP token
@@ -125,8 +106,6 @@ export default {
        * @type {boolean}
        */
       isLpToken,
-
-      error: ModelValueError.create(),
 
       /**
        * 是否已初始化
@@ -136,40 +115,40 @@ export default {
         return __store__.initialized
       },
 
-      series: {
-        get initiate () {
-          // FIXME:
-          return [
-            ...this.base,
-            ...this.once
-          ]
-        },
-        get base () {
-          const {
-            decimals
-          } = valueOpts
-          const {
-            address
-          } = mixin
+      get initiateSeries () {
+        // FIXME:
+        return [
+          ...this.baseSeries,
+          ...this.onceSeries
+        ]
+      },
+      get baseSeries () {
+        const {
+          decimals
+        } = valueOpts
+        const {
+          address,
+          contract
+        } = this
 
-          return [
-            { decodeType: decimals.type, call: [address, methods.getDecimalsMethod().encodeABI()], target: decimals }
-          ]
-        },
-        get once () {
-          const {
-            address,
-            name,
-            symbol,
-            totalSupply
-          } = mixin
+        return [
+          { decodeType: decimals.type, call: [address, contract.methods[decimalsMethodName]().encodeABI()], target: decimals }
+        ]
+      },
+      get onceSeries () {
+        const {
+          address,
+          contract,
+          name,
+          symbol,
+          totalSupply
+        } = this
 
-          return [
-            { decodeType: name.type, call: [address, methods.getNameMethod().encodeABI()], target: name },
-            { decodeType: symbol.type, call: [address, methods.getSymbolMethod().encodeABI()], target: symbol },
-            { decodeType: totalSupply.type, call: [address, methods.getTotalSupplyMethod().encodeABI()], target: totalSupply }
-          ]
-        }
+        return [
+          { decodeType: name.type, call: [address, contract.methods[nameMethodName]().encodeABI()], target: name },
+          { decodeType: symbol.type, call: [address, contract.methods[symbolMethodName]().encodeABI()], target: symbol },
+          { decodeType: totalSupply.type, call: [address, contract.methods[totalSupplyMethodName]().encodeABI()], target: totalSupply }
+        ]
       },
 
       async initiate (isSerie = false) {
@@ -290,7 +269,7 @@ export default {
         //   return false
         // }
 
-        // const allowanceEther = BN(await methods.getAllowanceMethod(store.wallet.address, toContractAddress).call())
+        // const allowanceEther = BN(await contract.methods[allowanceMethodName](store.wallet.address, toContractAddress).call())
 
         // if (isInfiniteAllowance) {
         //   // allowanceEther < maxAmount.ether / 2
@@ -342,10 +321,13 @@ export default {
       /**
        * Wallet
        */
-      walletBalanceOf: ModelWalletEther.create({
+      walletBalanceOf: ModelValueWallet.create({
         ...valueOpts,
         async trigger (address) {
-          const result = await methods.getBalanceOfMethod(address).call()
+          // TODO: 
+          const result = await __store__.contract.methods[balanceOfMethodName](address).call()
+          console.log('wallet ------ ', result)
+
           return result
         }
       }),
@@ -355,10 +337,13 @@ export default {
        * @return {string}
        */
       async getBalanceOf (address) {
-        const result = await methods.getBalanceOfMethod(address).call()
+        const { contract } = this
+        const result = await contract.methods[balanceOfMethodName](address).call()
 
         return result
-      }
+      },
+
+      error: ModelValueError.create(),
     }
   }
 }

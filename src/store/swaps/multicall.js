@@ -1,5 +1,3 @@
-// import web3 from '../../models/web3'
-
 import { ModelSwap } from '../../models'
 
 const abi = [
@@ -95,13 +93,12 @@ export default ModelSwap.create({
   methods: {
     /**
      * @param {Array} calls tuple[]
-     * @return {Array}
+     * @return {!Array}
      */
     async aggregate (calls) {
       const { contract } = this
 
       let result = []
-
       try {
         /* res
           {
@@ -111,22 +108,24 @@ export default ModelSwap.create({
             returnData: Array, // returnData
           }
          */
-        result = await contract.methods.aggregate(calls).call()
+        result = await this.contract.methods.aggregate(calls).call()
       } catch (err) {
         console.error('nulticall aggregate()', err)
       }
 
       return result
     },
+
     /**
      * @param {Array} targetQueues [{ decodeType: '', call: [], [target: Object,] [result: null] }, ...]
      * @return {Array}
      */
     async batcher (targetQueues) {
+      const { web3 } = this
       const result = await this.aggregate(targetQueues.map(item => item.call))
-console.log('batcher', targetQueues)
+
       targetQueues.forEach((item, idx) => {
-        // item.result = web3.eth.abi.decodeParameter(item.decodeType, result.returnData[idx])
+        item.result = web3.eth.abi.decodeParameter(item.decodeType, result.returnData[idx])
 
         if (item.target) {
           item.target.value = item.result

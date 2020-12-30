@@ -1,4 +1,4 @@
-import web3 from '../web3'
+import storeWallet from '../../store/wallet'
 
 export default {
   create () {
@@ -46,7 +46,7 @@ export default {
         let result = ''
 
         if (!loading) {
-          result = __store__.cont = web3.utils.toAscii(bytes)
+          result = __store__.cont = storeWallet.web3.utils.toAscii(bytes)
         }
 
         return result

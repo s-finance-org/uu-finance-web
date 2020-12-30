@@ -1,8 +1,6 @@
 <template>
-{{ $i18n.locale }}
-{{ $t('hello')}}
   <a-layout-footer class="container-lg px-4 px-lg-0 d-flex justify-content-between align-items-center">
-    <span>{{ $t('base.footer.slogan') }}</span>
+    <span>{{ $t('layer.footer.slogan') }}</span>
     <a-dropdown placement="topRight">
       <a-button size="small" class="d-flex">
         <iLanguage />
@@ -39,9 +37,7 @@ export default {
   },
   computed: {
     i18n () {
-      const { i18n } = this.$store
-
-      return i18n
+      return this.$store.i18n
     }
   }
 };

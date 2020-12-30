@@ -4,7 +4,7 @@
 import ModelValueBytes32 from './value/bytes32'
 // import ModelValueUint8 from './value/uint8'
 // import ModelValueString from './value/string'
-// import ModelWalletEther from './wallet/ether'
+// import ModelValueWallet from './wallet/ether'
 // import ModelCurrencyRates from './currency/rates'
 // import ModelPool from './pool'
 
@@ -16,7 +16,7 @@ import ModelSwap from './swap'
 // import ModelBnOnboard from './blocknative/onboard'
 // import ModelBnNotify from './blocknative/notify'
 
-import ModelState from './helpers/state'
+import ModelState from './base/state'
 
 export {
 //   ModelValueEther,
@@ -25,7 +25,7 @@ export {
   ModelValueBytes32,
 //   ModelValueUint8,
 //   ModelValueString,
-//   ModelWalletEther,
+//   ModelValueWallet,
 //   ModelCurrencyRates,
 //   ModelPool,
 
@@ -36,6 +36,5 @@ export {
 
   // ModelBnOnboard,
   // ModelBnNotify
-
   ModelState
 }

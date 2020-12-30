@@ -67,3 +67,36 @@ export const forEach = (obj, callback) => {
     }
   }
 }
+
+/**
+ * 字符串脱敏
+ * @param {string} val
+ * @param {number=} [opts.prePlainLength]
+ * @param {number=} [opts.postPlainLength]
+ * @param {number=} [opts.maskLength]
+ * @param {string=} [opts.maskSymbol]
+ * @return {string}
+ */
+export const desensitize = (
+    val,
+    { prePlainLength = 2,
+      postPlainLength = 2,
+      maskLength = 4,
+      maskSymbol = '*'
+    } = {}
+  ) => {
+  const reg = new RegExp(`(.{${prePlainLength}})(.*)(.{${postPlainLength}})`)
+  return val.replace(
+    reg,
+    (match, before, maskPart, after) => {
+      return `${before}${maskLength > 0 ? maskSymbol.repeat(maskLength) : maskPart.split('').map(() => maskSymbol).join('')}${after}`
+    }
+  )
+}
+
+/**
+ * 地址缩短器
+ * @param {string} val
+ * @return {string}
+ */
+export const addressShortener = val => desensitize(val, { prePlainLength: 6, postPlainLength: 4, maskLength: 3, maskSymbol: '.' } )

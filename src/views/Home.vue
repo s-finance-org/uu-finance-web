@@ -3,12 +3,12 @@
     <div class="cover d-flex py-0 py-md-5">
       <a-layout-content class="container-lg px-4 d-flex align-items-center">
         <div class="col-12 col-md-6 col-lg-6 ms-0 ms-lg-3 ps-0 ps-lg-5">
-          <h1 class="mb-1">有收益的稳定币</h1>
-          <span>在流通使用同时还可以领取收益的稳定币</span>
+          <h1 class="mb-1">{{ $t('global.home.cover_t') }}</h1>
+          <span>{{ $t('global.home.cover_c') }}</span>
           <div class="line-frame p-3 mt-5">
-            <iHomeUnion class="me-2" />UU 当前流通量
-            <h5 class="fs-5 py-1">$999,999,999.99</h5>
-            <a-button type="primary">立即获得 UU</a-button>
+            <iHomeUnion class="me-2" />{{ $t('global.home.cover_circulation') }}
+            <h5 class="fs-5 py-1">$0.00</h5>
+            <a-button type="primary">{{ $t('global.home.cover_cast') }}</a-button>
           </div>
         </div>
         <div class="col-auto ms-auto pe-4 d-none d-md-block">
@@ -22,23 +22,23 @@
       <div class="d-flex flex-wrap px-2 px-lg-5 mx-lg-4">
         <div class="col-12 col-lg-6 pb-5 px-3 d-flex flex-column align-items-center align-items-lg-start">
           <span class="line-frame p-2 d-flex justify-content-center align-items-center"><iHomeTrait1 /></span>
-          <h4 class="fs-4 mb-1 mt-3">稳定币发行自由</h4>
-          <span class="text-center text-lg-start">无门槛参与创造，生成即可流通</span>
+          <h4 class="fs-4 mb-1 mt-3">{{ $t('global.home.trait1_t') }}</h4>
+          <span class="text-center text-lg-start">{{ $t('global.home.trait1_c') }}</span>
         </div>
         <div class="col-12 col-lg-6 pb-5 px-3 d-flex flex-column align-items-center align-items-lg-start">
           <span class="line-frame p-2 d-flex justify-content-center align-items-center"><iHomeTrait2 /></span>
-          <h4 class="fs-4 mb-1 mt-3">100% 抵押发行</h4>
-          <span class="text-center text-lg-start">每一发行的 UU 都由其它主流稳定币进行抵押</span>
+          <h4 class="fs-4 mb-1 mt-3">{{ $t('global.home.trait2_t') }}</h4>
+          <span class="text-center text-lg-start">{{ $t('global.home.trait2_c') }}</span>
         </div>
         <div class="col-12 col-lg-6 pb-5 px-3 d-flex flex-column align-items-center align-items-lg-start">
           <span class="line-frame p-2 d-flex justify-content-center align-items-center"><iHomeTrait3 /></span>
-          <h4 class="fs-4 mb-1 mt-3">多重收益</h4>
-          <span class="text-center text-lg-start">收益包括兑换手续费、稳定币生息以及其它代币奖励</span>
+          <h4 class="fs-4 mb-1 mt-3">{{ $t('global.home.trait3_t') }}</h4>
+          <span class="text-center text-lg-start">{{ $t('global.home.trait3_c') }}</span>
         </div>
         <div class="col-12 col-lg-6 pb-5 px-3 d-flex flex-column align-items-center align-items-lg-start">
           <span class="line-frame p-2 d-flex justify-content-center align-items-center"><iHomeTrait4 /></span>
-          <h4 class="fs-4 mb-1 mt-3">安全透明</h4>
-          <span class="text-center text-lg-start">UU 充分利用了区块链技术的安全性与透明性，智能合约已经通过了 XXXX 和 XXXX 的安全审核</span>
+          <h4 class="fs-4 mb-1 mt-3">{{ $t('global.home.trait4_t') }}</h4>
+          <span class="text-center text-lg-start">{{ $t('global.home.trait4_c') }}</span>
         </div>
       </div>
     </div>
@@ -46,9 +46,9 @@
 
   <a-layout-content class="container-lg px-4">
     <div class="d-flex flex-wrap justify-content-between align-items-center py-3 mt-4">
-      <div class="col-12 col-lg py-3 mx-3 px-5 d-flex flex-column align-items-center align-items-lg-start">
-        <h4 class="fs-4 mb-1">加入社区</h4>
-        <span>深入了解 UU</span>
+      <div class="col col-lg py-3 mx-3 px-5 d-flex flex-column align-items-center align-items-lg-start">
+        <h4 class="fs-4 mb-1">{{ $t('layer.community.join') }}</h4>
+        <span>{{ $t('layer.community.about') }}</span>
       </div>
       <div class="communityLinks justify-content-center p-3 d-flex text-center col-12 col-lg-auto flex-wrap">
         <a v-for="(item, key) in communityLinks"
@@ -58,7 +58,7 @@
           :target=item.target
           :title=item.name>
           <component :is="item.component" class="mb-2"></component>
-          {{ item.name }}
+          {{ $t(item.i18n) }}
         </a>
       </div>
     </div>
@@ -99,12 +99,12 @@ export default {
   computed: {
     communityLinks () {
       return [
-        { href: '###', target: '_blank', name: '推特', component: iHomeTwitter },
-        { href: '###', target: '_blank', name: '微信', component: iHomeWechat },
-        { href: '###', target: '_blank', name: '电报', component: iHomeTelegram },
-        { href: '###', target: '_blank', name: 'Discord', component: iHomeDiscord },
-        { href: '###', target: '_blank', name: 'Medium', component: iHomeMedium },
-        { href: '###', target: '_blank', name: 'GitHub', component: iHomeGithub },
+        { href: '###', target: '_blank', i18n: 'layer.community.twitter', component: iHomeTwitter },
+        { href: '###', target: '_blank', i18n: 'layer.community.wechat', component: iHomeWechat },
+        { href: '###', target: '_blank', i18n: 'layer.community.telegram', component: iHomeTelegram },
+        { href: '###', target: '_blank', i18n: 'layer.community.discord', component: iHomeDiscord },
+        { href: '###', target: '_blank', i18n: 'layer.community.medium', component: iHomeMedium },
+        { href: '###', target: '_blank', i18n: 'layer.community.github', component: iHomeGithub },
       ]
     }
   },

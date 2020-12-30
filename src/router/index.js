@@ -7,6 +7,8 @@ import Yield from '@/views/Yield'
 
 import RootDefault from '@/components/layout/RootDefault'
 
+const DEFAULT_TITLE = 'UU.finance'
+
 const routes = [
   { path: '/',
     name: 'RootDefault',
@@ -42,6 +44,14 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(process.env.BASE_URL),
   routes
+})
+
+router.beforeEach((to, from, next) => {
+  const suffix = to.meta.suffix || ''
+
+  document.title = (to.meta.title || DEFAULT_TITLE) + suffix
+
+  next()
 })
 
 export default router

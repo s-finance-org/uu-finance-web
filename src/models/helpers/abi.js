@@ -1,4 +1,4 @@
-export default [
+const ERC20 = [
   {
     'constant': true,
     'inputs': [],
@@ -115,3 +115,7 @@ export default [
     'type': 'event'
   }
 ]
+
+export {
+  ERC20
+}

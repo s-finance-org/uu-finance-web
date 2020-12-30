@@ -1,7 +1,7 @@
 <template>
-  <a-layout-header class="container-fluid px-0">
-    <div class="header container-lg py-3 px-4 px-lg-0 d-flex align-items-center">
-      <router-link to="/" class="d-flex">
+  <a-layout-header class="container-fluid px-0 d-flex justify-content-center align-items-center">
+    <div class="header container-lg px-4 px-lg-0 d-flex align-items-center">
+      <router-link to="/" class="d-flex logo-mark">
         <iLogo class="me-4" />
       </router-link>
       <a-menu
@@ -11,20 +11,28 @@
         <a-menu-item v-for="item in navs"
           :key="item.id"
           >
-          <router-link :to=item.to>{{ item.name }}</router-link>
+          <router-link :to=item.to>{{ $t(item.i18n) }}</router-link>
         </a-menu-item>
       </a-menu>
 
-      <a-dropdown placement="bottomRight" class="ms-auto">
-        <a-button class="d-flex align-items-center" size="small">连接钱包<iDownOutlined class="ms-3" /></a-button>
-        <template #overlay>
-          <a-menu @click="handleMenuClick">
-            <a-menu-item key="1">item1</a-menu-item>
-            <a-menu-item key="2">item2</a-menu-item>
-            <a-menu-item key="3">item3</a-menu-item>
-          </a-menu>
-        </template>
-      </a-dropdown>
+      <div class="ms-auto">
+        <a-dropdown v-if=wallet.isValidated placement="bottomRight">
+          <a-button class="d-flex align-items-center" size="small" :title="wallet.address">
+            <span class="point point-primary me-2"></span>
+            {{ wallet.addressShortened }}
+            <iDownOutlined class="ms-2" />
+          </a-button>
+          <template #overlay>
+            <a-menu @click="walletMenuClick">
+              <a-menu-item key="change">{{ $t('layer.header.wallet.change') }}</a-menu-item>
+              <a-menu-item key="reset">{{ $t('layer.header.wallet.disconnect') }}</a-menu-item>
+            </a-menu>
+          </template>
+        </a-dropdown>
+        <a-button v-else @click=changeWallet class="d-flex align-items-center" size="small">
+          {{ $t('layer.header.wallet.connect') }}
+        </a-button>
+      </div>
 
       <a-button class="ms-4 d-lg-none" @click="showDrawer" size="small"><iMenu /></a-button>
     </div>
@@ -37,27 +45,19 @@
   >
     <a-menu
       v-model:selectedKeys="currentViewName"
-      mode="inline"
-      class="mt-4"
-    >
-      <a-menu-item v-for="(item, key) in navs"
-        :key="key"
-      >
-        <router-link :to=item.to>{{ item.name }}</router-link>
+      mode="vertical-right"
+      class="mt-4">
+      <a-menu-item v-for="item in navs"
+        :key="item.id"
+        >
+        <router-link :to=item.to>{{ $t(item.i18n) }}</router-link>
       </a-menu-item>
     </a-menu>
   </a-drawer>
-
-
-<a href="###" @click="changeWallet">changeWallet</a>
-<a href="###" @click="resetWallet">resetWallet</a>
-<br/>
-address: {{ wallet.address }}<br/>
-networkId: {{ wallet.networkId }}<br/>
-name: {{ wallet.name }}<br/>
 </template>
 
 <script>
+import { LoadingOutlined } from '@ant-design/icons-vue';
 import { iLogo, iDownOutlined, iMenu } from '../../components/icons'
 
 export default {
@@ -65,6 +65,7 @@ export default {
     iLogo,
     iDownOutlined,
     iMenu,
+    LoadingOutlined
   },
   data() {
     return {
@@ -80,21 +81,28 @@ export default {
     changeWallet () {
       this.$store.wallet.changeWallet()
     },
-    switchAccount () {
-      this.$store.wallet.switchAccount()
-    },
     resetWallet () {
       this.$store.wallet.resetWallet()
+    },
+    walletMenuClick (val) {
+      const KEYS = {
+        change: this.changeWallet,
+        reset: this.resetWallet
+      }
+      console.log(KEYS[val.key])
+      KEYS[val.key]
+        && KEYS[val.key]()
+
     }
   },
   computed: {
     navs () {
       return [
-        { id: 'Home', to: '/', name: '首页' },
-        { id: 'Cast', to: '/cast', name: '获得 UU' },
-        { id: 'Exchange', to: '/exchange', name: '稳定币兑换' },
-        { id: 'Yield', to: '/yield', name: '领取收益' },
-        { id: 'About', to: '/about', name: 'test' },
+        { id: 'Home', to: '/', i18n: 'layer.header.nav.home' },
+        { id: 'Cast', to: '/cast', i18n: 'layer.header.nav.cast' },
+        { id: 'Exchange', to: '/exchange', i18n: 'layer.header.nav.exchange' },
+        { id: 'Yield', to: '/yield', i18n: 'layer.header.nav.yield' },
+        // { id: 'About', to: '/about', i18n: 'test' },
       ]
     },
     currentViewName: {
@@ -117,25 +125,41 @@ export default {
   z-index: 10;
   backdrop-filter: blur(60px);
 }
-  .ant-menu {
-    background-color: transparent;
-    .ant-menu-item {
-      width: auto;
-    }
+.logo-mark::before {
+  content: 'alpha';
+  position: absolute;
+  font-size: 12px;
+  background-color: #428e8e;
+  color: #fff;
+  padding: 4px;
+  line-height: 9px;
+  margin: -4px 0 0 27px;
+}
+.ant-menu {
+  background-color: transparent;
+  .ant-menu-item {
+    width: auto;
   }
-  .ant-menu-horizontal {
+}
+.ant-menu-horizontal {
+  border-bottom: 0px;
+  .ant-menu-item, .ant-menu-item:hover {
     border-bottom: 0px;
-    .ant-menu-item, .ant-menu-item:hover {
-      border-bottom: 0px;
-    }
   }
-  .ant-menu-inline {
+}
+.ant-menu-vertical-right {
+  border: 0;
+}
+.ant-menu:not(.ant-menu-horizontal) .ant-menu-item-selected {
+  background-color: transparent;
+}
+.ant-menu-inline {
+  border-right: 0px;
+  .ant-menu-item {
     border-right: 0px;
-    .ant-menu-item {
-      border-right: 0px;
-    }
   }
-.header-holder, .ant-layout-header {
+}
+.header-holder, .ant-layout-header{
   height: 80px;
 }
 </style>
