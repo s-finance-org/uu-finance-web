@@ -34,6 +34,9 @@ export default {
     },
     footer: {
       slogan: 'UU, A profitable stablecoin'
+    },
+    coming: {
+      title: 'COMING SOON...'
     }
   },
   global: {

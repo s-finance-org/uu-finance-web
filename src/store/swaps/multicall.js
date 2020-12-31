@@ -1,4 +1,5 @@
 import { ModelSwap } from '../../models'
+import { getDotenvAddress } from '../helpers/methods'
 
 const abi = [
   {
@@ -88,7 +89,7 @@ const abi = [
 ]
 
 export default ModelSwap.create({
-  address: process.env.VUE_APP_MULTICALL_SWAP,
+  address: getDotenvAddress('MULTICALL_SWAP'),
   abi,
   methods: {
     /**
@@ -123,7 +124,7 @@ export default ModelSwap.create({
     async batcher (targetQueues) {
       const { web3 } = this
       const result = await this.aggregate(targetQueues.map(item => item.call))
-
+console.log('multicall batcher', result)
       targetQueues.forEach((item, idx) => {
         item.result = web3.eth.abi.decodeParameter(item.decodeType, result.returnData[idx])
 

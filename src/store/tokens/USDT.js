@@ -1,6 +1,7 @@
 import { ModelToken } from '../../models'
+import { getDotenvAddress } from '../helpers/methods'
 
 export default ModelToken.create({
   code: 'USDT',
-  address: process.env.VUE_APP_USDT_TOKEN,
+  address: getDotenvAddress('USDT_TOKEN'),
 })

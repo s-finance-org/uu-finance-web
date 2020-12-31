@@ -1,6 +1,6 @@
 <template>
   <a-config-provider :locale="i18n.language.ant">
-    <a-layout class="container-fluid px-0">
+    <a-layout class="container-fluid px-0 min-100vh">
       <router-view />
     </a-layout>
   </a-config-provider>

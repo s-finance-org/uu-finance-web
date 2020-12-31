@@ -51,5 +51,14 @@ module.exports = {
       .end()
       .use('vue-svg-loader')
       .loader('vue-svg-loader');
-  },
- }
+
+    config
+      .plugin('html')
+      .tap(args => {
+        args[0].title= process.env.VUE_APP_DEFAULT_TITLE
+        args[0].keywords = process.env.VUE_APP_KEYWORDS
+        args[0].description = process.env.VUE_APP_DESCRIPTION
+        return args
+      })
+  }
+}

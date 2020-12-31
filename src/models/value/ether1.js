@@ -1,6 +1,7 @@
 import BigNumber from 'bignumber.js'
 import * as helpers from '../../utils/helpers'
 import { floor } from '../../utils/math/round'
+import ModelState from '../base/state'
 
 import ModelValueUint8 from './uint8'
 
@@ -13,14 +14,14 @@ const ModelValueEther = {
     decimals = ModelValueUint8.create(),
     ether = undefined,
     handled = undefined,
-    contDecimal = 6,
-    contDefault = '-',
-    contMethod = floor
+    viewDecimal = 6,
+    viewDefault = '-',
+    viewMethod = floor
   } = {}) {
     const __store__ = {
       ether: '000000000000000000',
       handled: '',
-      cont: contDefault
+      view: viewDefault
     }
 
     const model = {
@@ -34,15 +35,6 @@ const ModelValueEther = {
         const { decimal, decimals } = this
 
         return Math.pow(10, decimals.handled || decimal)
-      },
-
-      /** @type {boolean} */
-      loading: true,
-      beforeUpdate () {
-        this.loading = true
-      },
-      afterUpdate () {
-        this.loading = false
       },
 
       /**
@@ -74,22 +66,24 @@ const ModelValueEther = {
       set handled (val) {
         __store__.handled = val
 
-        this.afterUpdate()
+        this.state.afterUpdate()
       },
 
-      contDecimal,
+      viewDecimal,
       /** @type {string} */
-      get cont () {
-        const { handled, contDecimal, loading } = this
+      get view () {
+        const { handled, viewDecimal, loading } = this
 
         if (!loading) {
   
           // FIXME: formatNumber toFixed -> round()
-          __store__.cont = helpers.formatNumber(contMethod(handled, contDecimal), contDecimal)
+          __store__.view = helpers.formatNumber(viewMethod(handled, viewDecimal), viewDecimal)
         }
 
-        return __store__.cont
-      }
+        return __store__.view
+      },
+
+      state: ModelState.create()
     }
 
     ether != null

@@ -2,25 +2,15 @@ import { multicall } from '../swaps'
 
 import DAI from './DAI'
 import USDT from './USDT'
-// import DF from './DF'
-// import USDG from './USDG'
+import UU from './UU'
 
-import QUSD5 from './QUSD5'
-import iUSD from './iUSD'
-import dUSD from './dUSD'
-import USDG5 from './USDG5'
 
 const tokens = {
   DAI,
   USDT,
-  // DF,
-  // USDG,
+  UU
 
-  // /* LP token */
-  // QUSD5,
-  // iUSD,
-  // dUSD,
-  // USDG5
+  /* LP token */
 }
 
 

@@ -7,8 +7,16 @@
           <span>{{ $t('global.home.cover_c') }}</span>
           <div class="line-frame p-3 mt-5">
             <iHomeUnion class="me-2" />{{ $t('global.home.cover_circulation') }}
-            <h5 class="fs-5 py-1">$0.00</h5>
-            <a-button type="primary">{{ $t('global.home.cover_cast') }}</a-button>
+            <h5 class="fs-5 py-1">
+              <a-spin spin :spinning="tokens.UU.totalSupply.state.busy">
+                $ {{ tokens.UU.totalSupply.view }}
+              </a-spin>
+            </h5>
+            <a-button type="primary">
+              <router-link to="/exchange" class="d-flex logo-mark">
+                {{ $t('global.home.cover_cast') }}
+              </router-link>
+            </a-button>
           </div>
         </div>
         <div class="col-auto ms-auto pe-4 d-none d-md-block">
@@ -97,6 +105,9 @@ export default {
     iHomeUnion
   },
   computed: {
+    tokens () {
+      return this.$store.tokens
+    },
     communityLinks () {
       return [
         { href: '###', target: '_blank', i18n: 'layer.community.twitter', component: iHomeTwitter },

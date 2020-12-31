@@ -35,6 +35,9 @@ export default {
     footer: {
       slogan: 'UU，有收益的稳定币'
     },
+    coming: {
+      title: '敬请期待!'
+    }
   },
   global: {
     home: {

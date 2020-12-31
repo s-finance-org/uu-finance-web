@@ -4,10 +4,9 @@ import About from '@/views/About'
 import Cast from '@/views/Cast'
 import Exchange from '@/views/Exchange'
 import Yield from '@/views/Yield'
+import Coming from '@/views/Coming'
 
 import RootDefault from '@/components/layout/RootDefault'
-
-const DEFAULT_TITLE = 'UU.finance'
 
 const routes = [
   { path: '/',
@@ -22,22 +21,22 @@ const routes = [
       {
         path: 'cast',
         name: 'Cast',
-        component: Cast,
+        component: Coming,
       },
       {
         path: 'exchange',
         name: 'Exchange',
-        component: Exchange
+        component: Coming
       },
       { path: 'yield',
         name: 'Yield',
-        component: Yield
+        component: Coming
       }
     ]
   },
   { path: '/about',
     name: 'About',
-    component: About,
+    component: Coming,
   },
 ]
 
@@ -49,7 +48,7 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const suffix = to.meta.suffix || ''
 
-  document.title = (to.meta.title || DEFAULT_TITLE) + suffix
+  document.title = (to.meta.title || process.env.VUE_APP_DEFAULT_TITLE) + suffix
 
   next()
 })

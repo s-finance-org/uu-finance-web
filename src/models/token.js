@@ -1,4 +1,5 @@
 import BN from 'bignumber.js'
+import { reactive } from 'vue'
 
 import storeWallet from '../store/wallet'
 
@@ -74,7 +75,7 @@ export default {
     // getTransferFromMethod: mixin.contract.methods[transferFromMethodName],
     // getTransferMethod: mixin.contract.methods[transferMethodName],
 
-    return {
+    return reactive({
       /**
        * Base
        */
@@ -344,6 +345,6 @@ export default {
       },
 
       error: ModelValueError.create(),
-    }
+    })
   }
 }
