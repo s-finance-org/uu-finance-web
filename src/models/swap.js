@@ -1,7 +1,6 @@
 import { reactive } from 'vue'
 
 import ModelValueError from './value/error'
-
 import storeWallet from '../store/wallet'
 
 export default {
@@ -48,9 +47,9 @@ export default {
       },
       web3: storeWallet.web3,
 
-      error: ModelValueError.create(),
+      ...methods,
 
-      ...methods
+      error: ModelValueError.create()
     }
   }
 }

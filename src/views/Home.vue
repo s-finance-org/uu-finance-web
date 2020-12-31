@@ -54,20 +54,36 @@
 
   <a-layout-content class="container-lg px-4">
     <div class="d-flex flex-wrap justify-content-between align-items-center py-3 mt-4">
-      <div class="col col-lg py-3 mx-3 px-5 d-flex flex-column align-items-center align-items-lg-start">
+      <div class="col py-3 mx-3 px-5 d-flex flex-column align-items-center align-items-xl-start">
         <h4 class="fs-4 mb-1">{{ $t('layer.community.join') }}</h4>
         <span>{{ $t('layer.community.about') }}</span>
       </div>
-      <div class="communityLinks justify-content-center p-3 d-flex text-center col-12 col-lg-auto flex-wrap">
+
+      <div class="communityLinks justify-content-center p-3 d-flex text-center col-12 col-xl-auto flex-wrap">
         <a v-for="(item, key) in communityLinks"
           :key="key"
           :href=item.href
           class="text-reset mx-2 px-3 py-3 d-flex flex-column align-items-center"
           :target=item.target
           :title=item.name>
-          <component :is="item.component" class="mb-2"></component>
-          {{ $t(item.i18n) }}
+          <template v-if=item.popover>
+            <a-popover trigger="click">
+              <template #content>
+                <img class="qrcode" src="/img/community/qrcode_wechat@2x.png" />
+              </template>
+
+              <span class="d-flex flex-column align-items-center">
+                <component :is="item.component" class="mb-2"></component>
+                {{ $t(item.i18n) }}
+              </span>
+            </a-popover>
+          </template>
+          <template v-else>
+            <component :is="item.component" class="mb-2"></component>
+            {{ $t(item.i18n) }}
+          </template>
         </a>
+
       </div>
     </div>
   </a-layout-content>
@@ -109,13 +125,19 @@ export default {
       return this.$store.tokens
     },
     communityLinks () {
+      const { i18n } = this.$store
+
+      const telegramUrl = i18n.locale === 'zh-CN'
+        ? 'https://t.me/SFinanceCN'
+        : 'https://t.me/SFinanceEN'
+
       return [
-        { href: '###', target: '_blank', i18n: 'layer.community.twitter', component: iHomeTwitter },
-        { href: '###', target: '_blank', i18n: 'layer.community.wechat', component: iHomeWechat },
-        { href: '###', target: '_blank', i18n: 'layer.community.telegram', component: iHomeTelegram },
-        { href: '###', target: '_blank', i18n: 'layer.community.discord', component: iHomeDiscord },
-        { href: '###', target: '_blank', i18n: 'layer.community.medium', component: iHomeMedium },
-        { href: '###', target: '_blank', i18n: 'layer.community.github', component: iHomeGithub },
+        { href: 'https://twitter.com/SFinanceEx', target: '_blank', i18n: 'layer.community.twitter', component: iHomeTwitter },
+        { href: 'javascript:void(0);', popover: true, target: '_blank', i18n: 'layer.community.wechat', component: iHomeWechat },
+        { href: telegramUrl, target: '_blank', i18n: 'layer.community.telegram', component: iHomeTelegram },
+        { href: 'https://discord.gg/rc49Dzu', target: '_blank', i18n: 'layer.community.discord', component: iHomeDiscord },
+        { href: 'https://medium.com/s-finance', target: '_blank', i18n: 'layer.community.medium', component: iHomeMedium },
+        { href: 'https://github.com/s-finance-org/uu-finance-web', target: '_blank', i18n: 'layer.community.github', component: iHomeGithub },
       ]
     }
   },
@@ -127,6 +149,7 @@ export default {
   background: linear-gradient(269.92deg, #F2F2F2 0.07%, #FFFFFF 99.93%);
   h1 {
     font-size: 48px;
+    line-height: 58px;
   }
 }
 .trait {
@@ -149,5 +172,9 @@ export default {
       background-color: rgba(229,243,243,0.5);
     }
   }
+}
+.qrcode {
+  width: 114px;
+  height: 114px;
 }
 </style>

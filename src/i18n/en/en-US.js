@@ -12,9 +12,9 @@ export default {
     header: {
       nav: {
         home: 'Home',
-        cast: 'Cast',
-        exchange: 'Exchange',
-        yield: 'Yield',
+        cast: 'Mint',
+        exchange: 'Swap',
+        yield: 'Claim',
       },
       wallet: {
         change: 'Change',
@@ -29,11 +29,11 @@ export default {
       discord: 'Discord',
       medium: 'Medium',
       github: 'GitHub',
-      join: 'Join the community',
-      about: 'Learn more about UU'
+      join: 'Join our community',
+      about: 'More details about UU'
     },
     footer: {
-      slogan: 'UU, A profitable stablecoin'
+      slogan: 'UU, Yielding United USD'
     },
     coming: {
       title: 'COMING SOON...'
@@ -41,18 +41,18 @@ export default {
   },
   global: {
     home: {
-      cover_t: 'Profitable stablecoin',
-      cover_c: 'Stable coins that can be used in circulation and can also receive income',
-      cover_circulation: 'UU current circulation',
-      cover_cast: 'Get UU immediately',
-      trait1_t: 'Free issuance of stablecoins',
-      trait1_c: 'Participate in creation without threshold, generate and circulate',
-      trait2_t: '100% mortgage issuance',
-      trait2_c: 'Every UU issued is mortgaged by other mainstream stablecoins',
-      trait3_t: 'Multiple benefits',
-      trait3_c: 'Profits include exchange fees, stablecoin interest and other token rewards',
-      trait4_t: 'safe and transparent',
-      trait4_c: 'UU makes full use of the security and transparency of blockchain technology, and the smart contract has passed the security audit of XXXX and XXXX',
+      cover_t: 'Yielding United USD',
+      cover_c: 'A kind of stable coin with both market circulation & yielding',
+      cover_circulation: 'Circulation of UU',
+      cover_cast: 'Mint',
+      trait1_t: 'Liberty of issuing stable currencies',
+      trait1_c: 'Everyone could participate in creating UU. Once minted, UU could circulate in the market',
+      trait2_t: '100% staking mint',
+      trait2_c: 'Every UU is created by staking other stable coins',
+      trait3_t: 'Multi-earnings',
+      trait3_c: 'Earnings include fee、APY and other token reward',
+      trait4_t: 'Safe & Transparent',
+      trait4_c: 'UU is totally community-oriented, with full safety and transparency of block-chain technology.',
     }
   }
 }

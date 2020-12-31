@@ -26,7 +26,7 @@ const routes = [
       {
         path: 'exchange',
         name: 'Exchange',
-        component: Coming
+        component: Exchange
       },
       { path: 'yield',
         name: 'Yield',

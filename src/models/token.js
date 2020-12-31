@@ -2,8 +2,7 @@ import BN from 'bignumber.js'
 import { reactive } from 'vue'
 
 import storeWallet from '../store/wallet'
-
-import store from '../store'
+import i18n from '../i18n'
 
 import { multicall } from '../store/swaps'
 
@@ -25,7 +24,10 @@ export default {
    * @param {string} [opts.code] // TODO: 暂无作用
    * @param {string} opts.address
    * @param {Array} [opts.abi=]
-   * @param {number=} opts.decimal
+   * @param {boolean} [opts.isLPT=] 是否为 lp token
+   * 
+   * 
+   * 
    * @param {number=} opts.contDecimal
    * @param {Object=} opts.moneyOfAccount
    * @param {Object=} opts.getPrice
@@ -39,9 +41,8 @@ export default {
     code = '',
     address = '',
     abi = ERC20,
-    isLpToken = false,
-    decimal = 18,
-    decimals = ModelValueUint8.create(),
+    isLPT = false,
+
     contDecimal = 4,
     moneyOfAccount = USD,
     // XXX: default
@@ -61,13 +62,13 @@ export default {
     const __store__ = {
       contract: null,
       initialized: false,
-      decimal,
       precision: 0,
     }
 
     const valueOpts = {
-      decimal,
-      decimals,
+      // TODO: temp
+      decimal: 18,
+      decimals: ModelValueUint8.create(),
       contDecimal
     }
 
@@ -106,7 +107,7 @@ export default {
        * - TODO:
        * @type {boolean}
        */
-      isLpToken,
+      isLPT,
 
       /**
        * 是否已初始化
@@ -164,10 +165,6 @@ export default {
         // XXX: this.getPriceMethod 为合约方法，getPrice为自定义方法，取其一
         this.getPrice && await this.getPrice()
 
-        
-
-        
-
         const wallet = [
         ]
 
@@ -194,19 +191,17 @@ export default {
       // getPriceMethod,
 
 
-      /** @type {number} */
-      // decimal,
 
-      // decimals,
+
       ...valueOpts,
 
       /** @type {number} */
       get precision () {
         const { precision } = __store__
-        const { decimal } = this
+        const { decimals } = this
 
         return precision
-          || (__store__.precision = Math.pow(10, decimal))
+          || (__store__.precision = Math.pow(10, decimals.handled))
       },
 
 
@@ -239,7 +234,7 @@ export default {
           && bnAmountEther.let(maxAmount.ether)
 
         if (!result) {
-          error.message = store.i18n.$i18n.t('model.valueOutValidRange')
+          error.message = i18n.$i18n.t('model.valueOutValidRange')
         }
 
         return result
@@ -284,7 +279,7 @@ export default {
 
         // // // allowanceEther < amountEther
         // // if (allowanceEther.lt(amountEther)) {
-        // //   error.message = store.i18n.$i18n.t('model.approveOperation')
+        // //   error.message = i18n.$i18n.t('model.approveOperation')
         // // }
 
         // // needResetAllowance

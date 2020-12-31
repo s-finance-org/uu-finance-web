@@ -29,7 +29,7 @@
             </a-menu>
           </template>
         </a-dropdown>
-        <a-button v-else @click=changeWallet class="d-flex align-items-center" size="small">
+        <a-button disabled v-else @click=changeWallet class="d-flex align-items-center" size="small">
           {{ $t('layer.header.wallet.connect') }}
         </a-button>
       </div>
