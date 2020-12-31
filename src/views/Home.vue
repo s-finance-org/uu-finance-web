@@ -12,7 +12,7 @@
                 $ {{ tokens.UU.totalSupply.view }}
               </a-spin>
             </h5>
-            <a-button type="primary">
+            <a-button type="primary" disabled>
               <router-link to="/exchange" class="d-flex logo-mark">
                 {{ $t('global.home.cover_cast') }}
               </router-link>
@@ -67,7 +67,7 @@
           :target=item.target
           :title=item.name>
           <template v-if=item.popover>
-            <a-popover trigger="click">
+            <a-popover>
               <template #content>
                 <img class="qrcode" src="/img/community/qrcode_wechat@2x.png" />
               </template>
