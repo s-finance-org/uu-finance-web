@@ -12,7 +12,7 @@ import ModelValueString from './value/string'
 import ModelValueBytes32 from './value/bytes32'
 import ModelValueUint8 from './value/uint8'
 import ModelValueError from './value/error'
-import ModelState from '../base/state'
+import ModelState from './base/state'
 
 import { ERC20 } from './helpers/abi'
 import { TOKEN_MIN_AMOUNT_ETHER, TOKEN_MAX_AMOUNT_ETHER } from './helpers/constant'
