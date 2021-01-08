@@ -12,9 +12,9 @@ export default {
     header: {
       nav: {
         home: 'Home',
-        cast: 'Mint',
-        exchange: 'Swap',
-        yield: 'Claim',
+        mint: 'Mint',
+        swap: 'Swap',
+        claim: 'Claim',
       },
       wallet: {
         change: 'Change',
@@ -40,11 +40,16 @@ export default {
     }
   },
   global: {
+    base: {
+      reserves: 'Currency Reserves',
+      deposit: 'Deposit',
+      withdraw: 'Withdraw'
+    },
     home: {
       cover_t: 'Yielding United USD',
       cover_c: 'A kind of stable coin with both market circulation & yielding',
       cover_circulation: 'Circulation of UU',
-      cover_cast: 'Mint',
+      cover_mint: 'Mint',
       trait1_t: 'Liberty of issuing stable currencies',
       trait1_c: 'Everyone could participate in creating UU. Once minted, UU could circulate in the market',
       trait2_t: '100% staking mint',
@@ -53,6 +58,6 @@ export default {
       trait3_c: 'Earnings include fee、APY and other token reward',
       trait4_t: 'Safe & Transparent',
       trait4_c: 'UU is totally community-oriented, with full safety and transparency of block-chain technology.',
-    }
+    },
   }
 }

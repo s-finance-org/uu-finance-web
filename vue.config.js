@@ -58,6 +58,7 @@ module.exports = {
         args[0].title= process.env.VUE_APP_DEFAULT_TITLE
         args[0].keywords = process.env.VUE_APP_KEYWORDS
         args[0].description = process.env.VUE_APP_DESCRIPTION
+        
         return args
       })
   }

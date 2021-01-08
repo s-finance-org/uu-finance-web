@@ -12,9 +12,9 @@
                 $ {{ tokens.UU.totalSupply.view }}
               </a-spin>
             </h5>
-            <a-button type="primary" disabled>
-              <router-link to="/exchange" class="d-flex logo-mark">
-                {{ $t('global.home.cover_cast') }}
+            <a-button type="primary">
+              <router-link to="/swap">
+                {{ $t('global.home.cover_mint') }}
               </router-link>
             </a-button>
           </div>

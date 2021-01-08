@@ -1,57 +1,63 @@
+import ModelState from '../base/state'
+
 export default {
   /**
+   * @param {Object} opts
+   * @param {string|number=} opts.value
    * @return {!Object}
    */
-  create () {
+  create ({
+    value = '',
+  } = {}) {
+    // 缺省值
+    const __default__ = {
+      handled: '',
+      view: '-'
+    }
     const __store__ = {
-      value: '',
-      cont: '-'
+      handled: __default__.handled,
+      view: __default__.view
     }
 
     return {
       type: 'string',
 
-      /** @type {boolean} */
-      loading: true,
-      beforeUpdate () {
-        this.loading = true
-      },
-      afterUpdate () {
-        this.loading = false
-      },
-
-      /** @type {string} */
+      /**
+       * IO
+       * @type {string}
+       */
       get value () {
-        return __store__.value
+        return this.handled
       },
       set value (val) {
-        __store__.value = val
-
-        this.afterUpdate()
-      },
-
-      /**
-       * 赋值 value
-       * - 链式
-       * @param {*} val
-       * @return {!Object}
-       */
-      setValue (val) {
-        this.value = val
-
-        return this
+        this.handled = val
       },
 
       /** @type {string} */
-      get cont () {
-        const { value, loading } = this
+      get handled () {
+        return __store__.handled
+      },
+      set handled (val) {
+        const { state } = this
 
-        if (!loading) {
-          __store__.cont = value
+        __store__.handled = val + ''
+
+        state.afterUpdate()
+      },
+
+      /** @type {string} */
+      get view () {
+        const { handled, state } = this
+        let result = __default__.view
+
+        if (state.updated) {
+          result = __store__.view = handled + ''
         }
 
-        return __store__.cont
-      }
+        return result
+      },
+
+      state: ModelState.create()
     }
   }
 }

@@ -1,18 +1,26 @@
 import { multicall } from '../swaps'
 
+// TODO:
+import __UNKNOW__ from './__UNKNOW__'
+
 import DAI from './DAI'
 import USDT from './USDT'
+import USDC from './USDC'
 import UU from './UU'
 
+import DAI_USDC from './DAI_USDC'
+import DAI_USDT from './DAI_USDT'
 
 const tokens = {
   DAI,
   USDT,
-  UU
+  USDC,
+  UU,
 
   /* LP token */
+  DAI_USDC,
+  DAI_USDT,
 }
-
 
 
 // FIXME:

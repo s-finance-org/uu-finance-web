@@ -25,8 +25,6 @@ export default {
     const __store__ = {
       name: undefined,
       address: '',
-      // 缺省 infuraWeb3
-      web3: infura.web3
     }
 
     const wallet = reactive({
@@ -67,22 +65,64 @@ export default {
        */
       addressShortened: '',
 
-      /** Web3 */
+      /**
+       * 当前网络 ID
+       * @type {number|undefined}
+       */
+      networkId: NETWORK_ID,
+      /**
+       * 校验网络 ID 是否有效
+       * @param {number} networkId
+       */
+      async checkNetwork (networkId) {
+        const { isConnectWallet } = this
+
+        this.networkId = networkId
+
+        // 已连上钱包时才可以 walletCheck()，否则需要 walletSelect()，而如果 walletSelect() 则会连续出现2次弹框
+        if (this.isConnectWallet) {
+          // 官方说明需要先调用 walletSelect，但这里 walletSelect 后 body 会被 hidden
+          // await onboard.walletSelect(name)
+          // 当网络不匹配时，onboard 会要求变更网络
+          await onboard.walletCheck()
+        }
+      },
+
+      /**
+       * 当前钱包数据是否有效
+       * - 无法 set
+       * - true 有钱包地址、网络 id 符合、连接钱包时
+       * @type {boolean}
+       */
+      get isValidated () {
+        const { networkId, address, isConnectWallet } = this
+
+        // 必须与配置的网络 ID 一样
+        return networkId === NETWORK_ID
+          // TODO: 钱包地址格式校验
+          && !!address
+          && isConnectWallet
+      },
+
       /**
        * 当前使用的 web3
        * @type {!Object}
        */
       get web3 () {
-        return __store__.web3
-      },
-      set web3 (val) {
-        __store__.web3 = val
+        return this.isConnectWallet && this.walletWeb3
+          // 没链接到钱包
+          || this.infuraWeb3
       },
       /**
        * infura
        * @type {Object}
        */
       infuraWeb3: infura.web3,
+      /**
+       * 钱包自身
+       * @type {Object}
+       */
+      walletWeb3: null,
       /**
        * 对应 window.web3
        * @type {Object}
@@ -114,19 +154,25 @@ export default {
        */
       // switchAccount () {
       //   // TODO: 要已经连上钱包后
+      //   // TODO: 目前 web 下无效
       //   onboard.accountSelect()
       // },
       /**
        * 变更钱包
-       * @param {string} [walletName=] 指定钱包
+       * @param {string=} walletName 指定钱包
        */
       async changeWallet (walletName = undefined) {
+        const { state } = this
+
+        state.beforeUpdate()
+
         try {
           // 变更钱包完成后，再钱包是否已准备好
           await onboard.walletSelect(walletName)
             && await onboard.walletCheck()
 
-          this.updateWallet()
+          // 由 onboard.wallet 的监听触发，而不用在这里
+          // this.updateWallet()
         }
         catch(err) {
           console.error(err)
@@ -138,83 +184,50 @@ export default {
        */
       updateWallet (provider = null) {
         const { state } = this
-        const { address, wallet, network, appNetworkId } = onboard.getState()
-
-        state.updated = false
+        const { wallet, network, appNetworkId } = onboard.getState()
 
         if (wallet.provider == null) {
-          this.deployDefaultWeb3()
+          // 重置钱包
+          this.resetWallet()
         } else {
           // update
           this.name = wallet.name
-          address
-            && (this.address = address)
-          network
-            && (this.networkId = network)
+          this.networkId = network
 
           // 使用钱包的
-          this.windowWeb3 = this.web3 = new Web3(wallet.provider)
-          state.updated = true
+          // wallet.address 有效后会使用钱包赋值的 this.web3，因此先处理 this.web3
+          this.walletWeb3 = new Web3(wallet.provider)
+          this.isConnectWallet = true
+
+          state.afterUpdate()
         }
       },
+      /**
+       * 是否与钱包连上
+       * @type {boolean}
+       */
+      isConnectWallet: false,
+
       /**
        * 重置当前钱包
        */
       resetWallet () {
         const { state } = this
 
-        state.updated = false
+        // 已经断开则不再重置
+        if (!this.isConnectWallet) return false
 
         // update
         this.name = ''
         this.address = ''
+        this.walletWeb3 = null
 
-        this.deployDefaultWeb3()
+        state.reset()
+        this.isConnectWallet = false
 
         // 重置 Onboard 钱包状态并断开
         onboard.walletReset()
-      },
-      /**
-       * 配置为默认 web3
-       */
-      deployDefaultWeb3 () {
-        this.windowWeb3 = this.web3 = this.infuraWeb3
-      },
-
-      /**
-       * 当前网络 ID
-       * @type {number|undefined}
-       */
-      networkId: NETWORK_ID,
-      /**
-       * 当前钱包是否有效
-       * - 无法 set
-       * @type {boolean}
-       */
-      get isValidated () {
-        const { networkId, address } = this
-
-        // 必须与配置的网络 ID 一样
-        return networkId === NETWORK_ID
-          && !!address
-      },
-      /**
-       * 校验网络 ID 是否有效
-       * @param {number} networkId
-       */
-      async checkNetwork (networkId) {
-        // const { name } = this
-
-        this.networkId = networkId
-
-        if (!this.isValidated) {
-          wallet.deployDefaultWeb3()
-
-          // 官方说明需要先调用 walletSelect，但这里 walletSelect 后 body 会被 hidden
-          // await onboard.walletSelect(name)
-          // 当网络不匹配时，onboard 会要求变更网络
-          await onboard.walletCheck()
-        }
+        console.info('Wallet disconnected.')
       },
 
       // 状态
@@ -290,7 +303,9 @@ export default {
           await wallet.checkNetwork(networkId)
         },
         address (address) {
-          if (address) {
+          // 必须要有 isConnectWallet，否则断开后再切换账号，仍然会获取地址
+          if (address && wallet.isConnectWallet) {
+            // 唯一 address 赋值处
             wallet.address = address
           } else {
             if (localStorage.getItem('-walletlink:https://www.walletlink.org:session:id') == null) {
@@ -311,7 +326,7 @@ export default {
       ],
     })
 
-    // wallet.init()
+    wallet.init()
 
     return wallet
   }

@@ -1,4 +1,5 @@
 import { createI18n } from 'vue-i18n'
+import { nativeNavigatorLanguage } from '../utils'
 
 import enUS from './en/en-US'
 import zhCN from './zh/zh-CN'
@@ -21,24 +22,26 @@ for(let lang in languages) {
 }
 
 const __store__ = {
+  // 缓存 i18n 标识
   locale: localStorage.getItem(cacheLocaleKey)
+    // 浏览器环境标识
+    || nativeNavigatorLanguage
+    // 项目缺省标识
     || process.env.VUE_APP_I18N_LOCALE,
   fallbackLocale: process.env.VUE_APP_I18N_FALLBACK_LOCALE,
   supports
 }
-
-const $i18n = createI18n({
-  locale: __store__.locale,
-  fallbackLocale: __store__.fallbackLocale,
-  messages: languages,
-})
 
 export default {
   /**
    * Vue-i18n Object
    * @type {!Object}
    */
-  $i18n,
+  $i18n: createI18n({
+    locale: __store__.locale,
+    fallbackLocale: __store__.fallbackLocale,
+    messages: languages,
+  }),
 
   /**
    * 获取当前语言的标识
@@ -54,9 +57,10 @@ export default {
    * @type {string}
    */
   set locale (val) {
-    const { cacheLocaleKey } = this
-    // TODO: check
-    const result = __store__.locale = val
+    // Check
+    const result = __store__.locale = this.isSupportLanguage(val)
+      ? val
+      : process.env.VUE_APP_I18N_LOCALE
 
     localStorage.setItem(cacheLocaleKey, result)
   },
@@ -88,6 +92,7 @@ export default {
    */
   isSupportLanguage (id) {
     const { supports } = __store__
+
     // TODO: 需严格校验
     return !!supports[id]
   },
@@ -101,5 +106,6 @@ export default {
     return languages[locale]
   },
 
+  // 项目拥有的语言包
   languages
 }

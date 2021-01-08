@@ -1,5 +1,5 @@
 <template>
-  exchange<br/>
+  swap<br/>
 
 <br/>
 address: {{ wallet.address }}<br/>
@@ -15,8 +15,8 @@ isValidated: {{ wallet.isValidated }}<br/>
   <a-spin spin :spinning="tokens.DAI.walletBalanceOf.state.busy">
   walletBalanceOf:
   <!-- | {{ tokens.DAI.walletBalanceOf.ether }} -->
-  | {{ tokens.DAI.walletBalanceOf.handled }}
-  <!-- | {{ tokens.DAI.walletBalanceOf.view }} -->
+  <!-- | {{ tokens.DAI.walletBalanceOf.handled }} -->
+  | {{ tokens.DAI.walletBalanceOf.view }}
   <br/>
   <br/>
   </a-spin>

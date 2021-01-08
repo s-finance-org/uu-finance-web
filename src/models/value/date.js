@@ -1,5 +1,6 @@
 import BigNumber from 'bignumber.js'
-import * as helpers from '../../utils/helpers'
+
+import { formatNumber } from '../../utils'
 import { floor } from '../../utils/math/round'
 
 const ModelValueDate = {
@@ -56,8 +57,7 @@ const ModelValueDate = {
         const { handled, contDecimal, loading } = this
 
         if (!loading) {
-          // FIXME: formatNumber toFixed -> round()
-          __store__.cont = helpers.formatNumber(contMethod(handled, contDecimal), contDecimal)
+          __store__.cont = formatNumber(contMethod(handled, contDecimal))
         }
 
         return __store__.cont

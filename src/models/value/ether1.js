@@ -1,44 +1,49 @@
 import BigNumber from 'bignumber.js'
-import * as helpers from '../../utils/helpers'
+
+import { formatNumber } from '../../utils'
 import { floor } from '../../utils/math/round'
 import ModelState from '../base/state'
-
 import ModelValueUint8 from './uint8'
 
-const ModelValueEther = {
+export default {
   /**
    * @return {!Object}
    */
   create ({
-    decimal = 18,
     decimals = ModelValueUint8.create(),
-    ether = undefined,
-    handled = undefined,
+    ether = undefined, // TODO: 待思考
+    handled = undefined, // TODO: 待思考
     viewDecimal = 6,
-    viewDefault = '-',
-    viewMethod = floor
+    viewMethod = floor,
+    viewPrefix = '',
+    viewSuffix = '',
   } = {}) {
-    const __store__ = {
-      ether: '000000000000000000',
+    // 缺省值
+    const __default__ = {
+      address: '',
+      ether: Array(decimals.handled).fill(0).join(''),
       handled: '',
-      view: viewDefault
+      view: '-',
+    }
+    const __store__ = {
+      ether: __default__.ether,
+      handled: __default__.handled,
     }
 
     const model = {
       type: 'uint256',
 
-      /** @type {number} */
-      decimal,
+      /** @type {Object} */
       decimals,
       /** @type {number} */
       get precision () {
-        const { decimal, decimals } = this
+        const { decimals } = this
 
-        return Math.pow(10, decimals.handled || decimal)
+        return Math.pow(10, decimals.handled)
       },
 
       /**
-       * Universal data
+       * IO
        * @type {(string|number)}
        */
       get value () {
@@ -59,28 +64,30 @@ const ModelValueEther = {
         this.handled = BigNumber(result).div(precision).toString()
       },
 
-      /** @type {string|number} */
+      /** @type {string} */
       get handled () {
         return __store__.handled
       },
       set handled (val) {
+        const { state } = this
+
         __store__.handled = val
 
-        this.state.afterUpdate()
+        state.afterUpdate()
       },
 
       viewDecimal,
+      viewMethod,
       /** @type {string} */
       get view () {
-        const { handled, viewDecimal, loading } = this
+        const { handled, viewDecimal, state } = this
+        let result = __default__.view
 
-        if (!loading) {
-  
-          // FIXME: formatNumber toFixed -> round()
-          __store__.view = helpers.formatNumber(viewMethod(handled, viewDecimal), viewDecimal)
+        if (state.updated) {
+          result = viewPrefix + formatNumber(viewMethod(handled, viewDecimal)) + viewSuffix
         }
 
-        return __store__.view
+        return result
       },
 
       state: ModelState.create()
@@ -92,5 +99,3 @@ const ModelValueEther = {
     return model
   }
 }
-
-export default ModelValueEther

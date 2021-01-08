@@ -1,47 +1,55 @@
 import BigNumber from 'bignumber.js'
 
-import * as helpers from '../../utils/helpers'
 import { floor } from '../../utils/math/round'
+import { formatNumber } from '../../utils'
 
 import ModelState from '../base/state'
+import ModelValueUint8 from './uint8'
 import storeWallet from '../../store/wallet'
 
 /**
  * 钱包数据模型
- * TODO: 
- * - 调用 handled、view 时，当 address 变更时才会触发数值更新；如果不调用，则不
  */
 export default {
   /**
+   * - 数据关联 storeWallet.address -> address -> ether -> handled -> view
+   * @param {Object} opts
+   * @param {Object=} opts.decimals 原数据的设定精度
+   * @param {number=} opts.viewDecimal 显示内容的显示精度
+   * @param {Function=} opts.viewMethod 显示内容的舍入方法
+   * @param {string=} opts.viewPrefix 显示内容的前缀
+   * @param {string=} opts.viewSuffix 显示内容的后缀
+   * @param {Promise=} opts.trigger 数值来源
    * @return {!Object}
    */
   create ({
-    decimal = 18,
+    decimals = ModelValueUint8.create(),
     viewDecimal = 6,
-    viewDefault = '-',
     viewMethod = floor,
+    viewPrefix = '',
+    viewSuffix = '',
     trigger = new Promise((resolve, reject) => {})
   } = {}) {
-    const __store__ = {
+    // 缺省值
+    const __default__ = {
       address: '',
-      ether: '000000000000000000',
+      ether: Array(decimals.handled).fill(0).join(''),
       handled: '',
-      view: viewDefault,
+      view: '-',
+    }
+    const __store__ = {
+      address: __default__.address,
+      ether: __default__.ether,
     }
 
     return {
-      /** @type {number} */
-      decimal,
+      /** @type {Object} */
+      decimals,
       /** @type {number} */
       get precision () {
-        const { decimal } = this
+        const { decimals } = this
 
-        return Math.pow(10, decimal)
-      },
-
-      get adsfasdf () {
-        console.log('钱包数据出口被调用，且变更', )
-        return storeWallet.address
+        return Math.pow(10, decimals.handled)
       },
 
       /**
@@ -50,23 +58,34 @@ export default {
        * @type {string}
        */
       get address () {
-        const { state } = this
-
         const result = storeWallet.address
-console.log(result,  __store__.address !== result)
-        // 有效，且与上一个地址不同时才继续
-        if (result
-            && __store__.address !== result) {
 
-          state.beforeUpdate()
-          // sync
+// TODO: 在获取第一次数据成功后，再次获取则不会 trigger()，如果用户交易完成（block），则对应值应该更新
+        // 有效
+        if (storeWallet.isValidated) {
+          // 与上一个地址不同时才继续
+          if (__store__.address !== result
+              // 数据已经过期，且不在 busy 中
+              || this.state.isExpired && !this.state.busy) {
+            this.state.beforeUpdate()
+
+            // sync
+            __store__.address = result
+
+            this.trigger(result)
+              .then(data => {
+console.log('[update] --------- wallet ether:')
+                // sync
+                this.ether = data
+                this.state.afterUpdate()
+              })
+          }
+        } else {
+          // 当钱包没连接、断开时
           __store__.address = result
 
-          this.trigger(result)
-            .then(data => {
-              this.ether = data
-              this.state.afterUpdate()
-            })
+          // 重置
+          this.state.reset()
         }
 
         return result
@@ -80,15 +99,14 @@ console.log(result,  __store__.address !== result)
 
       /** @type {string} */
       get ether () {
-        const { address } = this
+        const { address, state } = this
 
-        return __store__.ether
+        return state.initialized
+          ? __store__.ether
+          : __default__.ether
       },
       set ether (val) {
-        const { precision } = this
-        const result = __store__.ether = val
-
-        // this.handled = 
+        __store__.ether = val
       },
 
       /**
@@ -97,36 +115,36 @@ console.log(result,  __store__.address !== result)
        * @type {string|number}
        */
       get handled () {
-        const { ether, precision } = this
+        const { ether, precision, state } = this
 
-        return BigNumber(ether).div(precision).toString()
-        // return __store__.handled
-      },
-      set handled (val) {
-        __store__.handled = val
+        return state.initialized
+          ? BigNumber(ether).div(precision).toString()
+          : __default__.handled
       },
 
       viewDecimal,
       viewMethod,
+      viewPrefix,
+      viewSuffix,
       /**
        * 视觉数据
        * - 主动式更新
        * @type {string}
        */
       get view () {
-        // FIXME: address
         const { handled, viewDecimal, state } = this
-        let result = viewDefault
+        let result = __default__.view
 
         if (state.updated) {
-          // FIXME: formatNumber toFixed -> round()
-          result = __store__.view = helpers.formatNumber(viewMethod(handled, viewDecimal), viewDecimal)
+    console.log('重复------')
+          result = viewPrefix + formatNumber(viewMethod(handled, viewDecimal)) + viewSuffix
         }
 
         return result
       },
 
-      state: ModelState.create()
+      state: ModelState.create({ expire: 5 })
     }
   }
 }
+

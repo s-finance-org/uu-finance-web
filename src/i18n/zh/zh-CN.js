@@ -12,9 +12,9 @@ export default {
     header: {
       nav: {
         home: '首页',
-        cast: '获得 UU',
-        exchange: '稳定币兑换',
-        yield: '领取收益',
+        mint: '获得 UU',
+        swap: '稳定币兑换',
+        claim: '领取收益',
       },
       wallet: {
         change: '变更钱包',
@@ -40,11 +40,16 @@ export default {
     }
   },
   global: {
+    base: {
+      reserves: '资产分布',
+      deposit: '存入',
+      withdraw: '取出'
+    },
     home: {
       cover_t: '有收益的稳定币',
       cover_c: '在流通使用同时还可以领取收益的稳定币',
       cover_circulation: 'UU 当前流通量',
-      cover_cast: '立即获得 UU',
+      cover_mint: '立即获得 UU',
       trait1_t: '稳定币发行自由',
       trait1_c: '无门槛参与创造，生成即可流通',
       trait2_t: '100% 抵押发行',
@@ -53,6 +58,6 @@ export default {
       trait3_c: '收益包括交易手续费、存款利率以及其它代币奖励',
       trait4_t: '安全透明',
       trait4_c: 'UU 完全属于社区，充分利用了区块链技术的安全性与透明性',
-    }
+    },
   },
 }

@@ -1,8 +1,8 @@
 <template>
   <a-layout-header class="container-fluid px-0 d-flex justify-content-center align-items-center">
     <div class="header container-lg px-4 px-lg-0 d-flex align-items-center">
-      <router-link to="/" class="d-flex logo-mark">
-        <iLogo class="me-4" />
+      <router-link to="/" class="d-flex logo-mark pe-2">
+        <iLogo class="me-3" />
       </router-link>
       <a-menu
         v-model:selectedKeys="currentViewName"
@@ -20,7 +20,7 @@
           <a-button class="d-flex align-items-center" size="small" :title="wallet.address">
             <span class="point point-primary me-2"></span>
             {{ wallet.addressShortened }}
-            <iDownOutlined class="ms-2" />
+            <span class="icon-downOutlined ms-2"></span>
           </a-button>
           <template #overlay>
             <a-menu @click="walletMenuClick">
@@ -29,12 +29,14 @@
             </a-menu>
           </template>
         </a-dropdown>
-        <a-button disabled v-else @click=changeWallet class="d-flex align-items-center" size="small">
+        <a-button v-else @click=changeWallet class="d-flex align-items-center" size="small">
           {{ $t('layer.header.wallet.connect') }}
         </a-button>
       </div>
 
-      <a-button class="ms-4 d-lg-none" @click="showDrawer" size="small"><iMenu /></a-button>
+      <a-button class="ms-4 d-lg-none py-1" @click="showDrawer" size="small">
+        <span class="h4 icon-menu"></span>
+      </a-button>
     </div>
   </a-layout-header>
   <div class="header-holder"></div>
@@ -57,15 +59,11 @@
 </template>
 
 <script>
-import { LoadingOutlined } from '@ant-design/icons-vue';
-import { iLogo, iDownOutlined, iMenu } from '../../components/icons'
+import { iLogo } from '../../components/icons'
 
 export default {
   components: {
     iLogo,
-    iDownOutlined,
-    iMenu,
-    LoadingOutlined
   },
   data() {
     return {
@@ -89,19 +87,18 @@ export default {
         change: this.changeWallet,
         reset: this.resetWallet
       }
-      console.log(KEYS[val.key])
+
       KEYS[val.key]
         && KEYS[val.key]()
-
     }
   },
   computed: {
     navs () {
       return [
         { id: 'Home', to: '/', i18n: 'layer.header.nav.home' },
-        { id: 'Cast', to: '/cast', i18n: 'layer.header.nav.cast' },
-        { id: 'Exchange', to: '/exchange', i18n: 'layer.header.nav.exchange' },
-        { id: 'Yield', to: '/yield', i18n: 'layer.header.nav.yield' },
+        { id: 'Mint', to: '/mint', i18n: 'layer.header.nav.mint' },
+        { id: 'Swap', to: '/swap', i18n: 'layer.header.nav.swap' },
+        { id: 'Claim', to: '/claim', i18n: 'layer.header.nav.claim' },
         // { id: 'About', to: '/about', i18n: 'test' },
       ]
     },

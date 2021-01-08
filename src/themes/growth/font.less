@@ -1,0 +1,33 @@
+@font-face {
+  font-family: 'icon-base';
+  src: url( '../../../public/font/base.ttf') format('truetype'),
+    url( '../../../public/font/base.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: block;
+}
+
+@font-face {
+  font-family: 'icon-token';
+  src: url( '../../../public/font/token.ttf') format('truetype'),
+    url( '../../../public/font/token.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: block;
+}
+
+[class^="icon-"], [class*=" icon-"] {
+    font-family: 'icon-base' !important;
+    speak: none;
+    font-style: normal;
+    font-weight: normal;
+    font-variant: normal;
+    text-transform: none;
+    // 抗锯齿
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+[class^="icon-token-"], [class*=" icon-token-"] {
+    font-family: 'icon-token' !important;
+}

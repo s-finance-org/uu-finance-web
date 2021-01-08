@@ -1,9 +1,11 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { message } from 'ant-design-vue';
+
 import Home from '@/views/Home'
 import About from '@/views/About'
-import Cast from '@/views/Cast'
-import Exchange from '@/views/Exchange'
-import Yield from '@/views/Yield'
+import Mint from '@/views/Mint'
+import Swap from '@/views/Swap'
+import Claim from '@/views/Claim'
 import Coming from '@/views/Coming'
 
 import RootDefault from '@/components/layout/RootDefault'
@@ -19,17 +21,17 @@ const routes = [
         component: Home,
       },
       {
-        path: 'cast',
-        name: 'Cast',
-        component: Coming,
+        path: 'mint',
+        name: 'Mint',
+        component: Mint,
       },
       {
-        path: 'exchange',
-        name: 'Exchange',
-        component: Coming
+        path: 'swap',
+        name: 'Swap',
+        component: Swap
       },
-      { path: 'yield',
-        name: 'Yield',
+      { path: 'claim',
+        name: 'Claim',
         component: Coming
       }
     ]
@@ -48,9 +50,15 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const suffix = to.meta.suffix || ''
 
-  document.title = (to.meta.title || process.env.VUE_APP_DEFAULT_TITLE) + suffix
+  if (!to.matched || to.matched.length === 0) {
+    // 404
+    next({ path: '/' })
+    message.error(`404 NOT FOUND`)
+  } else {
+    document.title = (to.meta.title || process.env.VUE_APP_DEFAULT_TITLE) + suffix
 
-  next()
+    next()
+  }
 })
 
 export default router

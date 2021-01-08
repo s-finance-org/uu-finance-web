@@ -94,12 +94,12 @@ export default ModelSwap.create({
   methods: {
     /**
      * @param {Array} calls tuple[]
-     * @return {!Array}
+     * @return {Array}
      */
     async aggregate (calls) {
       const { contract } = this
 
-      let result = []
+      let result = null
       try {
         /* res
           {
@@ -109,10 +109,12 @@ export default ModelSwap.create({
             returnData: Array, // returnData
           }
          */
+console.log('multicall calls', calls)
         result = await this.contract.methods.aggregate(calls).call()
       } catch (err) {
         console.error('nulticall aggregate()', err)
       }
+console.log('multicall aggregate', result)
 
       return result
     },
@@ -124,14 +126,16 @@ export default ModelSwap.create({
     async batcher (targetQueues) {
       const { web3 } = this
       const result = await this.aggregate(targetQueues.map(item => item.call))
-console.log('multicall batcher', result)
-      targetQueues.forEach((item, idx) => {
-        item.result = web3.eth.abi.decodeParameter(item.decodeType, result.returnData[idx])
 
-        if (item.target) {
-          item.target.value = item.result
-        }
-      })
+      // aggregate 比如要有返回值，否则没有 forEach 意义
+      result
+        && targetQueues.forEach((item, idx) => {
+          item.result = web3.eth.abi.decodeParameter(item.decodeType, result.returnData[idx])
+
+          if (item.target) {
+            item.target.value = item.result
+          }
+        })
 
       return targetQueues
     }

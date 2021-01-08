@@ -1,5 +1,4 @@
 import BN from 'bignumber.js'
-import { reactive } from 'vue'
 
 import storeWallet from '../store/wallet'
 import i18n from '../i18n'
@@ -13,6 +12,7 @@ import ModelValueString from './value/string'
 import ModelValueBytes32 from './value/bytes32'
 import ModelValueUint8 from './value/uint8'
 import ModelValueError from './value/error'
+import ModelState from '../base/state'
 
 import { ERC20 } from './helpers/abi'
 import { TOKEN_MIN_AMOUNT_ETHER, TOKEN_MAX_AMOUNT_ETHER } from './helpers/constant'
@@ -21,20 +21,21 @@ import { USD } from '../store/currencies'
 export default {
   /**
    * @param {Object} opts
-   * @param {string} [opts.code] // TODO: 暂无作用
+   * @param {string} opts.code // TODO: 暂无作用
    * @param {string} opts.address
-   * @param {Array} [opts.abi=]
-   * @param {boolean} [opts.isLPT=] 是否为 lp token
+   * @param {Array} opts.abi
+   * @param {boolean=} opts.isLPT 是否为 lp token
    * 
    * 
    * 
-   * @param {number=} opts.contDecimal
+   * @param {number=} opts.viewDecimal
    * @param {Object=} opts.moneyOfAccount
    * @param {Object=} opts.getPrice
    * @param {Object=} opts.symbol
    * @param {string=} opts.symbolMethodName
    * @param {string=} opts.balanceOfMethodName
    * @param {string=} opts.totalSupplyMethodName
+   * @param {Object=} opts.methods 严禁方法重名覆盖
    * @return {!Object}
    */
   create ({
@@ -43,7 +44,7 @@ export default {
     abi = ERC20,
     isLPT = false,
 
-    contDecimal = 4,
+    viewDecimal = 4,
     moneyOfAccount = USD,
     // XXX: default
     getPrice = null,
@@ -58,9 +59,11 @@ export default {
     totalSupplyMethodName = 'totalSupply',
     transferFromMethodName = 'transferFrom',
     transferMethodName = 'transfer',
+    methods = {}
   } = {}) {
     const __store__ = {
       contract: null,
+      // TODO: 用 state 替换
       initialized: false,
       precision: 0,
     }
@@ -68,15 +71,17 @@ export default {
     const valueOpts = {
       // TODO: temp
       decimal: 18,
-      decimals: ModelValueUint8.create(),
-      contDecimal
+      decimals: ModelValueUint8.create({ value: 18 }),
+      viewDecimal
     }
 
     // getApproveMethod: mixin.contract.methods[approveMethodName],
     // getTransferFromMethod: mixin.contract.methods[transferFromMethodName],
     // getTransferMethod: mixin.contract.methods[transferMethodName],
 
-    return reactive({
+    return {
+      ...valueOpts,
+
       /**
        * Base
        */
@@ -89,14 +94,28 @@ export default {
       name: ModelValueString.create(),
       /** @type {Object} */
       symbol,
+      /**
+       * 标识
+       * @type {string}
+       */
+      icon: `token-${code}`,
 
       /** @type {Object} */
       get contract () {
         const { contract } = __store__
         const { abi, address } = this
+// TODO: 
+        if (storeWallet.address) {
+          console.log('------- 地址切换，且用钱包的 web3')
+          __store__.contract = new storeWallet.web3.eth.Contract(abi, address)
+        } else {
+          console.log('------- 无地址, 用缺省 web3')
+          __store__.contract = new storeWallet.web3.eth.Contract(abi, address)
+        }
 
-        return contract
-          || (__store__.contract = new storeWallet.web3.eth.Contract(abi, address))
+        return __store__.contract
+        // return contract
+        //   || (__store__.contract = new storeWallet.web3.eth.Contract(abi, address))
       },
 
       /** @type {string} */
@@ -159,6 +178,7 @@ export default {
           name,
           symbol,
           totalSupply,
+          state
         } = this
 
         /* sync */
@@ -169,11 +189,6 @@ export default {
         ]
 
         let queues = []
-
-        if (!__store__.initialized) {
-          __store__.initialized = true
-          // queues = base.concat(once)
-        }
 
         // XXX:
         queues = queues.concat(wallet)
@@ -193,7 +208,7 @@ export default {
 
 
 
-      ...valueOpts,
+      
 
       /** @type {number} */
       get precision () {
@@ -211,12 +226,12 @@ export default {
       minAmount: ModelValueEther1.create({
         ...valueOpts,
         ether: TOKEN_MIN_AMOUNT_ETHER,
-        contDecimal: 0
+        viewDecimal: 0
       }),
       maxAmount: ModelValueEther1.create({
         ...valueOpts,
         ether: TOKEN_MAX_AMOUNT_ETHER,
-        contDecimal: 0
+        viewDecimal: 0
       }),
       // TODO:
       // amount:
@@ -314,15 +329,15 @@ export default {
         // // }
       },
 
+      ...methods,
+
       /**
        * Wallet
        */
       walletBalanceOf: ModelValueWallet.create({
         ...valueOpts,
         async trigger (address) {
-          // TODO: 
           const result = await __store__.contract.methods[balanceOfMethodName](address).call()
-          console.log('wallet ------ ', result)
 
           return result
         }
@@ -339,7 +354,8 @@ export default {
         return result
       },
 
+      state: ModelState.create(),
       error: ModelValueError.create(),
-    })
+    }
   }
 }

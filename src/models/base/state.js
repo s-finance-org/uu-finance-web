@@ -1,6 +1,16 @@
+import { now } from '../../utils'
+
 export default {
-  create () {
+  /**
+   * @param {Object} opts
+   * @param {number=} expire 有效时长（秒）
+   * @return {!Object}
+   */
+  create ({
+    expire = 86400
+  } = {}) {
     const __store__ = {
+      updatedAt: 0,
       updated: false,
     }
 
@@ -27,8 +37,7 @@ export default {
 
         if (result) {
           this.initialized = true
-          // TODO:
-          // this.updatedAt = now()
+          this.updatedAt = now()
         }
       },
 
@@ -48,18 +57,46 @@ export default {
 
       /**
        * 数据更新时间戳
+       * - 毫秒
        * - 由 updated 更新
        * @type {number}
        */
-      updatedAt: 0,
+      get updatedAt () {
+        return __store__.updatedAt
+      },
+      set updatedAt (val) {
+        const result = __store__.updatedAt = val
+
+        // sync
+        this.expireAt = result + expire * 1000
+      },
+
+      /**
+       * 数据有效的时间戳
+       * - 毫秒
+       * - 由 updatedAt 更新
+       * @type {number}
+       */
+      expireAt: 0,
+
+      /**
+       * 是否到期
+       * @type {}
+       */
+      get isExpired () {
+        const { expireAt } = this
+
+        return now() > expireAt
+      },
 
       /**
        * 是否忙绿中
-       * - true 刚初始化、还未获取初始数据完成、后续数据中断时
+       * - true 数据中断、更新时
+       * - false 未初始化
        * - 由 updated、beforeUpdate() 维护
        * @type {boolean}
        */
-      busy: true,
+      busy: false,
 
       /**
        * 已处理过的次数累加器
@@ -67,7 +104,16 @@ export default {
        * - 避免某些需要多个数据相互配合，但先处理过的数据会优先执行，而浪费算力
        * @type {number}
        */
-      handledCounter: 0
+      handledCounter: 0,
+
+      /**
+       * 重置为未初始
+       */
+      reset () {
+        this.initialized = false
+        this.updated = false
+        this.busy = false
+      }
     }
   }
 }

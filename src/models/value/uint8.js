@@ -1,34 +1,26 @@
+import ModelState from '../base/state'
+
 export default {
   /**
-   * @param {string=} contDefault
+   * @param {Object} opts
+   * @param {string|number=} opts.value
    * @return {!Object}
    */
   create ({
-    contDefault = '-'
+    value = 0,
   } = {}) {
+    // 缺省值
+    const __default__ = {
+      handled: 0,
+      view: '-'
+    }
     const __store__ = {
-      loading: true,
-      handled: '0',
-      contDefault,
-    }
-
-    const beforeUpdate = () => {
-      __store__.loading = true
-    }
-
-    const afterUpdate = () => {
-      __store__.loading = false
+      handled: __default__.handled,
+      view: __default__.view
     }
 
     return {
       type: 'uint8',
-
-      /** @type {boolean} */
-      get loading () {
-        return __store__.loading
-      },
-      beforeUpdate,
-      afterUpdate,
 
       /** @type {number} */
       min: 0,
@@ -46,32 +38,34 @@ export default {
         this.handled = val
       },
 
-      /** @type {string} */
+      /** @type {string|number} */
       get handled () {
         return __store__.handled
       },
       set handled (val) {
-        const { min, max } = this
+        const { min, max, state } = this
         const result = +val
-
+// TODO: 限制在范围内，并提示错误，并修正
         if (min <= result && result <= max) {
-          __store__.handled = val
+          __store__.handled = result
 
-          afterUpdate()
-        } else {
-          beforeUpdate()
+          state.afterUpdate()
         }
       },
 
       /** @type {string} */
-      get cont () {
-        const { contDefault } = __store__
-        const { handled, loading } = this
+      get view () {
+        const { handled, state } = this
+        let result = __default__.view
 
-        return loading
-          ? contDefault
-          : handled
-      }
+        if (state.updated) {
+          result = __store__.view = handled + ''
+        }
+
+        return result
+      },
+
+      state: ModelState.create()
     }
   }
 }
