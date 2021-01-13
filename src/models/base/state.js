@@ -1,17 +1,32 @@
 import { now } from '../../utils'
 
+/*
+              init   beforeUpdate   afterUpdate
+updated       false  false          true
+busy          false  true           false
+loading       true   true           false
+initialized   false  true           true
+ */
+
 export default {
   /**
    * @param {Object} opts
-   * @param {number=} expire 有效时长（秒）
+   * @param {number=} expireSec 有效时长（秒）
    * @return {!Object}
    */
   create ({
-    expire = 86400
+    expireSec = 86400
   } = {}) {
-    const __store__ = {
-      updatedAt: 0,
+    const __default__ = {
+      initialized: false,
       updated: false,
+      busy: false,
+      loading: true,
+      updatedAt: 0,
+      handledCounter: 0
+    }
+    const __store__ = {
+      updatedAt: __default__.updatedAt,
     }
 
     return {
@@ -21,31 +36,22 @@ export default {
        * - 由 updated 维护
        * @type {boolean}
        */
-      initialized: false,
+      initialized: __default__.initialized,
       /**
        * 是否已更新完毕
-       * - 用于判断是否已完成数据更新
+       * - true 是否已完成数据更新
+       * - false 未初始化
        * @type {boolean}
        */
-      get updated () {
-        return __store__.updated
-      },
-      set updated (val) {
-        const result = __store__.updated = val
-
-        this.busy = !result
-
-        if (result) {
-          this.initialized = true
-          this.updatedAt = now()
-        }
-      },
+      updated: __default__.updated,
 
       /**
        * 更新前的方法
        */
       beforeUpdate () {
         this.updated = false
+        this.busy = true
+        this.loading = true
       },
 
       /**
@@ -53,6 +59,13 @@ export default {
        */
       afterUpdate () {
         this.updated = true
+        this.busy = false
+        this.loading = false
+        this.updatedAt = now()
+
+        if (!this.initialized) {
+          this.initialized = true
+        }
       },
 
       /**
@@ -61,27 +74,23 @@ export default {
        * - 由 updated 更新
        * @type {number}
        */
-      get updatedAt () {
-        return __store__.updatedAt
-      },
-      set updatedAt (val) {
-        const result = __store__.updatedAt = val
-
-        // sync
-        this.expireAt = result + expire * 1000
-      },
-
+      updatedAt: __default__.updatedAt,
       /**
-       * 数据有效的时间戳
-       * - 毫秒
-       * - 由 updatedAt 更新
+       * 数据有效的时间戳(毫秒)
+       * - 无 set
+       * - 使用才计算
        * @type {number}
        */
-      expireAt: 0,
+      get expireAt () {
+        const { updatedAt } = this
 
+        return updatedAt + expireSec * 1000
+      },
       /**
        * 是否到期
-       * @type {}
+       * - 无 set
+       * - 使用才计算
+       * @type {boolean}
        */
       get isExpired () {
         const { expireAt } = this
@@ -93,10 +102,19 @@ export default {
        * 是否忙绿中
        * - true 数据中断、更新时
        * - false 未初始化
-       * - 由 updated、beforeUpdate() 维护
+       * - 在未初始化时与 updated 同为 false，否则为 busy 的反值
+       * - 由 beforeUpdate()、afterUpdate()、reset() 维护
        * @type {boolean}
        */
-      busy: false,
+      busy: __default__.busy,
+
+      /**
+       * 是否加载中
+       * - true 未初始化、更新时
+       * - false 数据更新完毕
+       * @type {boolean}
+       */
+      loading: __default__.loading,
 
       /**
        * 已处理过的次数累加器
@@ -104,15 +122,19 @@ export default {
        * - 避免某些需要多个数据相互配合，但先处理过的数据会优先执行，而浪费算力
        * @type {number}
        */
-      handledCounter: 0,
+      handledCounter: __default__.handledCounter,
 
       /**
        * 重置为未初始
        */
       reset () {
-        this.initialized = false
-        this.updated = false
-        this.busy = false
+        const { initialized, updated, busy, loading, updatedAt } = __default__
+
+        this.initialized = initialized
+        __store__.updated = updated
+        this.busy = busy
+        this.loading = loading
+        this.updatedAt = updatedAt
       }
     }
   }

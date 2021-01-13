@@ -1,4 +1,4 @@
-import BigNumber from 'bignumber.js'
+import BN from 'BN.js'
 
 import { formatNumber } from '../../utils'
 import { floor } from '../../utils/math/round'

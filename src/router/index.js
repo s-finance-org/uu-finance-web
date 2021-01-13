@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { message } from 'ant-design-vue';
 
 import Home from '@/views/Home'
-import About from '@/views/About'
+import Test from '@/views/Test'
 import Mint from '@/views/Mint'
 import Swap from '@/views/Swap'
 import Claim from '@/views/Claim'
@@ -33,13 +33,13 @@ const routes = [
       { path: 'claim',
         name: 'Claim',
         component: Coming
-      }
+      },
+      { path: 'test',
+        name: 'Test',
+        component: Test,
+      },
     ]
-  },
-  { path: '/about',
-    name: 'About',
-    component: Coming,
-  },
+  }
 ]
 
 const router = createRouter({

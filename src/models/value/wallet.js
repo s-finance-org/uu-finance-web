@@ -1,4 +1,4 @@
-import BigNumber from 'bignumber.js'
+import BN from 'bignumber.js'
 
 import { floor } from '../../utils/math/round'
 import { formatNumber } from '../../utils'
@@ -45,6 +45,7 @@ export default {
     return {
       /** @type {Object} */
       decimals,
+      // TODO: 可考虑给 precision 加缓存，但会因为还未初始 token decimals 完成前产生无效的初始数据，要做区分
       /** @type {number} */
       get precision () {
         const { decimals } = this
@@ -58,6 +59,7 @@ export default {
        * @type {string}
        */
       get address () {
+        // NOTE: 这里不 { state } = this 先调用，是 state 的变更会再次触发本流程
         const result = storeWallet.address
 
 // TODO: 在获取第一次数据成功后，再次获取则不会 trigger()，如果用户交易完成（block），则对应值应该更新
@@ -118,7 +120,7 @@ console.log('[update] --------- wallet ether:')
         const { ether, precision, state } = this
 
         return state.initialized
-          ? BigNumber(ether).div(precision).toString()
+          ? BN(ether).div(precision).toString()
           : __default__.handled
       },
 
@@ -135,15 +137,17 @@ console.log('[update] --------- wallet ether:')
         const { handled, viewDecimal, state } = this
         let result = __default__.view
 
+        // TODO: 如果数据没变动，则不再次处理
         if (state.updated) {
-    console.log('重复------')
           result = viewPrefix + formatNumber(viewMethod(handled, viewDecimal)) + viewSuffix
+console.log('重复------', result)
+
         }
 
         return result
       },
 
-      state: ModelState.create({ expire: 5 })
+      state: ModelState.create({ expireSec: 5 })
     }
   }
 }

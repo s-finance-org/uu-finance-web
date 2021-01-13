@@ -8,12 +8,12 @@
           <div class="line-frame p-3 mt-5">
             <iHomeUnion class="me-2" />{{ $t('global.home.cover_circulation') }}
             <h5 class="fs-5 py-1">
-              <a-spin spin :spinning="tokens.UU.totalSupply.state.busy">
+              <busy :busying="tokens.UU.totalSupply.state.loading">
                 $ {{ tokens.UU.totalSupply.view }}
-              </a-spin>
+              </busy>
             </h5>
             <a-button type="primary">
-              <router-link to="/swap">
+              <router-link to="/mint">
                 {{ $t('global.home.cover_mint') }}
               </router-link>
             </a-button>
@@ -28,25 +28,15 @@
   <a-layout-content class="container-lg px-0">
     <div class="trait d-flex">
       <div class="d-flex flex-wrap px-2 px-lg-5 mx-lg-4">
-        <div class="col-12 col-lg-6 pb-5 px-3 d-flex flex-column align-items-center align-items-lg-start">
-          <span class="line-frame p-2 d-flex justify-content-center align-items-center"><iHomeTrait1 /></span>
-          <h4 class="fs-4 mb-1 mt-3">{{ $t('global.home.trait1_t') }}</h4>
-          <span class="text-center text-lg-start">{{ $t('global.home.trait1_c') }}</span>
-        </div>
-        <div class="col-12 col-lg-6 pb-5 px-3 d-flex flex-column align-items-center align-items-lg-start">
-          <span class="line-frame p-2 d-flex justify-content-center align-items-center"><iHomeTrait2 /></span>
-          <h4 class="fs-4 mb-1 mt-3">{{ $t('global.home.trait2_t') }}</h4>
-          <span class="text-center text-lg-start">{{ $t('global.home.trait2_c') }}</span>
-        </div>
-        <div class="col-12 col-lg-6 pb-5 px-3 d-flex flex-column align-items-center align-items-lg-start">
-          <span class="line-frame p-2 d-flex justify-content-center align-items-center"><iHomeTrait3 /></span>
-          <h4 class="fs-4 mb-1 mt-3">{{ $t('global.home.trait3_t') }}</h4>
-          <span class="text-center text-lg-start">{{ $t('global.home.trait3_c') }}</span>
-        </div>
-        <div class="col-12 col-lg-6 pb-5 px-3 d-flex flex-column align-items-center align-items-lg-start">
-          <span class="line-frame p-2 d-flex justify-content-center align-items-center"><iHomeTrait4 /></span>
-          <h4 class="fs-4 mb-1 mt-3">{{ $t('global.home.trait4_t') }}</h4>
-          <span class="text-center text-lg-start">{{ $t('global.home.trait4_c') }}</span>
+        <div class="col-12 col-lg-6 pb-5 px-3 d-flex flex-column align-items-center align-items-lg-start"
+          v-for="(item, idx) in traits"
+          :key="'trait-' + idx"
+          >
+          <span class="line-frame p-2 d-flex justify-content-center align-items-center">
+            <component :is="item.component"></component>
+          </span>
+          <h4 class="fs-4 mb-1 mt-3">{{ $t(item.titleI18n) }}</h4>
+          <span class="text-center text-lg-start">{{ $t(item.contI18n) }}</span>
         </div>
       </div>
     </div>
@@ -104,6 +94,7 @@ import {
   iHomeCoverUU,
   iHomeUnion } from '../components/icons';
 import Icon from '@ant-design/icons-vue';
+import Busy from '../components/busy'
 
 export default {
   components: {
@@ -118,11 +109,20 @@ export default {
     iHomeTwitter,
     iHomeWechat,
     iHomeCoverUU,
-    iHomeUnion
+    iHomeUnion,
+    Busy,
   },
   computed: {
     tokens () {
       return this.$store.tokens
+    },
+    traits () {
+      return [
+        { component: iHomeTrait1, titleI18n: 'global.home.trait1_t', contI18n: 'global.home.trait1_c' },
+        { component: iHomeTrait2, titleI18n: 'global.home.trait2_t', contI18n: 'global.home.trait2_c' },
+        { component: iHomeTrait3, titleI18n: 'global.home.trait3_t', contI18n: 'global.home.trait3_c' },
+        { component: iHomeTrait4, titleI18n: 'global.home.trait4_t', contI18n: 'global.home.trait4_c' }
+      ]
     },
     communityLinks () {
       const { i18n } = this.$store
@@ -143,6 +143,7 @@ export default {
   },
 };
 </script>
+
 <style scoped lang="less">
 .cover {
   height: 470px;

@@ -1,3 +1,5 @@
+import { reactive } from 'vue'
+
 import { multicall } from '../swaps'
 
 // TODO:
@@ -11,7 +13,7 @@ import UU from './UU'
 import DAI_USDC from './DAI_USDC'
 import DAI_USDT from './DAI_USDT'
 
-const tokens = {
+const tokens = reactive({
   DAI,
   USDT,
   USDC,
@@ -20,7 +22,7 @@ const tokens = {
   /* LP token */
   DAI_USDC,
   DAI_USDT,
-}
+})
 
 
 // FIXME:

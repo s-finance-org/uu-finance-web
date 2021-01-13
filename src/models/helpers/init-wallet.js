@@ -11,15 +11,17 @@ const CACHE_WALLET_NAME = '__Global_Wallet_Selected'
 
 export default {
   /**
-   * @param {number|string} param 当前配置的网络 ID
-   * @param {string} infuraKey
+   * @param {Object} opts
+   * @param {number|string} opts.networkId 当前配置的网络 ID
+   * @param {string=} opts.infuraKey
    * @return {!Object}
    */
   create ({
     networkId = DEFAULT_NETWORK_ID,
     infuraKey = '',
   } = {}) {
-    const NETWORK_ID = +networkId || DEFAULT_NETWORK_ID
+    // 创建时的网络 ID，当后面网络切换时的参照而设定为常量
+    const NETWORK_ID = +networkId
     const infura = ModelInfura.create({ networkId: NETWORK_ID, infuraKey })
 
     const __store__ = {
@@ -139,6 +141,7 @@ export default {
        */
       async init () {
         const { trust, imToken, coinbase } = originWallets
+
         try {
           // 自动加载缓存、所在环境的钱包名
           this.changeWallet(localStorage.getItem(CACHE_WALLET_NAME)
@@ -165,7 +168,7 @@ export default {
         const { state } = this
 
         state.beforeUpdate()
-
+console.log('-----------')
         try {
           // 变更钱包完成后，再钱包是否已准备好
           await onboard.walletSelect(walletName)
@@ -308,6 +311,7 @@ export default {
             // 唯一 address 赋值处
             wallet.address = address
           } else {
+            // TODO: WHY?
             if (localStorage.getItem('-walletlink:https://www.walletlink.org:session:id') == null) {
               wallet.resetWallet()
               wallet.changeWallet()

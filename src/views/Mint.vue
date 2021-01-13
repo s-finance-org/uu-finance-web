@@ -11,7 +11,7 @@
 
             <div class="d-flex flex-column flex-wrap col-12 col-md-8 pe-md-4">
               <span class="h5 d-block py-1 pt-4">选择存入资产类型</span>
-              <a-radio-group defaultValue="1" size="small" class="pb-4">
+              <a-radio-group defaultValue="1" size="small" class="pb-3">
                 <a-radio-button value="1">
                   流动性凭证
                 </a-radio-button>
@@ -25,6 +25,8 @@
 
               <a-tabs size="small" animated type="card" defaultActiveKey="single">
                 <a-tab-pane key="multi" tab="多资产存入" class="pt-2">
+                  <token-select-input :label="$t('global.base.deposit')" codes="DAI_USDC" />
+                  <token-select-input :label="$t('global.base.deposit')" codes="DAI_USDT" />
                   <token-select-input :label="$t('global.base.deposit')" codes="DAI" />
                 </a-tab-pane>
                 <a-tab-pane key="single" tab="单资产存入" class="pt-2">
@@ -51,9 +53,16 @@
               <a-button type="link" size="small" class="p-0 mt-2 order-1 order-md-12 col-12 col-md-auto">
                 高级选项
               </a-button>
-              <a-button type="primary" @click=onMinit class="col-12 col-md-auto order-12 order-md-1">
+
+              <button-busy
+                :busying=ixd.mintBtn.busy
+                className="col-12 col-md-auto order-12 order-md-1"
+                :disabled=ixd.mintBtn.disabled
+                type="primary"
+                @click=onMinit
+                >
                 存款
-              </a-button>
+              </button-busy>
             </div>
         </a-tab-pane>
 
@@ -111,12 +120,15 @@
 import {
   iIntersect,
 } from '@/components/icons'
+
 import TokenSelectInput from '../components/token-select-input'
+import ButtonBusy from '../components/button-busy'
 
 export default {
   components: {
     iIntersect,
-    TokenSelectInput
+    TokenSelectInput,
+    ButtonBusy
   },
   data() {
     return {
@@ -133,12 +145,30 @@ export default {
     },
     async onMinit () {
       const { UU, DAI_USDC } = this.$store.tokens
-      const { wallet } = this.$store
 
       await UU.mint(DAI_USDC.address, '1', '1')
     }
   },
   computed: {
+    store () {
+      const { wallet, tokens } = this.$store
+
+      return {
+        wallet,
+        tokens
+      }
+    },
+    ixd () {
+      const { wallet, tokens } = this.$store
+
+      return {
+        mintBtn: {
+          // TODO: 操作的币种
+          disabled: !wallet.isValidated,
+          busy: tokens.UU.state.busy
+        }
+      }
+    },
     preview () {
       return [
         { name: '预计矿工费', view: 'x.xx 美元' },

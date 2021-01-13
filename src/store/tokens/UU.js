@@ -2,6 +2,8 @@ import { ModelToken } from '../../models'
 import { getDotenvAddress } from '../helpers/methods'
 
 import storeWallet from '../wallet'
+import notify from '../notify'
+import i18n from '../../i18n'
 
 const abi = [{
 	"anonymous": false,
@@ -1233,25 +1235,49 @@ export default ModelToken.create({
   methods: {
     // lpt 铸造 UU
     async mint (lptAddress, vol, minMint) {
-      const { contract, address } = this
+      const { contract, address, state } = this
 
-      const _method = await contract.methods.mint(lptAddress, vol, minMint)
-console.log(lptAddress, vol, minMint)
+      // 限制当前提交待确认的交易只有一份
+      state.beforeUpdate()
 
-      return _method.send({
-        from: storeWallet.address,
-        // gasPrice: this.gasPriceWei,
-        // gas: this.currentPool.deposit.gas,
-        // gas: 1200000
-      })
-      .once('transactionHash', hash => {
-        // dismiss()
-        // notifyHandler(hash)
-      })
-      .catch(err =>{
-        // 4001
-        console.log(err)
-      })
+      const { update, dismiss } = notify.notification({ message: '正准备拉起' })
+
+      try {
+        const _method = await contract.methods.mint(lptAddress, vol, minMint)
+  console.log(lptAddress, vol, minMint)
+
+        return _method.send({
+          from: storeWallet.address,
+          // gasPrice: this.gasPriceWei,
+          // gas: this.currentPool.deposit.gas,
+          // gas: 1200000
+        })
+        .once('transactionHash', hash => {
+          dismiss()
+          notify.handler(hash)
+          // state.afterUpdate()
+        })
+        .catch(err =>{
+          console.log(err)
+
+          state.afterUpdate()
+
+          notify.updateError({
+            update,
+            code: err.code,
+            message: err.message
+          })
+        })
+      } catch (err) {
+        // TODO: 异常
+        console.error(err)
+        update({
+          message: 'err',
+          type: 'error'
+        })
+
+        state.afterUpdate()
+      }
     }
   }
 })

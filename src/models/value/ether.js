@@ -1,49 +1,68 @@
-import BigNumber from 'bignumber.js'
+import BN from 'bignumber.js'
 
 import { formatNumber } from '../../utils'
 import { floor } from '../../utils/math/round'
+import ModelState from '../base/state'
+import ModelValueUint8 from './uint8'
 
-const ModelValueEther = {
+export default {
   /**
+   * - 数据关联 value -> ether <-> handled -> view
+   * @param {Object=} opts.decimals 原数据的设定精度
+   * @param {string=} opts.value 预设值
+   * @param {string=} opts.handled 预设值
+   * @param {number=} opts.viewDecimal 显示内容的显示精度
+   * @param {Function=} opts.viewMethod 显示内容的舍入方法
+   * @param {string=} opts.viewPrefix 显示内容的前缀
+   * @param {string=} opts.viewSuffix 显示内容的后缀
    * @return {!Object}
    */
   create ({
-    decimal = 18,
-    ether = undefined,
+    decimals = ModelValueUint8.create(),
+    value = undefined,
     handled = undefined,
-    contDecimal = 6,
-    contDefault = '-',
-    contMethod = floor
+    viewDecimal = 6,
+    viewMethod = floor,
+    viewPrefix = '',
+    viewSuffix = '',
   } = {}) {
-    const __store__ = {
-      ether: '000000000000000000',
+    const __default__ = {
+      address: '',
+      ether: Array(decimals.handled).fill(0).join(''),
       handled: '',
-      cont: contDefault
+      view: '-',
+    }
+    const __cache__ = {
+      decimals: undefined,
+      precision: undefined
+    }
+    const __store__ = {
+      ether: __default__.ether,
+      handled: __default__.handled,
     }
 
-    const model = {
+    const result = {
       type: 'uint256',
 
-      /** @type {number} */
-      decimal,
+      /** @type {Object} */
+      decimals,
+      // TODO: 设为通用方法
       /** @type {number} */
       get precision () {
-        const { decimal } = this
+        const { decimals } = this
+        let result = __cache__.precision
 
-        return Math.pow(10, decimal)
-      },
+        // 没变动则从缓存获取
+        if (__cache__.decimals !== decimals.handled) {
+          __cache__.decimals = decimals.handled
+          result = __cache__.precision = Math.pow(10, decimals.handled)
+        }
 
-      /** @type {boolean} */
-      loading: true,
-      beforeUpdate () {
-        this.loading = true
-      },
-      afterUpdate () {
-        this.loading = false
+        return result
       },
 
       /**
-       * Universal data
+       * IO
        * @type {(string|number)}
        */
       get value () {
@@ -53,45 +72,60 @@ const ModelValueEther = {
         this.ether = val
       },
 
-      /** @type {string} */
+      /**
+       * - ether、handled 数据同步
+       * @type {string}
+       */
       get ether () {
         return __store__.ether
       },
       set ether (val) {
-        const { precision } = this
+        const { state, precision } = this
         const result = __store__.ether = val
 
-        this.handled = BigNumber(result).div(precision).toString()
+        // sync
+        __store__.handled = BN(result).div(precision).toString()
+        state.afterUpdate()
       },
 
-      /** @type {string|number} */
+      /**
+       * - ether、handled 数据同步
+       * @type {string}
+       */
       get handled () {
         return __store__.handled
       },
       set handled (val) {
-        __store__.handled = val
+        const { state, precision } = this
+        const result = __store__.handled = val
 
-        this.afterUpdate()
+        // sync
+        __store__.ether = BN(result).times(precision).toString()
+        state.afterUpdate()
       },
 
-      contDecimal,
+      viewDecimal,
+      viewMethod,
+      viewPrefix,
+      viewSuffix,
       /** @type {string} */
-      get cont () {
-        const { handled, contDecimal, loading } = this
+      get view () {
+        const { handled, viewDecimal, state } = this
+console.log('----- view')
+        return state.updated
+          ? viewPrefix + formatNumber(BN(viewMethod(handled, viewDecimal)).toFixed(viewDecimal)) + viewSuffix
+          : __default__.view
+      },
 
-        if (!loading) {
-          __store__.cont = formatNumber(contMethod(handled, contDecimal))
-        }
-
-        return __store__.cont
-      }
+      state: ModelState.create()
     }
 
-    ether != null
-      && (model.ether = ether)
+    // 预设
+    value != null
+      && (result.value = value)
+    handled != null
+      && (result.handled = handled)
 
-    return model
+    return result
   }
 }
-
-export default ModelValueEther

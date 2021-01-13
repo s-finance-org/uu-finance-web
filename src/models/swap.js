@@ -1,21 +1,19 @@
 import { reactive } from 'vue'
 
-import ModelValueError from './value/error'
+import ModelValueError from './base/error'
 import storeWallet from '../store/wallet'
 
 export default {
   /**
    * @param {Object} opts
-   * @param {string} [opts.code] // TODO: 暂无作用
-   * @param {string} [opts.name] // TODO: 暂无作用
-   * @param {string} opts.address
-   * @param {Array} opts.abi
-   * @param {Object} [opts.methods]
+   * @param {string=} opts.code // TODO: 暂无作用
+   * @param {string=} opts.address
+   * @param {Array=} opts.abi
+   * @param {Object=} opts.methods
    * @return {!Object}
    */
   create ({
     code = '',
-    name = '',
     address = '',
     abi = [],
     methods = {}
@@ -25,11 +23,12 @@ export default {
     }
 
     return {
+      ...methods,
+
       /**
        * Base
        */
       code,
-      name,
       address,
       abi,
 
@@ -47,7 +46,6 @@ export default {
       },
       web3: storeWallet.web3,
 
-      ...methods,
 
       error: ModelValueError.create()
     }

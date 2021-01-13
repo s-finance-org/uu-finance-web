@@ -1,31 +1,29 @@
 import ModelState from '../base/state'
 
+/** @type {number} */
+const MIN_VALUE = 0
+/** @type {number} */
+const MAX_VALUE = 255
+
 export default {
   /**
    * @param {Object} opts
-   * @param {string|number=} opts.value
+   * @param {string|number} opts.value 预设值
    * @return {!Object}
    */
   create ({
-    value = 0,
+    value = undefined,
   } = {}) {
-    // 缺省值
     const __default__ = {
       handled: 0,
       view: '-'
     }
     const __store__ = {
       handled: __default__.handled,
-      view: __default__.view
     }
 
-    return {
+    const result =  {
       type: 'uint8',
-
-      /** @type {number} */
-      min: 0,
-      /** @type {number} */
-      max: 255,
 
       /**
        * IO
@@ -43,29 +41,34 @@ export default {
         return __store__.handled
       },
       set handled (val) {
-        const { min, max, state } = this
+        const { state } = this
         const result = +val
-// TODO: 限制在范围内，并提示错误，并修正
-        if (min <= result && result <= max) {
-          __store__.handled = result
 
+        // 限制在范围内
+        if (MIN_VALUE <= result && result <= MAX_VALUE) {
+          __store__.handled = result
           state.afterUpdate()
+        } else {
+          console.error(`[ERROR] Out of range: ${result}`)
         }
       },
 
       /** @type {string} */
       get view () {
         const { handled, state } = this
-        let result = __default__.view
 
-        if (state.updated) {
-          result = __store__.view = handled + ''
-        }
-
-        return result
+        return state.updated
+          ? handled + ''
+          : __default__.view
       },
 
       state: ModelState.create()
     }
+
+    // 预设
+    value != undefined
+      && (result.value = value)
+
+    return result
   }
 }

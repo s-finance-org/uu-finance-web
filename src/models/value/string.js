@@ -3,28 +3,26 @@ import ModelState from '../base/state'
 export default {
   /**
    * @param {Object} opts
-   * @param {string|number=} opts.value
+   * @param {string|number} opts.value 预设值
    * @return {!Object}
    */
   create ({
-    value = '',
+    value = undefined,
   } = {}) {
-    // 缺省值
     const __default__ = {
       handled: '',
       view: '-'
     }
     const __store__ = {
-      handled: __default__.handled,
-      view: __default__.view
+      handled: __default__.handled
     }
 
-    return {
+    const result = {
       type: 'string',
 
       /**
        * IO
-       * @type {string}
+       * @type {string|number}
        */
       get value () {
         return this.handled
@@ -41,23 +39,25 @@ export default {
         const { state } = this
 
         __store__.handled = val + ''
-
         state.afterUpdate()
       },
 
       /** @type {string} */
       get view () {
         const { handled, state } = this
-        let result = __default__.view
 
-        if (state.updated) {
-          result = __store__.view = handled + ''
-        }
-
-        return result
+        return state.updated
+          ? handled
+          : __default__.view
       },
 
       state: ModelState.create()
     }
+
+    // 预设
+    value != undefined
+      && (result.value = value)
+
+    return result
   }
 }

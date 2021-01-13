@@ -8,6 +8,12 @@ export default {
     name: 'English'
   }),
   ant: ant_enUS,
+  error: {
+    '4001': 'MetaMask Tx Signature: User denied transaction signature.'
+  },
+  message: {
+    valueOutValidRange: 'Value is out of valid range',
+  },
   layer: {
     header: {
       nav: {

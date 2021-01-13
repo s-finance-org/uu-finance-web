@@ -1,6 +1,8 @@
 import { ModelSwap } from '../../models'
 import { getDotenvAddress } from '../helpers/methods'
 
+import storeWallet from '../wallet'
+
 const abi = [
   {
     'constant': true,

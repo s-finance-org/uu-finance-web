@@ -15,7 +15,7 @@
           :key="`${item.code}`"
           :value=item.code
         >
-          <span class="d-flex">
+          <span class="d-flex align-items-center">
             <component :is="`token-${item.code}`" class="me-2"></component>
             {{ item.code }}
           </span>
@@ -28,7 +28,7 @@
         <component :is=currentToken.icon class="me-2"></component>
         {{ currentToken.code }}
       </span>
-      <a-input v-model:value="inputValue" type="number" class="pe-0">
+      <a-input v-model:value="currentToken.amount.handled" type="number" class="pe-0">
         <template #suffix>
           <a-tooltip title="当前值大于已授权的">
             <a-button type="link" size="small">授权</a-button>
@@ -38,17 +38,37 @@
     </a-input-group>
     <small class="py-1 mb-2 d-flex">
       最多:
-      <spin :spinning="currentToken.walletBalanceOf.state.busy">
+      <busy :busying="currentToken.walletBalanceOf.state.busy">
         <span class="pointer px-2">{{ currentToken.walletBalanceOf.view }}</span>
-      </spin>
+      </busy>
     </small>
+
     name: {{ currentToken.name.view }}<br/>
     decimals: {{ currentToken.decimals.view }}<br/>
-    totalSupply: {{ currentToken.totalSupply.view }}
+    totalSupply: {{ currentToken.totalSupply.view }}<br/>
+    <a-checkbox v-model:checked="currentToken.isInfiniteAllowance">
+      isInfiniteAllowance: {{ currentToken.isInfiniteAllowance }}
+    </a-checkbox>
+    amount: {{ currentToken.amount.handled }}<br/>
+    approveAmount: <br/>
+    error: {{ currentToken.error }}<br/>
+    <span class="row">
+      <span class="col-2">
+        walletAllowances: 
+      </span>
+      <span class="col-10" v-for="(item, key) of currentToken.walletAllowances"
+        :key=key
+        >
+        <small>toContractAddress: {{ key }}</small><br/>
+        allowance: {{ item.allowance }} <br/>
+        approve: {{ item.approve }}<br/>
+        walletAddress: {{ item.walletAddress }}<br/>
+      </span>
+    </span>
 </template>
 
 <script>
-import Spin from '../components/spin'
+import Busy from '../components/busy'
 import { isArray } from '../utils'
 
 export default {
@@ -61,7 +81,7 @@ export default {
     select: Boolean
   },
   components: {
-    Spin,
+    Busy,
   },
   data () {
     const { codes } = this
@@ -70,7 +90,6 @@ export default {
       currentCode: isArray(codes)
         ? codes[0]
         : codes,
-      inputValue: '',
     }
   },
   methods: {
@@ -107,7 +126,7 @@ export default {
       const { currentCode } = this
 
       return tokens[currentCode]
-    }
+    },
     // tokens1 () {
     //   return [
     //     { code: 'iUSD' },

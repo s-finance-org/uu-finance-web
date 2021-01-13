@@ -8,6 +8,12 @@ export default {
     name: '中文（简体）'
   }),
   ant: ant_zhCN,
+  error: {
+    '4001': 'MetaMask：用户拒绝了交易。'
+  },
+  message: {
+    valueOutValidRange: '值不在有效范围内',
+  },
   layer: {
     header: {
       nav: {

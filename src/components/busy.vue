@@ -1,16 +1,18 @@
 <template>
-  <div>
-    <a-spin :indicator="indicator" :spinning="spinning" >
-      <slot></slot>
-    </a-spin>
-  </div>
+  <a-spin :indicator="indicator" :spinning="busying" :wrapperClassName="className" >
+    <slot></slot>
+  </a-spin>
 </template>
 
 <script>
 import { LoadingOutlined } from '@ant-design/icons-vue';
 
 export default {
-  props: ['spinning'],
+  name: 'busy',
+  props: {
+    busying: Boolean,
+    className: [Object, Array]
+  },
   components: {
     LoadingOutlined,
   },
