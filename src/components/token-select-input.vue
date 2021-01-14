@@ -1,17 +1,13 @@
 <template>
   <div class="h5 pb-1">{{ label }}</div>
-    <a-input-group compact>
+    <a-input-group compact :class="{ 'danger': !currentToken.amount.isValidInput }">
       <a-select
         class="col-4 pe-0"
         v-model:value="currentCode"
-        :filter-option="filterOption"
-        @focus="handleFocus"
-        @blur="handleBlur"
-        @change="handleChange"
-        v-if="select"
+        v-if="__base__.isSelect"
       >
         <a-select-option
-          v-for="item in __tokens__"
+          v-for="item in __base__.tokens"
           :key="`${item.code}`"
           :value=item.code
         >
@@ -28,7 +24,11 @@
         <component :is=currentToken.icon class="me-2"></component>
         {{ currentToken.code }}
       </span>
-      <a-input v-model:value="currentToken.amount.handled" type="number" class="pe-0">
+      <a-input
+        v-model:value="currentToken.amount.input"
+        class="pe-0"
+        @change="changeAmount"
+        >
         <template #suffix>
           <a-tooltip title="当前值大于已授权的">
             <a-button type="link" size="small">授权</a-button>
@@ -36,35 +36,36 @@
         </template>
       </a-input>
     </a-input-group>
-    <small class="py-1 mb-2 d-flex">
+    <small class="py-1 d-flex">
       最多:
       <busy :busying="currentToken.walletBalanceOf.state.busy">
-        <span class="pointer px-2">{{ currentToken.walletBalanceOf.view }}</span>
+        <span @click="useAllBalance" class="pointer px-2">{{ currentToken.walletBalanceOf.view }}</span>
       </busy>
     </small>
 
-    name: {{ currentToken.name.view }}<br/>
-    decimals: {{ currentToken.decimals.view }}<br/>
-    totalSupply: {{ currentToken.totalSupply.view }}<br/>
-    <a-checkbox v-model:checked="currentToken.isInfiniteAllowance">
-      isInfiniteAllowance: {{ currentToken.isInfiniteAllowance }}
-    </a-checkbox>
-    amount: {{ currentToken.amount.handled }}<br/>
-    approveAmount: <br/>
-    error: {{ currentToken.error }}<br/>
-    <span class="row">
-      <span class="col-2">
-        walletAllowances: 
-      </span>
-      <span class="col-10" v-for="(item, key) of currentToken.walletAllowances"
+    <small class="d-flex flex-column" style="overflow: hidden;">
+      <span>是否输入错误: {{ !currentToken.amount.isValidInput }}</span>
+      <span>name: {{ currentToken.name.view }}</span>
+      decimals: {{ currentToken.decimals.handled }}<br/>
+      totalSupply: {{ currentToken.totalSupply.handled }}<br/>
+      <a-checkbox v-model:checked="currentToken.isInfiniteAllowance">
+        isInfiniteAllowance: {{ currentToken.isInfiniteAllowance }}
+      </a-checkbox>
+      precision: {{ currentToken.precision }}<br/>
+      walletBalanceOf: {{ currentToken.walletBalanceOf.handled }}<br/>
+      amount: {{ currentToken.amount.ether }} | {{ currentToken.amount.handled }} | {{ currentToken.amount.view }}<br/>
+      approveAmount: <br/>
+      error: {{ currentToken.error }}<br/>
+      walletAllowances: <br/>
+      <span class="ps-5 d-flex" v-for="(item, key) of currentToken.walletAllowances"
         :key=key
         >
-        <small>toContractAddress: {{ key }}</small><br/>
+        toContractAddress: {{ key }}<br/>
         allowance: {{ item.allowance }} <br/>
         approve: {{ item.approve }}<br/>
         walletAddress: {{ item.walletAddress }}<br/>
       </span>
-    </span>
+    </small>
 </template>
 
 <script>
@@ -76,10 +77,22 @@ export default {
     codes: {
       type: [String, Array],
     },
+    current: String,
     label: String,
-    approve: Boolean,
-    select: Boolean
+    placeholder: String
   },
+  // setup(props,context){
+  //   const changeVal = () => {
+  //     console.log('props', props, this)
+  //       context.emit("update:current", '1');
+  //   }
+  //   // const inputBlur = (e:FocusEvent) => {
+  //   //     context.emit("update:modelValue",(e.target as HTMLLIElement).value);
+  //   // }
+  //   return{
+  //     changeVal
+  //   }
+  // },
   components: {
     Busy,
   },
@@ -93,49 +106,42 @@ export default {
     }
   },
   methods: {
-    handleChange(value) {
-      console.log(`selected ${value}`);
+    changeAmount(value) {
+      console.log(`selected ${value}`)
     },
-    handleBlur() {
-      console.log('blur');
-    },
-    handleFocus() {
-      console.log('focus');
-    },
-    filterOption(input, option) {
-      return option.props.value.toLowerCase().indexOf(input.toLowerCase()) >= 0;
-    },
+    // 使用全部余额
+    useAllBalance () {
+      const { tokens } = this.$store
+      const { currentCode } = this
+      const __token__ = tokens[currentCode]
+
+      __token__.amount.input = __token__.walletBalanceOf.viewHandled
+    }
   },
   computed: {
-    __tokens__ () {
+    __base__ () {
       const { tokens } = this.$store
       const { codes } = this
-      // TODO: 缺省第一个，但
-// if (isArray(codes)) {
-// this.currentCode = codes[0]
-// } else {
-// this.currentCode = codes
-// }
-      return isArray(codes)
-        ? codes.map(code => tokens[code])
-        : tokens[codes]
+
+      const isSelect = isArray(codes)
+
+      return {
+        // 是否为选择模式
+        isSelect,
+        tokens: isSelect
+          ? codes.map(code => tokens[code])
+          : tokens[codes]
+      }
     },
     // 当前(选中)的 token
     currentToken () {
       const { tokens } = this.$store
       const { currentCode } = this
 
+      this.$emit('update:current', currentCode)
+
       return tokens[currentCode]
     },
-    // tokens1 () {
-    //   return [
-    //     { code: 'iUSD' },
-    //     { code: 'USD5' },
-    //     { code: 'USDC' },
-    //     { code: 'USDT' },
-    //     { code: 'USDx' },
-    //   ]
-    // },
   }
 }
 </script>

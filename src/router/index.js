@@ -28,7 +28,7 @@ const routes = [
       {
         path: 'swap',
         name: 'Swap',
-        component: Swap
+        component: Coming,
       },
       { path: 'claim',
         name: 'Claim',

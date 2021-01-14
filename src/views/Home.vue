@@ -8,7 +8,7 @@
           <div class="line-frame p-3 mt-5">
             <iHomeUnion class="me-2" />{{ $t('global.home.cover_circulation') }}
             <h5 class="fs-5 py-1">
-              <busy :busying="tokens.UU.totalSupply.state.loading">
+              <busy :busying="!tokens.UU.totalSupply.state.updated">
                 $ {{ tokens.UU.totalSupply.view }}
               </busy>
             </h5>
@@ -146,7 +146,8 @@ export default {
 
 <style scoped lang="less">
 .cover {
-  height: 470px;
+  margin-top: -120px;
+  height: 590px;
   background: linear-gradient(269.92deg, #F2F2F2 0.07%, #FFFFFF 99.93%);
   h1 {
     font-size: 48px;

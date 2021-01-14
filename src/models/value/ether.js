@@ -5,12 +5,15 @@ import { floor } from '../../utils/math/round'
 import ModelState from '../base/state'
 import ModelValueUint8 from './uint8'
 
+import { trim } from '../../utils'
+
 export default {
   /**
    * - 数据关联 value -> ether <-> handled -> view
    * @param {Object=} opts.decimals 原数据的设定精度
    * @param {string=} opts.value 预设值
    * @param {string=} opts.handled 预设值
+   * @param {string=} opts.input 预设值
    * @param {number=} opts.viewDecimal 显示内容的显示精度
    * @param {Function=} opts.viewMethod 显示内容的舍入方法
    * @param {string=} opts.viewPrefix 显示内容的前缀
@@ -21,6 +24,7 @@ export default {
     decimals = ModelValueUint8.create(),
     value = undefined,
     handled = undefined,
+    input = undefined,
     viewDecimal = 6,
     viewMethod = floor,
     viewPrefix = '',
@@ -28,8 +32,9 @@ export default {
   } = {}) {
     const __default__ = {
       address: '',
-      ether: Array(decimals.handled).fill(0).join(''),
-      handled: '',
+      ether: '0',
+      handled: '0',
+      input: '',
       view: '-',
     }
     const __cache__ = {
@@ -39,9 +44,11 @@ export default {
     const __store__ = {
       ether: __default__.ether,
       handled: __default__.handled,
+      input: __default__.input
     }
 
     const result = {
+      // TODO: 添加 min、max uint256 的范围
       type: 'uint256',
 
       /** @type {Object} */
@@ -81,7 +88,7 @@ export default {
       },
       set ether (val) {
         const { state, precision } = this
-        const result = __store__.ether = val
+        const result = __store__.ether = val || __default__.handled
 
         // sync
         __store__.handled = BN(result).div(precision).toString()
@@ -90,18 +97,51 @@ export default {
 
       /**
        * - ether、handled 数据同步
+       * - 允许
        * @type {string}
        */
       get handled () {
         return __store__.handled
       },
       set handled (val) {
-        const { state, precision } = this
-        const result = __store__.handled = val
+        const { state, precision, decimals } = this
+        // 避免空字符串赋值
+        let result = __store__.handled = BN(val || __default__.handled).toString()
 
         // sync
-        __store__.ether = BN(result).times(precision).toString()
+        __store__.ether = BN(result).times(precision).toFixed(0, 1)
         state.afterUpdate()
+      },
+
+      /**
+       * input 数据处理
+       * - 严格控制数值
+       * @type {string}
+       */
+      get input () {
+        return __store__.input
+      },
+      set input (val) {
+        const result = __store__.input = val
+
+        // sync
+        this.handled = this.isValidInput
+          ? result
+          // 异常则恢复缺省
+          : __default__.handled
+      },
+      /**
+       * input 数据是否有效
+       * - 先更新 input 再调用
+       * @type {boolean}
+       */
+      get isValidInput () {
+        const { input } = this
+
+        // 允许初始空格
+        return input === ''
+          // 不为isNaN，且 > 0
+          || !BN(input).isNaN() && BN(input).gt(0)
       },
 
       viewDecimal,
@@ -111,7 +151,7 @@ export default {
       /** @type {string} */
       get view () {
         const { handled, viewDecimal, state } = this
-console.log('----- view')
+
         return state.updated
           ? viewPrefix + formatNumber(BN(viewMethod(handled, viewDecimal)).toFixed(viewDecimal)) + viewSuffix
           : __default__.view
@@ -125,6 +165,8 @@ console.log('----- view')
       && (result.value = value)
     handled != null
       && (result.handled = handled)
+    input != null
+      && (result.input = input)
 
     return result
   }

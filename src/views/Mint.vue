@@ -1,7 +1,7 @@
 <template>
   <a-layout-content class="container-lg px-4">
     <div class="px-lg-5 mx-lg-3">
-      <div class="my-lg-5 pb-4">
+      <div class="mt-lg-4 mb-lg-5 pb-4">
         <h2 class="fs-2 mb-1">存入稳定币资产，获得 UU</h2>
         <span class="fs-6 pe-5 d-block">你可以选择存入稳定币池流动性凭证、生息代币或直接存入稳定币获得 UU</span>
       </div>
@@ -23,17 +23,22 @@
                 </a-radio-button>
               </a-radio-group>
 
-              <a-tabs size="small" animated type="card" defaultActiveKey="single">
-                <a-tab-pane key="multi" tab="多资产存入" class="pt-2">
-                  <token-select-input :label="$t('global.base.deposit')" codes="DAI_USDC" />
-                  <token-select-input :label="$t('global.base.deposit')" codes="DAI_USDT" />
-                  <token-select-input :label="$t('global.base.deposit')" codes="DAI" />
+              <a-tabs size="small" animated type="card" defaultActiveKey="single" v-model:activeKey="mintAssetMode">
+                <a-tab-pane key="multiple" tab="多资产存入" class="pt-2">
+                  <token-select-input
+                    v-for="item in once.multipleAssetTokens"
+                    :key="'multipleAssetTokens-' + item"
+                    :label="$t('global.base.deposit')"
+                    placeholder="输入存入数量"
+                    :codes=item />
                 </a-tab-pane>
                 <a-tab-pane key="single" tab="单资产存入" class="pt-2">
-                  <token-select-input select :label="$t('global.base.deposit')" :codes=select_codes />
+                  <token-select-input
+                    v-model:current="singleSelectCode"
+                    :label="$t('global.base.deposit')"
+                    :codes=once.singleAssetTokens />
                 </a-tab-pane>
               </a-tabs>
-
             </div>
 
             <div class="line-frame-thin d-flex p-3 p-md-4 pb-2 pb-md-3 flex-column col-12 col-md-4">
@@ -53,7 +58,6 @@
               <a-button type="link" size="small" class="p-0 mt-2 order-1 order-md-12 col-12 col-md-auto">
                 高级选项
               </a-button>
-
               <button-busy
                 :busying=ixd.mintBtn.busy
                 className="col-12 col-md-auto order-12 order-md-1"
@@ -71,7 +75,7 @@
         </a-tab-pane>
       </a-tabs>
 
-      <div class="flex-wrap row">
+      <div class="flex-wrap row" v-if=false>
         <div class="col-12 col-md">
           <h5 class="py-3 mb-0">最大滑点</h5>
           <a-radio-group v-model:value="value1" size="small" @change="onChange" class="pb-3">
@@ -132,11 +136,12 @@ export default {
   },
   data() {
     return {
-      value1: 'a',
-      value: undefined,
+      singleSelectCode: '',
+      mintAssetMode: 'single',
 
       // TEMP:
-      select_codes: ['DAI_USDC', 'DAI_USDT', 'USDC', 'USDT', 'DAI', 'UU']
+      value1: 'a',
+      value: undefined,
     };
   },
   methods: {
@@ -144,9 +149,12 @@ export default {
       console.log(`checked = ${e.target.value}`);
     },
     async onMinit () {
-      const { UU, DAI_USDC } = this.$store.tokens
+      const { tokens } = this.$store
+      const singleToken = tokens[this.singleSelectCode]
 
-      await UU.mint(DAI_USDC.address, '1', '1')
+      await singleToken.ensureAllowance(tokens.UU.address)
+
+      await tokens.UU.mint(singleToken.address, singleToken.amount.ether, '1')
     }
   },
   computed: {
@@ -158,18 +166,34 @@ export default {
         tokens
       }
     },
+    // 结构性只一次
+    once () {
+      return {
+        multipleAssetTokens: [ 'DAI_USDT', 'DAI_USDC', 'DAI', 'USDC', 'USDT'],
+        singleAssetTokens: ['DAI_USDC', 'DAI_USDT', 'USDC', 'USDT', 'DAI', 'UU']
+      }
+    },
+    // 交互
     ixd () {
       const { wallet, tokens } = this.$store
+      const { singleSelectCode, mintAssetMode } = this
+      // 量值
+      
 
       return {
         mintBtn: {
           // TODO: 操作的币种
-          disabled: !wallet.isValidated,
+          disabled: !wallet.isValidated
+            // TODO: 暂时关闭
+            || mintAssetMode === 'multiple'
+            // singleSelectCode 初始为空，由 select 自动填充
+            || singleSelectCode && !tokens[singleSelectCode].amount.isValidInput,
           busy: tokens.UU.state.busy
         }
       }
     },
     preview () {
+      // TODO: 链数据
       return [
         { name: '预计矿工费', view: 'x.xx 美元' },
         { name: '最大滑点', view: 'x.xx %' },

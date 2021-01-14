@@ -9,11 +9,4 @@ export default ModelToken.create({
   // allowances: {
 
   // },
-  methods: {
-    async onStake () {
-
-      
-      // const { }
-    }
-  }
 })

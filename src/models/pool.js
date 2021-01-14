@@ -1,8 +1,8 @@
-import { reactive } from 'vue'
-
 import ModelValueEther from './value/ether'
 import ModelValueError from './base/error'
 import storeWallet from '../store/wallet'
+import ModelValueString from './value/string'
+import ModelState from './base/state'
 
 export default {
   /**
@@ -14,7 +14,7 @@ export default {
    * 
    * 
    * 
-   * ModelValueEtherModelValueEther
+   * 
    * @return {!Object}
    */
   create ({
@@ -33,6 +33,11 @@ export default {
     const __store__ = {
       contract: null
     }
+    // const valueOpts = {
+    //   // TODO: temp
+    //   decimals: ModelValueUint8.create({ value: 18 }),
+    //   viewDecimal
+    // }
 
     return {
       ...methods,
@@ -63,47 +68,47 @@ export default {
           || (__store__.contract = new storeWallet.web3.eth.Contract(abi, address))
       },
 
-      get initiateSeries () {
-        // FIXME: 待完善
-        return [
-          ...this.baseSeries,
-          ...this.onceSeries
-        ]
-      },
-      get baseSeries () {
-        const {
-          decimals
-        } = valueOpts
-        const {
-          address,
-          contract
-        } = this
+      // get initiateSeries () {
+      //   // FIXME: 待完善
+      //   return [
+      //     ...this.baseSeries,
+      //     ...this.onceSeries
+      //   ]
+      // },
+      // get baseSeries () {
+      //   const {
+      //     decimals
+      //   } = valueOpts
+      //   const {
+      //     address,
+      //     contract
+      //   } = this
 
-        return [
-          { decodeType: decimals.type, call: [address, contract.methods[decimalsMethodName]().encodeABI()], target: decimals }
-        ]
-      },
-      get onceSeries () {
-        const {
-          address,
-          contract,
-          name,
-          symbol,
-          totalSupply
-        } = this
+      //   return [
+      //     { decodeType: decimals.type, call: [address, contract.methods[decimalsMethodName]().encodeABI()], target: decimals }
+      //   ]
+      // },
+      // get onceSeries () {
+      //   const {
+      //     address,
+      //     contract,
+      //     name,
+      //     symbol,
+      //     totalSupply
+      //   } = this
 
-        return [
-          underlying
-          // { decodeType: name.type, call: [address, contract.methods[nameMethodName]().encodeABI()], target: name },
-          // { decodeType: symbol.type, call: [address, contract.methods[symbolMethodName]().encodeABI()], target: symbol },
-          // { decodeType: totalSupply.type, call: [address, contract.methods[totalSupplyMethodName]().encodeABI()], target: totalSupply }
-        ]
-      },
+      //   return [
+      //     // underlying
+      //     // { decodeType: name.type, call: [address, contract.methods[nameMethodName]().encodeABI()], target: name },
+      //     // { decodeType: symbol.type, call: [address, contract.methods[symbolMethodName]().encodeABI()], target: symbol },
+      //     // { decodeType: totalSupply.type, call: [address, contract.methods[totalSupplyMethodName]().encodeABI()], target: totalSupply }
+      //   ]
+      // },
 
       getVirtualPrice,
 
-
-      error: ModelValueError.create()
+      error: ModelValueError.create(),
+      state: ModelState.create()
     }
   }
 }

@@ -1,5 +1,3 @@
-import { reactive } from 'vue'
-
 import ModelValueError from './base/error'
 import storeWallet from '../store/wallet'
 

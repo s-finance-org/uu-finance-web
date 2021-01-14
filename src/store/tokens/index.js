@@ -1,9 +1,6 @@
 import { reactive } from 'vue'
 
-import { multicall } from '../swaps'
-
-// TODO:
-import __UNKNOW__ from './__UNKNOW__'
+import swaps from '../swaps'
 
 import DAI from './DAI'
 import USDT from './USDT'
@@ -24,13 +21,11 @@ const tokens = reactive({
   DAI_USDT,
 })
 
-
-// FIXME:
-let aaa = []
+// FIXME: temp
+let initiateTokens = []
 Object.values(tokens).forEach(item => {
-  aaa = aaa.concat(item.initiateSeries)
+  initiateTokens = initiateTokens.concat(item.initiateSeries)
 })
-
-multicall.batcher(aaa)
+swaps.multicall.batcher(initiateTokens)
 
 export default tokens

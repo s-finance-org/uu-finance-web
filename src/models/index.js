@@ -7,14 +7,10 @@ import ModelValueBytes32 from './value/bytes32'
 // import ModelCurrencyRates from './currency/rates'
 // import ModelPool from './pool'
 
-// import ModelContractMinter from './contract/minter'
 import ModelToken from './token'
 
 import ModelSwap from './swap'
-
-// import ModelBnOnboard from './blocknative/onboard'
-// import ModelBnNotify from './blocknative/notify'
-
+import ModelPool from './pool'
 import ModelState from './base/state'
 
 export {
@@ -27,12 +23,9 @@ export {
 //   ModelCurrencyRates,
 //   ModelPool,
 
-//   ModelContractMinter,
   ModelToken,
 
   ModelSwap,
-
-  // ModelBnOnboard,
-  // ModelBnNotify
+  ModelPool,
   ModelState
 }

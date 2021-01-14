@@ -4,7 +4,6 @@ import { now } from '../../utils'
               init   beforeUpdate   afterUpdate
 updated       false  false          true
 busy          false  true           false
-loading       true   true           false
 initialized   false  true           true
  */
 
@@ -21,7 +20,6 @@ export default {
       initialized: false,
       updated: false,
       busy: false,
-      loading: true,
       updatedAt: 0,
       handledCounter: 0
     }
@@ -37,13 +35,19 @@ export default {
        * @type {boolean}
        */
       initialized: __default__.initialized,
+
       /**
        * 是否已更新完毕
-       * - true 是否已完成数据更新
-       * - false 未初始化
        * @type {boolean}
        */
       updated: __default__.updated,
+
+      /**
+       * 是否忙绿中
+       * - 由 beforeUpdate()、afterUpdate()、reset() 维护
+       * @type {boolean}
+       */
+      busy: __default__.busy,
 
       /**
        * 更新前的方法
@@ -51,7 +55,6 @@ export default {
       beforeUpdate () {
         this.updated = false
         this.busy = true
-        this.loading = true
       },
 
       /**
@@ -60,7 +63,7 @@ export default {
       afterUpdate () {
         this.updated = true
         this.busy = false
-        this.loading = false
+        this.handledCounter += 1
         this.updatedAt = now()
 
         if (!this.initialized) {
@@ -77,8 +80,7 @@ export default {
       updatedAt: __default__.updatedAt,
       /**
        * 数据有效的时间戳(毫秒)
-       * - 无 set
-       * - 使用才计算
+       * - 无 set (使用才计算)
        * @type {number}
        */
       get expireAt () {
@@ -88,8 +90,7 @@ export default {
       },
       /**
        * 是否到期
-       * - 无 set
-       * - 使用才计算
+       * - 无 set(使用才计算)
        * @type {boolean}
        */
       get isExpired () {
@@ -97,24 +98,6 @@ export default {
 
         return now() > expireAt
       },
-
-      /**
-       * 是否忙绿中
-       * - true 数据中断、更新时
-       * - false 未初始化
-       * - 在未初始化时与 updated 同为 false，否则为 busy 的反值
-       * - 由 beforeUpdate()、afterUpdate()、reset() 维护
-       * @type {boolean}
-       */
-      busy: __default__.busy,
-
-      /**
-       * 是否加载中
-       * - true 未初始化、更新时
-       * - false 数据更新完毕
-       * @type {boolean}
-       */
-      loading: __default__.loading,
 
       /**
        * 已处理过的次数累加器
@@ -128,12 +111,12 @@ export default {
        * 重置为未初始
        */
       reset () {
-        const { initialized, updated, busy, loading, updatedAt } = __default__
+        const { initialized, updated, busy, updatedAt, handledCounter } = __default__
 
         this.initialized = initialized
-        __store__.updated = updated
+        this.updated = updated
         this.busy = busy
-        this.loading = loading
+        this.handledCounter = handledCounter
         this.updatedAt = updatedAt
       }
     }

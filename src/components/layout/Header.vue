@@ -1,5 +1,5 @@
 <template>
-  <a-layout-header class="container-fluid px-0 d-flex justify-content-center align-items-center">
+  <a-layout-header ref="header" class="container-fluid px-0 d-flex justify-content-center align-items-center">
     <div class="header container-lg px-4 px-lg-0 d-flex align-items-center">
       <router-link to="/" class="d-flex logo-mark pe-2">
         <iLogo class="me-3" />
@@ -23,13 +23,13 @@
             <span class="icon-downOutlined ms-2"></span>
           </a-button>
           <template #overlay>
-            <a-menu @click="walletMenuClick">
+            <a-menu @click="onWalletMenuClick">
               <a-menu-item key="change">{{ $t('layer.header.wallet.change') }}</a-menu-item>
               <a-menu-item key="reset">{{ $t('layer.header.wallet.disconnect') }}</a-menu-item>
             </a-menu>
           </template>
         </a-dropdown>
-        <a-button v-else @click=changeWallet class="d-flex align-items-center" size="small">
+        <a-button v-else @click="onWalletMenuClick({key: 'change'})" class="d-flex align-items-center" size="small">
           {{ $t('layer.header.wallet.connect') }}
         </a-button>
       </div>
@@ -68,24 +68,33 @@ export default {
   data() {
     return {
       visible: false,
-      top: 10,
-      bottom: 10,
     };
   },
+  mounted () {
+    window.addEventListener('scroll', this.handleScroll, true) // 监听滚动事件
+    this.handleScroll()
+  },
+  beforeUnmount () {
+    window.removeEventListener('scroll', this.scrollToTop, true)
+  },
   methods: {
+    handleScroll () {
+      const scrollTop = Math.min(document.documentElement.scrollTop || document.body.scrollTop, 200)
+
+      if (this.$refs.header.$el) {
+        this.$refs.header.$el.style.backgroundColor = `rgba(255, 255, 255, ${scrollTop / 333} )`
+        this.$refs.header.$el.style.height = 120 - scrollTop / 5 + 'px'
+      }
+    },
     showDrawer() {
       this.visible = true;
     },
-    changeWallet () {
-      this.$store.wallet.changeWallet()
-    },
-    resetWallet () {
-      this.$store.wallet.resetWallet()
-    },
-    walletMenuClick (val) {
+    onWalletMenuClick (val) {
+      const { wallet } = this.$store
+
       const KEYS = {
-        change: this.changeWallet,
-        reset: this.resetWallet
+        change: () => { wallet.changeWallet() },
+        reset: () => { wallet.resetWallet() },
       }
 
       KEYS[val.key]
@@ -99,7 +108,6 @@ export default {
         { id: 'Mint', to: '/mint', i18n: 'layer.header.nav.mint' },
         { id: 'Swap', to: '/swap', i18n: 'layer.header.nav.swap' },
         { id: 'Claim', to: '/claim', i18n: 'layer.header.nav.claim' },
-        // { id: 'About', to: '/about', i18n: 'test' },
       ]
     },
     currentViewName: {
@@ -121,6 +129,7 @@ export default {
   position: fixed;
   z-index: 10;
   backdrop-filter: blur(60px);
+  // background-color: rgba(255, 255, 255, 0.6);
 }
 .logo-mark::before {
   content: 'alpha';
@@ -157,6 +166,6 @@ export default {
   }
 }
 .header-holder, .ant-layout-header{
-  height: 80px;
+  height: 120px;
 }
 </style>

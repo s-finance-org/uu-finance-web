@@ -1,4 +1,8 @@
 
+export const ObjectProto = Object.prototype
+export const ObjectToString = ObjectProto.toString
+export const hasOwn = ObjectProto.hasOwnProperty
+
 export const nativeDate = Date
 
 /**
@@ -50,10 +54,6 @@ export const isArray = Array.isArray // IE9+，ES5.1
  * @return {boolean}
  */
 export const isObjectLike = val => !!val && typeof val === 'object'
-
-const ObjectProto = Object.prototype
-
-export const hasOwn = ObjectProto.hasOwnProperty
 
 /**
  * 遍历集合
@@ -150,3 +150,39 @@ export const formatNumber = val => {
 
   return `${prefix}${result}${list[1] ? `.${list[1]}` : ''}`
 }
+
+/**
+ * 获得内置类型名称
+ * @param	{*} val
+ * @return {string}
+ */
+export const baseTag = val => ObjectToString.call(val)
+
+/**
+ * 是否是一个原型对象
+ * 	- 纯 js 对象
+ * @param {*} val
+ * @return {boolean}
+ */
+export const isPlainObject = val => baseTag(val) === '[object Object]'
+
+/**
+ * 转为字符串
+ * - undefined、null 转为 ''
+ * - 对象和数组被转为 JSON 字符串
+ * @param {*} val
+ * @param {number} [spaces]  指定 JSON 缩进用的空白字符串
+ * @return {!string}
+ */
+export const toString = (val, spaces = 2) => val == null
+    ? ''
+    : isArray(val) || (isPlainObject(val) && val.toString === ObjectToString)
+      ? JSON.stringify(val, null, spaces)
+      : String(val)
+
+/**
+ * 移除首尾的空格并返回字符串
+ * @param  {*} val
+ * @return {!string}
+ */
+export const trim = val => toString(val).trim() // ES5.1

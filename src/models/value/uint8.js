@@ -22,7 +22,7 @@ export default {
       handled: __default__.handled,
     }
 
-    const result =  {
+    const result = {
       type: 'uint8',
 
       /**

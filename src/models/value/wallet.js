@@ -12,7 +12,7 @@ import storeWallet from '../../store/wallet'
  */
 export default {
   /**
-   * - 数据关联 storeWallet.address -> address -> ether -> handled -> view
+   * - 数据关联 storeWallet.address -> address -> ether -> handled -> viewHandled -> view
    * @param {Object} opts
    * @param {Object=} opts.decimals 原数据的设定精度
    * @param {number=} opts.viewDecimal 显示内容的显示精度
@@ -34,7 +34,7 @@ export default {
     const __default__ = {
       address: '',
       ether: Array(decimals.handled).fill(0).join(''),
-      handled: '',
+      handled: '0',
       view: '-',
     }
     const __store__ = {
@@ -129,19 +129,30 @@ console.log('[update] --------- wallet ether:')
       viewPrefix,
       viewSuffix,
       /**
-       * 视觉数据
+       * 视觉处理值
        * - 主动式更新
+       * - view 的可用数值
+       * @type {string}
+       */
+      get viewHandled () {
+        const { handled, viewDecimal } = this
+
+        return viewMethod(handled, viewDecimal)
+      },
+      /**
+       * 视觉格式化的数据
+       * - 主动式更新
+       * - 格式化
        * @type {string}
        */
       get view () {
-        const { handled, viewDecimal, state } = this
+        const { viewDecimal, state, viewHandled } = this
         let result = __default__.view
 
         // TODO: 如果数据没变动，则不再次处理
         if (state.updated) {
-          result = viewPrefix + formatNumber(viewMethod(handled, viewDecimal)) + viewSuffix
-console.log('重复------', result)
-
+          result = viewPrefix + formatNumber(viewHandled) + viewSuffix
+console.log('view ------', result)
         }
 
         return result

@@ -1244,7 +1244,7 @@ export default ModelToken.create({
 
       try {
         const _method = await contract.methods.mint(lptAddress, vol, minMint)
-  console.log(lptAddress, vol, minMint)
+console.log(lptAddress, vol, minMint)
 
         return _method.send({
           from: storeWallet.address,

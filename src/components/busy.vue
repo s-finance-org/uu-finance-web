@@ -11,7 +11,7 @@ export default {
   name: 'busy',
   props: {
     busying: Boolean,
-    className: [Object, Array]
+    className: [Object, Array, String]
   },
   components: {
     LoadingOutlined,

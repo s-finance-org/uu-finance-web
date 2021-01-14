@@ -19,7 +19,6 @@ import storeWallet from '../store/wallet'
 import i18n from '../i18n'
 import notify from '../store/notify'
 
-import { multicall } from '../store/swaps'
 import { USD } from '../store/currencies'
 
 import { now } from '../utils'
@@ -246,7 +245,7 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
        * TODO: 目前使用 handled
        * @type {Object}
        */
-      amount: ModelValueEther.create(),
+      amount: ModelValueEther.create({...valueOpts}),
 
       /**
        * 量值是否有效
@@ -359,20 +358,38 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
           : bnAllowanceEther.lt(bnAmountEther)
 
         if (isInsufficientAmount) {
+          const { update, dismiss } = notify.notification({ message: '准备授权' })
+          this.approveNotifyDismiss = dismiss
           // 将要授权的量
           // TODO: 针对授权攻击
           // TODO: 要修改成重置 0 完成后再自动无限授权
-          const approveAmountEther = bnAllowanceEther.gt(0)
-            ? 0
-            : isInfiniteAllowance
-              ? maxAmount.ether
-              : bnAmountEther
+          // const approveAmountEther = bnAllowanceEther.gt(0)
+          //   ? 0
+          //   : isInfiniteAllowance
+          //     ? maxAmount.ether
+          //     : bnAmountEther
 
+          if (bnAllowanceEther.gt(0)) {
+            update({
+              message: '重置授权量为 0',
+            })
+            walletAllowances[toContractAddress].approve.ether = 0
+            await this.approve(toContractAddress)
+          }
+
+          update({
+            message: '授权',
+          })
+          const approveAmountEther = isInfiniteAllowance
+            ? maxAmount.ether
+            : bnAmountEther
           walletAllowances[toContractAddress].approve.ether = approveAmountEther
 
           await this.approve(toContractAddress)
         }
       },
+
+      approveNotifyDismiss: null,
 
       /**
        * 授权量
@@ -398,6 +415,7 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
               // gas: ,
             })
             .once('transactionHash', hash => {
+              this.approveNotifyDismiss()
               notify.handler(hash)
               resolve(true)
 
