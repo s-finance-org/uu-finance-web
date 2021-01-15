@@ -275,7 +275,11 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
        * @type {Object}
        */
       associatedTokens: {
-        // burnUUGetMinVol
+        // 'address': {
+          // burnGainAmount: ModelValueEther(lpt),
+          // mintGainAmount: ModelValueEther(UU),
+          // balance: ModelValueEther
+        // }
       },
       /**
        * 关联合约的地址集

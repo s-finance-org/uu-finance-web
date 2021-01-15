@@ -71,8 +71,7 @@
           </div>
         </a-tab-pane>
       </a-tabs>
-tokenAddresses
-{{ Object.keys($store.tokenAddresses) }}
+
       <div class="flex-wrap row" v-if=false>
         <div class="col-12 col-md">
           <h5 class="py-3 mb-0">最大滑点</h5>
@@ -141,6 +140,12 @@ export default {
       value1: 'a',
       value: undefined,
     };
+  },
+  // TODO: temp
+  async mounted () {
+    const { UU, DAI_USDC } = this.$store.tokens
+
+    await UU.lptBalance(DAI_USDC)
   },
   methods: {
     onChange (e) {
@@ -230,28 +235,33 @@ export default {
       const singleToken = tokens[this.singleSelectCode]
       let minVol = ''
       // TODO: temp
-      if (singleToken && tokens.UU.associatedTokens[singleToken.address]) {
-        minVol = tokens.UU.associatedTokens[singleToken.address].burnUUGetMinVol.view
+      if (singleToken && tokens.UU.associatedTokens[singleToken.address] && tokens.UU.associatedTokens[singleToken.address].burnGainAmount) {
+        minVol = tokens.UU.associatedTokens[singleToken.address].burnGainAmount.view
       }
-      
 
 
       // TODO: 链数据
       return [
-        { name: '预计矿工费', view: 'x.xx 美元' },
-        { name: '最大滑点', view: 'x.xx %' },
+        // { name: '预计矿工费', view: 'x.xx 美元' },
+        // { name: '最大滑点', view: 'x.xx %' },
         { name: '流动性池', view: 'UU' },
         { name: '你将至少收到', view: minVol + ' UU', class: [ 'text-color-primary' ] },
       ]
     },
     reserves () {
+      // TODO: temp
+      const { UU, DAI_USDC } = this.$store.tokens
+
+      let result = []
+
+      if (UU.associatedTokens[DAI_USDC.address] && UU.associatedTokens[DAI_USDC.address].balance) {
+        result.push({
+          code: DAI_USDC.symbol.view, balance: UU.associatedTokens[DAI_USDC.address].balance.view, proportion: '100'
+        })
+      }
+
       // TODO: 链数据
-      return [
-        { code: 'USD5', balance: '66,887,766.54', proportion: '20',  },
-        { code: 'USD5', balance: '66,887,766.54', proportion: '20',  },
-        { code: 'USD5', balance: '66,887,766.54', proportion: '20',  },
-        { code: 'USD5', balance: '66,887,766.54', proportion: '20',  },
-      ]
+      return result
     }
   }
 }

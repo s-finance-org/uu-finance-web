@@ -1328,7 +1328,8 @@ console.log(lptAddress, vol, minVol)
     },
 
     /**
-     * - 更新 associatedTokens[].burnUUGetMinVol
+     * 销毁 UU 可获得的 lpt 量
+     * - 更新 associatedTokens[].burnGainAmount
      * @param {Object} tokenObj
      * @return {Promise}
      */
@@ -1348,9 +1349,32 @@ console.log(lptAddress, vol, minVol)
       if (!associatedTokens[tokenObj.address]) {
         associatedTokens[tokenObj.address] = {}
       }
-      associatedTokens[tokenObj.address].burnUUGetMinVol = ModelValueEther.create({
+
+      associatedTokens[tokenObj.address].burnGainAmount = ModelValueEther.create({
         decimals: tokenObj.decimals,
         value: minVolEther
+      })
+    },
+
+    /**
+     * lpt 在 UU 中的余额
+     * - 更新 associatedTokens[].balance
+     * @param {Object} tokenObj
+     */
+    async lptBalance (tokenObj) {
+      const { contract, associatedTokens } = this
+
+
+      // TODO: TEMP
+
+      if (!associatedTokens[tokenObj.address]) {
+        associatedTokens[tokenObj.address] = {}
+      }
+      let lptBalance = await contract.methods.lptBalance(tokenObj.address).call()
+console.log('lptBalance', lptBalance)
+      associatedTokens[tokenObj.address].balance = ModelValueEther.create({
+        decimals: tokenObj.decimals,
+        value: lptBalance
       })
     },
 
@@ -1369,7 +1393,7 @@ console.log(lptAddress, vol, minVol)
       const { update, dismiss } = notify.notification({ message: '正准备拉起' })
 
       try {
-        // update burnUUGetMinVol
+        // update burnGainAmount
         await this.getUU2LptVol(tokenObj)
 
         const sendOpts = {
@@ -1379,7 +1403,7 @@ console.log(lptAddress, vol, minVol)
         const method = await contract.methods.burn(
           tokenObj.amount.ether,
           tokenObj.address,
-          associatedTokens[tokenObj.address].burnUUGetMinVol.ether
+          associatedTokens[tokenObj.address].burnGainAmount.ether
         )
 
         try {

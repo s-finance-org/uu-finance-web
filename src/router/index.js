@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { message } from 'ant-design-vue';
+import { message } from 'ant-design-vue'
 
 import Home from '@/views/Home'
 import Test from '@/views/Test'
@@ -24,17 +24,28 @@ const routes = [
         path: 'mint',
         name: 'Mint',
         component: Mint,
+        meta: {
+          suffix: ' - Mint'
+        }
       },
       {
         path: 'swap',
         name: 'Swap',
         component: Coming,
+        meta: {
+          suffix: ' - Swap'
+        }
       },
-      { path: 'claim',
+      {
+        path: 'claim',
         name: 'Claim',
-        component: Coming
+        component: Coming,
+        meta: {
+          suffix: ' - Claim'
+        }
       },
-      { path: 'test',
+      {
+        path: 'test',
         name: 'Test',
         component: Test,
       },
@@ -50,14 +61,14 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const suffix = to.meta.suffix || ''
 
-  if (!to.matched || to.matched.length === 0) {
-    // 404
-    next({ path: '/' })
-    message.error(`404 NOT FOUND`)
-  } else {
+  if (to.matched && to.matched.length) {
     document.title = (to.meta.title || process.env.VUE_APP_DEFAULT_TITLE) + suffix
 
     next()
+  } else {
+    // 404
+    next({ path: '/' })
+    message.error(`404 NOT FOUND`)
   }
 })
 
