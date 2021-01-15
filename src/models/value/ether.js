@@ -1,6 +1,6 @@
 import BN from 'bignumber.js'
 
-import { formatNumber } from '../../utils'
+import { formatNumber, isNaN } from '../../utils'
 import { floor } from '../../utils/math/round'
 import ModelState from '../base/state'
 import ModelValueUint8 from './uint8'
@@ -114,25 +114,47 @@ export default {
       },
 
       /**
-       * input 数据处理
-       * - 严格控制数值
+       * input 数据
+       * - 支持空格
        * @type {string}
        */
       get input () {
         return __store__.input
       },
       set input (val) {
-        const result = __store__.input = val
+        const { inputLimitedRe } = this
+        const result = val
 
-        // sync
-        this.handled = this.isValidInput
-          ? result
-          // 异常则恢复缺省
-          : __default__.handled
+        // 仅限为数值和空格
+        if ((!isNaN(result) && inputLimitedRe.test(result)) || result === '') {
+          this.handled = __store__.input = result
+        }
       },
+      /**
+       * 输入正则限制
+       * @type {RegExp}
+       */
+      inputLimitedRe: /^[0-9]*(\.[0-9]*)?$/,
+      /**
+       * input 视觉值
+       * - 主动式更新
+       * @type {string}
+       */
+      get inputView () {
+        const { input } = this
+        let result = ''
+
+        if (input !== '') {
+          result = formatNumber(input)
+        }
+
+        return result
+      },
+
       /**
        * input 数据是否有效
        * - 先更新 input 再调用
+       * - TODO: 要淘汰
        * @type {boolean}
        */
       get isValidInput () {

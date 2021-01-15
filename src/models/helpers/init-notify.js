@@ -57,14 +57,14 @@ export default {
        * @param {string=} opts.eventCode
        * @param {string=} opts.type 'hint' (gray), 'pending' (yellow), 'success' (green), 'error' (red)
        * @param {string=} opts.message
-       * @param {number=} opts.autoDismiss 消息展现时长（毫秒）
+      //  * @param {number=} opts.autoDismiss 消息展现时长（毫秒）,0 则不自动消失
        * @return {!Object}
        */
       notification ({
         eventCode = 'notification',
         type = 'pending',
         message = '',
-        autoDismiss = 4500
+        autoDismiss = 0
       } = {}) {
         return notify.notification({
           eventCode,
@@ -90,7 +90,8 @@ export default {
       } = {}) {
         const type = 'error'
         // i18n 内无对应信息，则使用 message
-        message = i18n.$i18n.global.t(`error.${code}`) || message
+        // TODO: 要支持 i18n
+        // message = i18n.$i18n.global.t(`error.${code}`) || message
 
         if (update) {
           update({

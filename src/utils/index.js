@@ -186,3 +186,32 @@ export const toString = (val, spaces = 2) => val == null
  * @return {!string}
  */
 export const trim = val => toString(val).trim() // ES5.1
+
+/**
+ * 是否为数字类型
+ * - true  数字、16进制、科学计数、小数点、负数、Infinity、NaN
+ * - 这里不能把 NaN 判定为 false
+ * - 按照 `ToNumber` 官方设定，undefined 会转为 NaN
+ * - 而如果这里把 NaN 判定不为数值，则不符合转换
+ * @param {*} val
+ * @return {boolean}
+ */
+export const isNumber = val => typeof val === 'number'
+
+export const nativeIsNaN = window.isNaN
+
+/**
+ * 是否为 NaN
+ * - 这里的定义会出现混淆，优先按照标准
+ * - true  NaN、Number.NaN、0 / 0
+ * - false 空数组、空字符串、对象、null、布尔值、undefined、数字、16进制、科学计数、小数点、负数、Infinity、数字字符串
+ * - isNaN与isNumeric的区别，在于[ 0 ]、Infinity、'2017/04/10'、'2017-04-10'会被 isNaN 认为是数字，而 isNumeric 认为不是
+ * - 不能用 ==、=== 来判断是否为 NaN
+ * - val !== val 为 true 的表达式，只有NaN
+ * - Number.isNaN不会强制将参数转换成数字，只有在参数是真正的数字类型，且值为 NaN 的时候才会返回 true
+ * - 对 Map、Set 等类型判定为 false
+ * @see http://www.ecma-international.org/ecma-262/6.0/#sec-isnan-number|isNaN
+ * @param {*} val
+ * @return {boolean}
+ */
+export const isNaN = val => isNumber(val) && nativeIsNaN(val)

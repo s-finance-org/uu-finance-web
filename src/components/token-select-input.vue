@@ -24,17 +24,25 @@
         <component :is=currentToken.icon class="me-2"></component>
         {{ currentToken.code }}
       </span>
-      <a-input
-        v-model:value="currentToken.amount.input"
-        class="pe-0"
-        @change="changeAmount"
-        >
-        <template #suffix>
-          <a-tooltip title="当前值大于已授权的">
-            <a-button type="link" size="small">授权</a-button>
-          </a-tooltip>
+      <a-tooltip :visible=showInputTip placement="topLeft">
+        <template #title>
+          {{ currentToken.amount.inputView }}
         </template>
-      </a-input>
+        <a-input
+          @focus=onInputFocus
+          @blur=onInputBlur
+          :value="currentToken.amount.input"
+          class="pe-0"
+          :placeholder=placeholder
+          @change="changeAmount"
+        >
+          <template #suffix>
+            <a-tooltip title="当前值大于已授权的" placement="topRight">
+              <a-button type="link" size="small">授权</a-button>
+            </a-tooltip>
+          </template>
+        </a-input>
+      </a-tooltip>
     </a-input-group>
     <small class="py-1 d-flex">
       最多:
@@ -53,11 +61,11 @@
       </a-checkbox>
       precision: {{ currentToken.precision }}<br/>
       walletBalanceOf: {{ currentToken.walletBalanceOf.handled }}<br/>
-      amount: {{ currentToken.amount.ether }} | {{ currentToken.amount.handled }} | {{ currentToken.amount.view }}<br/>
+      amount: {{ currentToken.amount.ether }} | {{ currentToken.amount.handled }} |  {{ currentToken.amount.input }} | {{ currentToken.amount.view }}<br/>
       approveAmount: <br/>
       error: {{ currentToken.error }}<br/>
-      walletAllowances: <br/>
-      <span class="ps-5 d-flex" v-for="(item, key) of currentToken.walletAllowances"
+      associatedTokens: <br/>
+      <span class="ps-5 d-flex" v-for="(item, key) of currentToken.associatedTokens"
         :key=key
         >
         toContractAddress: {{ key }}<br/>
@@ -103,11 +111,18 @@ export default {
       currentCode: isArray(codes)
         ? codes[0]
         : codes,
+      showInputTip: false
     }
   },
   methods: {
-    changeAmount(value) {
-      console.log(`selected ${value}`)
+    changeAmount(e) {
+      const { value } = e.target
+      const { currentToken } = this
+
+      // 限制输入
+      currentToken.amount.input = value
+      // 有效输入才影响
+      this.showInputTip = !!currentToken.amount.inputView
     },
     // 使用全部余额
     useAllBalance () {
@@ -115,7 +130,13 @@ export default {
       const { currentCode } = this
       const __token__ = tokens[currentCode]
 
-      __token__.amount.input = __token__.walletBalanceOf.viewHandled
+      __token__.amount.input = __token__.walletBalanceOf.handledView
+    },
+    onInputBlur (e) {
+      this.showInputTip = false
+    },
+    onInputFocus (e) {
+      this.showInputTip = !!this.currentToken.amount.inputView
     }
   },
   computed: {

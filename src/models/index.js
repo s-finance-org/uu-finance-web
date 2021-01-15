@@ -1,4 +1,4 @@
-// import ModelValueEther from './value/ether'
+import ModelValueEther from './value/ether'
 // import ModelValueDate from './value/date'
 import ModelValueBytes32 from './value/bytes32'
 // import ModelValueUint8 from './value/uint8'
@@ -14,7 +14,7 @@ import ModelPool from './pool'
 import ModelState from './base/state'
 
 export {
-//   ModelValueEther,
+  ModelValueEther,
 //   ModelValueDate,
   ModelValueBytes32,
 //   ModelValueUint8,

@@ -1,4 +1,6 @@
-import { ModelToken } from '../../models'
+import BN from 'bignumber.js'
+
+import { ModelToken, ModelValueEther } from '../../models'
 import { getDotenvAddress } from '../helpers/methods'
 
 import storeWallet from '../wallet'
@@ -1232,10 +1234,41 @@ export default ModelToken.create({
   code: 'UU',
   address: getDotenvAddress('UU_TOKEN'),
   abi,
+  customSeries () {
+    const { address, contract, supportedLptNum } = this
+
+    return [
+      { decodeType: supportedLptNum.type, call: [address, contract.methods.lptN().encodeABI()], target: supportedLptNum }
+    ]
+  },
+  values: {
+    /**
+     * 支持的 lpt 数量
+     * @type {Object}
+     */
+    supportedLptNum: ModelValueEther.create(),
+    /**
+     * 支持的 lpt 地址
+     * @type {Array}
+     */
+    supportedLptAddresses: [],
+
+    /**
+     * 
+     */
+    burnMinVol: ModelValueEther.create(),
+  },
   methods: {
-    // lpt 铸造 UU
-    async mint (lptAddress, vol, minMint) {
+    /**
+     * TODO: 
+     * lpt 铸造 UU
+     * @param {*} lptAddress 
+     * @param {*} vol 
+     * @param {*} minVol 
+     */
+    async mint (lptAddress, vol, minVol) {
       const { contract, address, state } = this
+      const walletAddress = storeWallet.address
 
       // 限制当前提交待确认的交易只有一份
       state.beforeUpdate()
@@ -1243,37 +1276,144 @@ export default ModelToken.create({
       const { update, dismiss } = notify.notification({ message: '正准备拉起' })
 
       try {
-        const _method = await contract.methods.mint(lptAddress, vol, minMint)
-console.log(lptAddress, vol, minMint)
 
-        return _method.send({
-          from: storeWallet.address,
-          // gasPrice: this.gasPriceWei,
-          // gas: this.currentPool.deposit.gas,
-          // gas: 1200000
-        })
-        .once('transactionHash', hash => {
-          dismiss()
-          notify.handler(hash)
-          // state.afterUpdate()
-        })
-        .catch(err =>{
-          console.log(err)
 
-          state.afterUpdate()
 
-          notify.updateError({
-            update,
-            code: err.code,
-            message: err.message
+
+      const sendOpts = {
+        from: walletAddress,
+      }
+
+      
+        const _method = await contract.methods.mint(lptAddress, vol, minVol)
+
+        try {
+          sendOpts.gas = await _method.estimateGas({
+            from: walletAddress,
           })
-        })
+        } catch(err) {
+          console.error(err)
+        }
+
+console.log(lptAddress, vol, minVol)
+
+        return _method.send(sendOpts)
+          .once('transactionHash', hash => {
+            dismiss()
+            notify.handler(hash)
+            state.afterUpdate()
+          })
+          .catch(err =>{
+            console.log(err)
+
+            notify.updateError({
+              update,
+              code: err.code,
+              message: err.message
+            })
+
+            state.afterUpdate()
+          })
       } catch (err) {
-        // TODO: 异常
         console.error(err)
-        update({
-          message: 'err',
-          type: 'error'
+
+        notify.updateError({
+          update,
+          code: err.code,
+          message: err.message
+        })
+
+        state.afterUpdate()
+      }
+    },
+
+    /**
+     * - 更新 associatedTokens[].burnUUGetMinVol
+     * @param {Object} tokenObj
+     * @return {Promise}
+     */
+    async getUU2LptVol (tokenObj) {
+      const { contract, associatedTokens } = this
+
+      // TODO: multi
+      let minVolEther = await contract.methods.uu2lpt(tokenObj.amount.ether, tokenObj.address).call()
+      const lptBalance = await contract.methods.lptBalance(tokenObj.address).call()
+
+      // TODO: why?
+      if(minVolEther == lptBalance) {
+        minVolEther = await contract.methods.lpt2uu(tokenObj.address, minVolEther).call()
+      }
+
+      // TODO: TEMP
+      if (!associatedTokens[tokenObj.address]) {
+        associatedTokens[tokenObj.address] = {}
+      }
+      associatedTokens[tokenObj.address].burnUUGetMinVol = ModelValueEther.create({
+        decimals: tokenObj.decimals,
+        value: minVolEther
+      })
+    },
+
+    /**
+     * lpt 销毁 UU
+     * TODO:
+     * @param {Object} tokenObj
+     */
+    async burn (tokenObj) {
+      const { contract, address, state, associatedTokens } = this
+      const walletAddress = storeWallet.address
+
+      // 限制当前提交待确认的交易只有一份
+      state.beforeUpdate()
+
+      const { update, dismiss } = notify.notification({ message: '正准备拉起' })
+
+      try {
+        // update burnUUGetMinVol
+        await this.getUU2LptVol(tokenObj)
+
+        const sendOpts = {
+          from: walletAddress,
+        }
+
+        const method = await contract.methods.burn(
+          tokenObj.amount.ether,
+          tokenObj.address,
+          associatedTokens[tokenObj.address].burnUUGetMinVol.ether
+        )
+
+        try {
+          sendOpts.gas = await method.estimateGas({
+            from: walletAddress,
+          })
+        } catch(err) {
+          console.error(err)
+        }
+
+        return method.send(sendOpts)
+          .once('transactionHash', hash => {
+            dismiss()
+            notify.handler(hash)
+            state.afterUpdate()
+          })
+          .catch(err =>{
+            console.log(err)
+
+            notify.updateError({
+              update,
+              code: err.code,
+              message: err.message
+            })
+
+            state.afterUpdate()
+          })
+      } catch (err) {
+        console.error(err)
+
+        notify.updateError({
+          update,
+          code: err.code,
+          message: err.message
         })
 
         state.afterUpdate()

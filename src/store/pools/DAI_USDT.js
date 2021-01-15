@@ -662,19 +662,7 @@ export default ModelPool.create({
       // TODO: temp
       state.beforeUpdate()
 
-      const fee = contract.methods.fee().call() * 100
-
-      let N_COINS = 2
-      let calcFee = fee / 100 * N_COINS / (4 * (N_COINS -1))
-
-      // TODO: 
-      var token_amount = 0;
-      // if(total_supply > 0) {
-          let token_amounts = amounts
-          token_amount = await contract.methods.calc_token_amount(token_amounts, true).call()
-          token_amount = BN(token_amount).times(BN(1).minus(BN(calcFee)))
-          token_amount = BN(token_amount).times(0.99).toFixed(0,1);
-      // }
+      
 
     const { update, dismiss } = notify.notification({ message: '正准备拉起' })
 

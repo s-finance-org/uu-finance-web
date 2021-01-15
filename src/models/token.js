@@ -30,7 +30,7 @@ export default {
    * @param {string} opts.address
    * @param {Array} opts.abi
    * @param {boolean=} opts.isLPT 是否为 lp token // TODO: 暂无作用
-   * 
+   * @param {Function=} opts.customSeries
    * 
    * @param {boolean=} opts.isInfiniteAllowance
    * @param {number=} opts.viewDecimal
@@ -40,6 +40,7 @@ export default {
    * @param {string=} opts.symbolMethodName
    * @param {string=} opts.balanceOfMethodName
    * @param {string=} opts.totalSupplyMethodName
+   * @param {Object=} opts.values 严禁值key重名覆盖
    * @param {Object=} opts.methods 严禁方法重名覆盖
    * @return {!Object}
    */
@@ -48,6 +49,7 @@ export default {
     address = '',
     abi = ERC20,
     isLPT = false,
+    customSeries = () => [],
 
     viewDecimal = 4,
     moneyOfAccount = USD,
@@ -64,7 +66,8 @@ export default {
     totalSupplyMethodName = 'totalSupply',
     transferFromMethodName = 'transferFrom',
     transferMethodName = 'transfer',
-    methods = {}
+    methods = {},
+    values = {}
   } = {}) {
     const __default__ = {
       contract: null,
@@ -87,9 +90,10 @@ export default {
       viewDecimal
     }
 
-    return {
+    const result = {
       ...valueOpts,
       ...methods,
+      ...values,
 
       /**
        * Base
@@ -147,40 +151,31 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
       isLPT,
 
       get initiateSeries () {
+
         // FIXME: 待完善
         return [
           ...this.baseSeries,
-          ...this.onceSeries
+          // 自定义的
+          ...this.customSeries()
         ]
       },
       get baseSeries () {
         const {
           decimals
         } = valueOpts
-        const {
-          address,
-          contract
-        } = this
+        const { address, contract, name, symbol, totalSupply } = this
 
         return [
-          { decodeType: decimals.type, call: [address, contract.methods[decimalsMethodName]().encodeABI()], target: decimals }
-        ]
-      },
-      get onceSeries () {
-        const {
-          address,
-          contract,
-          name,
-          symbol,
-          totalSupply
-        } = this
-
-        return [
+          { decodeType: decimals.type, call: [address, contract.methods[decimalsMethodName]().encodeABI()], target: decimals },
           { decodeType: name.type, call: [address, contract.methods[nameMethodName]().encodeABI()], target: name },
           { decodeType: symbol.type, call: [address, contract.methods[symbolMethodName]().encodeABI()], target: symbol },
           { decodeType: totalSupply.type, call: [address, contract.methods[totalSupplyMethodName]().encodeABI()], target: totalSupply }
         ]
       },
+      /**
+       * 自定义丢列
+       */
+      customSeries,
 
       price: ModelValueEther.create(valueOpts),
       // XXX: this.getPriceMethod 为合约方法，getPrice为自定义方法，取其一
@@ -272,15 +267,15 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
       },
 
       /**
-       * 钱包的授权量数据集
+       * 与其他 token 产生的关联数据
        * - 由 isSufficientAmount() 更新
        * - 只保存当前钱包地址的相关数据，当钱包切换、断开后重置
        * - 与 toContractAddresses 产生关系
        * - 目标合约地址: { At: 1231233, amount: 量值对象, 钱包地址: 0000 }
        * @type {Object}
        */
-      walletAllowances: {
-
+      associatedTokens: {
+        // burnUUGetMinVol
       },
       /**
        * 关联合约的地址集
@@ -314,9 +309,6 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
        * @return {boolean}
        */
       // async isSufficientAmount (toContractAddress) {
-        
-        
-
       //   return result
       // },
 
@@ -326,7 +318,7 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
        * @param {string} toContractAddress
        */
       async ensureAllowance (toContractAddress) {
-        const { contract, precision, amount, isValidAmount, isInfiniteAllowance, maxAmount, infiniteMinAmount, walletAllowances } = this
+        const { contract, precision, amount, isValidAmount, isInfiniteAllowance, maxAmount, infiniteMinAmount, associatedTokens } = this
         // const bnAmountEther = BN(amount.handled).times(precision)
         const bnAmountEther = BN(amount.ether)
 
@@ -336,13 +328,13 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
           // 钱包数据无效
           || !storeWallet.isValidated) return false
 
-        // TODO: 从 walletAllowances 内先获取，然后看是否有效
+        // TODO: 从 associatedTokens 内先获取，然后看是否有效
         // 流程中的主动更新
         const bnAllowanceEther = BN(await contract.methods[allowanceMethodName](storeWallet.address, toContractAddress).call())
 
         // sync
         // TODO: 要用方法管理
-        walletAllowances[toContractAddress] = {
+        associatedTokens[toContractAddress] = {
           expireAt: now() + 10000 * 1000,
           allowance: { ether: bnAllowanceEther },
           needApprove: false,
@@ -373,7 +365,7 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
             update({
               message: '重置授权量为 0',
             })
-            walletAllowances[toContractAddress].approve.ether = 0
+            associatedTokens[toContractAddress].approve.ether = 0
             await this.approve(toContractAddress)
           }
 
@@ -383,7 +375,7 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
           const approveAmountEther = isInfiniteAllowance
             ? maxAmount.ether
             : bnAmountEther
-          walletAllowances[toContractAddress].approve.ether = approveAmountEther
+          associatedTokens[toContractAddress].approve.ether = approveAmountEther
 
           await this.approve(toContractAddress)
         }
@@ -397,8 +389,8 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
        * @return {Promise}
        */
       approve (toContractAddress) {
-        const { contract, precision, walletAllowances, error, state } = this
-        const approveAmountEther = walletAllowances[toContractAddress].approve.ether
+        const { contract, precision, associatedTokens, error, state } = this
+        const approveAmountEther = associatedTokens[toContractAddress].approve.ether
 
         // 钱包数据无效
         if (!storeWallet.isValidated) return false
@@ -461,5 +453,23 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
       state: ModelState.create(),
       error: ModelValueError.create(),
     }
-  }
+console.log('lock', this.lock)
+    if (this.lock) {
+      this.bindTarget[result.address] = result
+    }
+    
+
+    return result
+  },
+  /**
+   * - 链式
+   * @type {!Object}
+   */
+  bind(target) {
+    this.lock = true
+    this.bindTarget = target
+
+    return this
+  },
+  lock: false
 }

@@ -12,7 +12,7 @@ import storeWallet from '../../store/wallet'
  */
 export default {
   /**
-   * - 数据关联 storeWallet.address -> address -> ether -> handled -> viewHandled -> view
+   * - 数据关联 storeWallet.address -> address -> ether -> handled -> handledView -> view
    * @param {Object} opts
    * @param {Object=} opts.decimals 原数据的设定精度
    * @param {number=} opts.viewDecimal 显示内容的显示精度
@@ -134,7 +134,7 @@ console.log('[update] --------- wallet ether:')
        * - view 的可用数值
        * @type {string}
        */
-      get viewHandled () {
+      get handledView () {
         const { handled, viewDecimal } = this
 
         return viewMethod(handled, viewDecimal)
@@ -146,12 +146,12 @@ console.log('[update] --------- wallet ether:')
        * @type {string}
        */
       get view () {
-        const { viewDecimal, state, viewHandled } = this
+        const { viewDecimal, state, handledView } = this
         let result = __default__.view
 
         // TODO: 如果数据没变动，则不再次处理
         if (state.updated) {
-          result = viewPrefix + formatNumber(viewHandled) + viewSuffix
+          result = viewPrefix + formatNumber(handledView) + viewSuffix
 console.log('view ------', result)
         }
 
