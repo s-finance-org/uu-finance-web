@@ -51,7 +51,7 @@
       </busy>
     </small>
 
-    <!-- <small class="d-flex flex-column" style="overflow: hidden;">
+    <small class="d-flex flex-column" style="overflow: hidden;">
       <span>是否输入错误: {{ !currentToken.amount.isValidInput }}</span>
       <span>name: {{ currentToken.name.view }}</span>
       decimals: {{ currentToken.decimals.handled }}<br/>
@@ -73,7 +73,7 @@
         approve: {{ item.approve }}<br/>
         walletAddress: {{ item.walletAddress }}<br/>
       </span>
-    </small> -->
+    </small>
 </template>
 
 <script>
