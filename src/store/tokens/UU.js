@@ -1234,6 +1234,7 @@ export default ModelToken.create({
   code: 'UU',
   address: getDotenvAddress('UU_TOKEN'),
   abi,
+  isInfiniteAllowance: true,
   customSeries () {
     const { address, contract, supportedLptNum } = this
 

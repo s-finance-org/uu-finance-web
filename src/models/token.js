@@ -317,43 +317,98 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
       // },
 
       /**
-       * 校验 Allowance
+       * 是否需要授权
        * - 自动关联钱包
        * @param {string} toContractAddress
        */
-      async ensureAllowance (toContractAddress) {
+      async isNeedApprove (toContractAddress) {
+        // TODO: 待优化
         const { contract, precision, amount, isValidAmount, isInfiniteAllowance, maxAmount, infiniteMinAmount, associatedTokens } = this
         // const bnAmountEther = BN(amount.handled).times(precision)
         const bnAmountEther = BN(amount.ether)
+        let result = false
 
         // TODO: 加 error 打点
         // 不在有效范围内
         if (!isValidAmount
           // 钱包数据无效
-          || !storeWallet.isValidated) return false
+          || !storeWallet.isValidated) {
 
-        // TODO: 从 associatedTokens 内先获取，然后看是否有效
-        // 流程中的主动更新
-        const bnAllowanceEther = BN(await contract.methods[allowanceMethodName](storeWallet.address, toContractAddress).call())
+          // TODO: 要用方法管理
+          associatedTokens[toContractAddress] = {
+            expireAt: now() + 10000 * 1000,
+            allowance: {},
+            needApprove: false,
+            resetApprove: false,
+            approve: {},
+            approveState: ModelState.create(),
+            walletAddress: storeWallet.address
+          }
+          return result
+        }
 
         // sync
         // TODO: 要用方法管理
         associatedTokens[toContractAddress] = {
           expireAt: now() + 10000 * 1000,
-          allowance: { ether: bnAllowanceEther },
+          allowance: { ether: 0 },
           needApprove: false,
+          resetApprove: false,
           approve: {},
+          approveState: ModelState.create(),
           walletAddress: storeWallet.address
         }
 
-        // 授权量是否不足
-        const isInsufficientAmount = isInfiniteAllowance
+        // TODO: 从 associatedTokens 内先获取，然后看是否有效
+        // 流程中的主动更新
+        const bnAllowanceEther = BN(await contract.methods[allowanceMethodName](storeWallet.address, toContractAddress).call())
+        
+        // 
+        associatedTokens[toContractAddress].allowance.ether = bnAllowanceEther
+
+        result = isInfiniteAllowance
           // 小于无限授权量最小阈值
           ? bnAllowanceEther.lt(infiniteMinAmount.ether)
           // 授权量不足当前量
           : bnAllowanceEther.lt(bnAmountEther)
 
-        if (isInsufficientAmount) {
+        associatedTokens[toContractAddress].needApprove = result
+
+        // TODO: 定位信息
+        if (result) {
+          if (bnAllowanceEther.gt(0)) {
+            associatedTokens[toContractAddress].approve.ether = 0
+            // update
+            associatedTokens[toContractAddress].needApprove = true
+            associatedTokens[toContractAddress].resetApprove = true
+          }
+        }
+
+        // XXX: 测试代码，重置授权
+        // associatedTokens[toContractAddress].approve.ether = 0
+        // // update
+        // associatedTokens[toContractAddress].needApprove = true
+        // associatedTokens[toContractAddress].resetApprove = true
+        // await this.approve(toContractAddress)
+
+        return result
+      },
+
+      /**
+       * 校验 Allowance
+       * - 自动关联钱包
+       * @param {string} toContractAddress
+       */
+      async ensureAllowance (toContractAddress) {
+        // TODO: 待优化
+        const { contract, precision, amount, isValidAmount, isInfiniteAllowance, maxAmount, infiniteMinAmount, associatedTokens } = this
+        // const bnAmountEther = BN(amount.handled).times(precision)
+        const bnAmountEther = BN(amount.ether)
+
+        if (await this.isNeedApprove(toContractAddress)) {
+          const bnAllowanceEther = associatedTokens[toContractAddress].allowance.ether
+
+
           const { update, dismiss } = notify.notification({ message: '准备授权' })
           this.approveNotifyDismiss = dismiss
           // 将要授权的量
@@ -370,20 +425,27 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
               message: '重置授权量为 0',
             })
             associatedTokens[toContractAddress].approve.ether = 0
+            // update
+            associatedTokens[toContractAddress].needApprove = true
+            associatedTokens[toContractAddress].resetApprove = true
+            await this.approve(toContractAddress)
+          } else {
+            update({
+              message: '授权',
+            })
+            const approveAmountEther = isInfiniteAllowance
+              ? maxAmount.ether
+              : bnAmountEther.toFixed(0, 1)
+  
+            associatedTokens[toContractAddress].approve.ether = approveAmountEther
+            // update
+            associatedTokens[toContractAddress].needApprove = true
+  
             await this.approve(toContractAddress)
           }
-
-          update({
-            message: '授权',
-          })
-          const approveAmountEther = isInfiniteAllowance
-            ? maxAmount.ether
-            : bnAmountEther
-          associatedTokens[toContractAddress].approve.ether = approveAmountEther
-
-          await this.approve(toContractAddress)
         }
       },
+// ensureAllowance 部分代码要放到 approve 内，从而淘汰 ensureAllowance
 
       approveNotifyDismiss: null,
 
@@ -394,40 +456,101 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
        */
       approve (toContractAddress) {
         const { contract, precision, associatedTokens, error, state } = this
+        // TODO: 
         const approveAmountEther = associatedTokens[toContractAddress].approve.ether
 
         // 钱包数据无效
         if (!storeWallet.isValidated) return false
 
+        associatedTokens[toContractAddress].approveState.beforeUpdate()
+
         // 限制当前提交待确认的交易只有一份
         state.beforeUpdate()
 
+        // TODO: 考虑避免一个token 同时多次提交
         return new Promise((resolve, reject) => {
-          contract.methods[approveMethodName](toContractAddress, approveAmountEther)
-            .send({
-              from: storeWallet.address,
-              // TODO:
-              // gasPrice: ,
-              // gas: ,
-            })
-            .once('transactionHash', hash => {
-              this.approveNotifyDismiss()
-              notify.handler(hash)
-              resolve(true)
+          const listenApproval = ({
+            value = '',
+            owner = '',
+            spender = '',
+            // TODO: 
+            approveNotifyDismiss = null
+          } = {}) => {
+            let onceLock = false
 
-              state.afterUpdate()
+            contract.events.Approval()
+            .on('data', function (data) {
+              /* data
+                {
+                  returnValues: {
+                    owner: '0x'
+                    spender: '0x'
+                    value: '0'
+                  }
+                }
+               */
+              // TODO: 如何停掉监听
+              if (onceLock) return false
+
+              console.log()
+
+              // 是否有符合的
+              // XXX: value 是 number
+              const filter = data.returnValues.value === value + ''
+                // TODO: 地址大小写
+                && data.returnValues.owner.toLowerCase() === owner.toLowerCase()
+                && data.returnValues.spender.toLowerCase() === spender.toLowerCase()
+
+              console.log('events.Approval', filter, data)
+              if (filter) {
+                approveNotifyDismiss()
+
+                // TODO: ? 到期后 3秒重置
+                window.setTimeout(() => onceLock = false, 3000)
+                resolve(data)
+                // TODO: double event
+                onceLock = true
+          console.log(spender, toContractAddress)
+                associatedTokens[spender].needApprove = false
+                // TODO: 等授权完
+                associatedTokens[spender].approveState.afterUpdate()
+              }
             })
             .on('error', err => {
               error.handler(err)
+              associatedTokens[spender].approveState.afterUpdate()
 
               reject(err)
-            })
-            .catch(err => {
-              error.handler(err)
-              reject(err)
-
               state.afterUpdate()
             })
+          }
+            
+
+            contract.methods[approveMethodName](toContractAddress, approveAmountEther)
+              .send({
+                from: storeWallet.address,
+                // TODO:
+                // gasPrice: ,
+                // gas: ,
+              })
+              .once('transactionHash', hash => {
+                notify.handler(hash)
+                listenApproval({
+                  value: approveAmountEther,
+                  owner: storeWallet.address,
+                  spender: toContractAddress,
+                  approveNotifyDismiss: this.approveNotifyDismiss
+                })
+              })
+              .on('error', err => {
+                error.handler(err)
+              })
+              .catch(err => {
+                error.handler(err)
+                reject(err)
+                associatedTokens[toContractAddress].approveState.afterUpdate()
+                state.afterUpdate()
+              })
           })
       },
 

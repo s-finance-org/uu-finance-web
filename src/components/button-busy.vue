@@ -7,6 +7,7 @@
       :disabled=disabled
       :type=type
       block
+      :size=size
       @click=onClick
       >
       <slot></slot>
@@ -23,7 +24,8 @@ export default {
     busying: Boolean,
     className: [Object, Array],
     disabled: Boolean,
-    type: String
+    type: String,
+    size: String
   },
   components: {
     Busy

@@ -50,6 +50,11 @@ export default {
       reserves: '资产分布',
       deposit: '存入',
       withdraw: '取出',
+      maxBalanceOf: '最多',
+      approve: '授权',
+      approveTip: '请授权',
+      resetApprove: '重置授权',
+      resetApproveTip: '请重置授权'
     },
     home: {
       cover_t: '有收益的稳定币',

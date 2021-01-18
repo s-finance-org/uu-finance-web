@@ -36,16 +36,23 @@
           :placeholder=placeholder
           @change="changeTokenAmount"
         >
-          <!-- <template #suffix>
-            <a-tooltip title="当前值大于已授权的" placement="topRight">
-              <a-button type="link" size="small">授权</a-button>
+          <template #suffix>
+            <a-tooltip :title=$t(approve.tipI18n) placement="topRight">
+              <button-busy
+                :busying=approve.busy
+                v-show=approve.need
+                @click=onApprove
+                type="link"
+                size="small">
+                  {{ $t(approve.textI18n) }}
+                </button-busy>
             </a-tooltip>
-          </template> -->
+          </template>
         </a-input>
       </a-tooltip>
     </a-input-group>
     <small class="py-1 d-flex">
-      最多:
+      {{ $t('global.base.maxBalanceOf') }}:
       <busy :busying="currentToken.walletBalanceOf.state.busy">
         <span @click="useAllBalance" class="pointer px-2">{{ currentToken.walletBalanceOf.view }}</span>
       </busy>
@@ -77,7 +84,7 @@
 </template>
 
 <script>
-import Busy from '../components/busy'
+import ButtonBusy from '../components/button-busy'
 import { isArray } from '../utils'
 
 export default {
@@ -88,10 +95,21 @@ export default {
     current: String,
     label: String,
     placeholder: String,
-    changeAmount: Function
+    changeAmount: Function,
+    approveToAddress: String,
+    // 是否使用授权功能（
+    useApprove: {
+      type: Boolean,
+      default: true
+    },
+    // 是否校验余额
+    ensureBalance: {
+      type: Boolean,
+      default: true
+    }
   },
   components: {
-    Busy,
+    ButtonBusy,
   },
   data () {
     const { codes } = this
@@ -104,9 +122,9 @@ export default {
     }
   },
   methods: {
-    changeTokenAmount(e) {
+    async changeTokenAmount(e) {
       const { value } = e.target
-      const { currentToken } = this
+      const { useApprove, currentToken, approveToAddress } = this
 
       // 限制输入
       currentToken.amount.input = value
@@ -115,6 +133,10 @@ export default {
 
       // 返回当前操作的 token 对象
       this.$emit('changeAmount', currentToken)
+
+      useApprove
+        && approveToAddress
+        && await currentToken.isNeedApprove(approveToAddress)
     },
     // 使用全部余额
     useAllBalance () {
@@ -129,6 +151,11 @@ export default {
     },
     onInputFocus (e) {
       this.showInputTip = !!this.currentToken.amount.inputView
+    },
+    async onApprove () {
+      const { approveToAddress } = this
+
+      await this.currentToken.ensureAllowance(approveToAddress)
     }
   },
   computed: {
@@ -155,6 +182,27 @@ export default {
 
       return tokens[currentCode]
     },
+    approve () {
+      const { useApprove, currentToken, approveToAddress } = this
+      let need = false
+      let reset = false
+      let busy = false
+
+      // TODO: 
+      // 使用授权功能、
+      if (useApprove && approveToAddress && currentToken.associatedTokens && currentToken.associatedTokens[approveToAddress]) {
+        need = currentToken.associatedTokens[approveToAddress].needApprove
+        reset = currentToken.associatedTokens[approveToAddress].resetApprove
+        busy = currentToken.associatedTokens[approveToAddress].approveState.busy
+      }
+
+      return {
+        need,
+        tipI18n: reset ? 'global.base.resetApproveTip' : 'global.base.approveTip',
+        textI18n: reset ? 'global.base.resetApprove' : 'global.base.approve',
+        busy
+      }
+    }
   }
 }
 </script>

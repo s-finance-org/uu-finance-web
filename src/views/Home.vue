@@ -5,13 +5,15 @@
         <div class="col-12 col-md-6 col-lg-6 ms-0 ms-lg-3 ps-0 ps-lg-5">
           <h1 class="mb-1">{{ $t('global.home.cover_t') }}</h1>
           <span>{{ $t('global.home.cover_c') }}</span>
-          <div class="line-frame p-3 mt-5">
-            <iHomeUnion class="me-2" />{{ $t('global.home.cover_circulation') }}
-            <h5 class="fs-5 py-1">
+          <div class="line-frame p-3 mt-5 flex-column">
+            <span class="d-flex align-items-center">
+              <iHomeUnion class="me-2" />{{ $t('global.home.cover_circulation') }}
+            </span>
+            <span class="fs-5 py-1 d-flex mb-2">
               <busy :busying="!tokens.UU.totalSupply.state.updated">
                 $ {{ tokens.UU.totalSupply.view }}
               </busy>
-            </h5>
+            </span>
             <a-button type="primary">
               <router-link to="/mint">
                 {{ $t('global.home.cover_mint') }}

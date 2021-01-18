@@ -49,7 +49,12 @@ export default {
     base: {
       reserves: 'Currency Reserves',
       deposit: 'Deposit',
-      withdraw: 'Withdraw'
+      withdraw: 'Withdraw',
+      maxBalanceOf: 'Max',
+      approve: 'Approve',
+      approveTip: 'Please approve',
+      resetApprove: 'Reset Approve',
+      resetApproveTip: 'Please reset Approve'
     },
     home: {
       cover_t: 'Yielding United USD',

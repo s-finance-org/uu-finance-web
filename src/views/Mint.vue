@@ -6,7 +6,7 @@
         <span class="fs-6 pe-5 d-block">{{ $t('global.mint.subtitle') }}</span>
       </div>
 
-      <a-tabs animated type="card" defaultActiveKey=structure.mintActionsDefaultKey v-model:activeKey=mintAction>
+      <a-tabs animated type="card" defaultActiveKey=structure.mintActionsDefaultKey v-model:activeKey=tabMintAction>
         <a-tab-pane
           v-for="(actionItem, key) of structure.mintActions"
           :key=key
@@ -32,7 +32,9 @@
                   :label="$t('global.base.deposit')"
                   :placeholder="$t(actionItem.mintAssetMode.placeholderI18n)"
                   v-on:changeAmount=changeAmount
-                  :codes=tokenItem />
+                  :approveToAddress=structure.approveToAddress
+                  :codes=tokenItem
+                  :useApprove=structure.useApprove />
               </a-tab-pane>
               <a-tab-pane key="single" :tab="$t(actionItem.mintAssetMode.singleTabI18n)" class="pt-2">
                 <token-select-input
@@ -40,7 +42,9 @@
                   :label="$t('global.base.deposit')"
                   :placeholder="$t(actionItem.mintAssetMode.placeholderI18n)"
                   v-on:changeAmount=changeAmount
-                  :codes=structure.singleAssetTokens />
+                  :approveToAddress=structure.approveToAddress
+                  :codes=structure.singleAssetTokens
+                  :useApprove=actionItem.useApprove />
               </a-tab-pane>
             </a-tabs>
           </div>
@@ -48,11 +52,11 @@
           <div class="line-frame-thin d-flex p-3 p-md-4 pb-2 pb-md-3 flex-column col-12 col-md-4">
             <span class="d-flex flex-wrap text-nowrap pb-2">
               {{ $t('global.mint.liquidityPool') }}
-              <span class="h4 col text-end">UU</span>
+              <span class="h4 col text-end ps-3">UU</span>
             </span>
             <span class="d-flex flex-wrap text-nowrap pb-2 text-color-primary">
               {{ $t(actionItem.preview.leastI18n) }}
-              <span class="h4 col text-end">
+              <span class="h4 col text-end ps-3">
                 <busy :busying="ixd.preview.leastBusy">
                   {{ ixd.preview.leastVol }} UU
                 </busy>
@@ -180,19 +184,20 @@ export default {
       const { UU } = this.$store.tokens
       const { mintAction } = this
 
-      // TODO:
+      // TODO: multi
       if (mintAction === 'deposit') {
+        
         await UU.getLpt2UUVol(tokenObj)
       } else if (mintAction === 'withdraw') {
         await UU.getUU2LptVol(tokenObj)
       }
-
-      
     }
   },
   computed: {
     // 结构性
     structure () {
+      const { UU } = this.$store.tokens
+
       return {
         selectTokenTypeDefaultValue: '1',
         selectTokenTypes: [
@@ -211,6 +216,7 @@ export default {
               singleTabI18n: 'global.mint.deposit.mintAssetMode.singleTab',
               placeholderI18n: 'global.mint.deposit.mintAssetMode.placeholder',
             },
+            useApprove: true,
             mintBtnI18n: 'global.mint.deposit.mintBtn',
             mintBtnClick: this.onMint,
             preview: {
@@ -225,6 +231,7 @@ export default {
               singleTabI18n: 'global.mint.withdraw.mintAssetMode.singleTab',
               placeholderI18n: 'global.mint.withdraw.mintAssetMode.placeholder',
             },
+            useApprove: false,
             mintBtnI18n: 'global.mint.withdraw.mintBtn',
             mintBtnClick: this.onBurn,
             preview: {
@@ -236,21 +243,58 @@ export default {
         // TODO: 
         multipleAssetTokens: [ 'DAI_USDC'],
         singleAssetTokens: ['DAI_USDC'],
+
+        // 授权操作的目标地址
+        approveToAddress: UU.address
+      }
+    },
+    // 切换行为类型
+    tabMintAction: {
+      get () {
+        return this.mintAction
+      },
+      set (val) {
+        const { tokens } = this.$store
+        const { singleSelectCode } = this
+        const singleToken = tokens[singleSelectCode]
+
+        this.mintAction = val
+
+        // sync
+        // 切换存款、取款类型时，同步变成值时的事件
+        this.changeAmount(singleToken)
       }
     },
     // 交互
     ixd () {
       const { wallet, tokens } = this.$store
-      const { singleSelectCode, mintAssetMode } = this
+      const { singleSelectCode, mintAssetMode, structure } = this
       // 量值
+
+      let mintBtnDisabled = !wallet.isValidated
+            // TODO: 多币种模式下暂时关闭
+            || mintAssetMode === 'multiple'
+            // singleSelectCode 初始为空，由 select 自动填充
+            || singleSelectCode && !tokens[singleSelectCode].amount.isValidInput
+            // TODO: 不能为空来提交
+            || singleSelectCode && tokens[singleSelectCode].amount.input === ''
+
 
       const singleToken = tokens[this.singleSelectCode]
       let leastVol = ''
       let leastBusy = false
 console.log(this.mintAction)
-      // TODO: temp 单选以及实现方法
+      // TODO: temp 单选以及实现方法 （用Model 结构初始化来解决）
       if (this.mintAction === 'deposit') {
+        if (singleToken && singleToken.associatedTokens && singleToken.associatedTokens[structure.approveToAddress]) {
+          let aaa  = singleToken.associatedTokens[structure.approveToAddress].needApprove
+          if (aaa) {
+            mintBtnDisabled = true
+          }
+        }
+
         if (singleToken && tokens.UU.associatedTokens[singleToken.address] && tokens.UU.associatedTokens[singleToken.address].mintGainAmount) {
+
           leastVol = tokens.UU.associatedTokens[singleToken.address].mintGainAmount.view
           leastBusy = tokens.UU.associatedTokens[singleToken.address].mintGainAmount.state.busy
         }
@@ -264,11 +308,7 @@ console.log(this.mintAction)
       return {
         mintBtn: {
           // TODO: 操作的币种
-          disabled: !wallet.isValidated
-            // TODO: 暂时关闭
-            || mintAssetMode === 'multiple'
-            // singleSelectCode 初始为空，由 select 自动填充
-            || singleSelectCode && !tokens[singleSelectCode].amount.isValidInput,
+          disabled: mintBtnDisabled,
           busy: tokens.UU.state.busy
         },
         preview: {
