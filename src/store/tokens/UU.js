@@ -1262,12 +1262,10 @@ export default ModelToken.create({
     /**
      * TODO: 
      * lpt 铸造 UU
-     * @param {*} lptAddress 
-     * @param {*} vol 
-     * @param {*} minVol 
+     * @param {Object} tokenObj
      */
-    async mint (lptAddress, vol, minVol) {
-      const { contract, address, state } = this
+    async mint (tokenObj) {
+      const { contract, address, state, associatedTokens } = this
       const walletAddress = storeWallet.address
 
       // 限制当前提交待确认的交易只有一份
@@ -1276,16 +1274,18 @@ export default ModelToken.create({
       const { update, dismiss } = notify.notification({ message: '正准备拉起' })
 
       try {
+        // update mintGainAmount
+        await this.getLpt2UUVol(tokenObj)
 
+        const sendOpts = {
+          from: walletAddress,
+        }
 
-
-
-      const sendOpts = {
-        from: walletAddress,
-      }
-
-      
-        const _method = await contract.methods.mint(lptAddress, vol, minVol)
+        const _method = await contract.methods.mint(
+          tokenObj.address,
+          tokenObj.amount.ether,
+          associatedTokens[tokenObj.address].mintGainAmount.ether
+        )
 
         try {
           sendOpts.gas = await _method.estimateGas({
@@ -1294,8 +1294,6 @@ export default ModelToken.create({
         } catch(err) {
           console.error(err)
         }
-
-console.log(lptAddress, vol, minVol)
 
         return _method.send(sendOpts)
           .once('transactionHash', hash => {
@@ -1328,7 +1326,61 @@ console.log(lptAddress, vol, minVol)
     },
 
     /**
+     * 铸造 UU 可获得的 lpt 量
+     * - 更新 associatedTokens[].mintGainAmount
+     * @param {Object} tokenObj
+     * @return {Promise}
+     */
+    async getLpt2UUVol (tokenObj) {
+      const { contract, associatedTokens } = this
+
+      // TODO: TEMP
+      if (!associatedTokens[tokenObj.address]) {
+        associatedTokens[tokenObj.address] = {}
+      }
+      // init
+      if (!associatedTokens[tokenObj.address].mintGainAmount) {
+        associatedTokens[tokenObj.address].mintGainAmount = ModelValueEther.create({
+          decimals: tokenObj.decimals,
+        })
+      }
+
+      associatedTokens[tokenObj.address].mintGainAmount.state.beforeUpdate()
+
+      // TODO: multi
+      let minVolEther = await contract.methods.lpt2uu(tokenObj.address, tokenObj.amount.ether).call()
+      // TODO: 在 multi 未使用之前暂不使用
+      // const lptBalance = await contract.methods.lptBalance(tokenObj.address).call()
+
+      // // TODO: why?
+      // if(minVolEther == lptBalance) {
+      //   minVolEther = await contract.methods.lpt2uu(tokenObj.address, minVolEther).call()
+      // }
+
+      associatedTokens[tokenObj.address].mintGainAmount = ModelValueEther.create({
+        decimals: tokenObj.decimals,
+        value: minVolEther
+      })
+
+      associatedTokens[tokenObj.address].mintGainAmount.state.afterUpdate()
+
+
+      // _updatePrice();
+      //   amt = lpt2uu(lpt, vol);
+      //   require(amt >= minMint, 'Slippage screwed you');
+      //   lpt.safeTransferFrom(_msgSender(), address(this), vol);
+      //   address gauge = address(getConfig(_gaugeOfLPT_, lpt));
+      //   if(gauge != address(0)) {
+      //       lpt.safeApprove(gauge, vol);
+      //       Gauge(gauge).deposit(vol);
+      //   }
+      //   _mint(_msgSender(), amt);
+      //   _adjustPriceFactor();
+    },
+
+    /**
      * 销毁 UU 可获得的 lpt 量
+     * - 取回 lpt 将销毁 UU 的量
      * - 更新 associatedTokens[].burnGainAmount
      * @param {Object} tokenObj
      * @return {Promise}
@@ -1336,24 +1388,35 @@ console.log(lptAddress, vol, minVol)
     async getUU2LptVol (tokenObj) {
       const { contract, associatedTokens } = this
 
-      // TODO: multi
-      let minVolEther = await contract.methods.uu2lpt(tokenObj.amount.ether, tokenObj.address).call()
-      const lptBalance = await contract.methods.lptBalance(tokenObj.address).call()
-
-      // TODO: why?
-      if(minVolEther == lptBalance) {
-        minVolEther = await contract.methods.lpt2uu(tokenObj.address, minVolEther).call()
-      }
-
       // TODO: TEMP
       if (!associatedTokens[tokenObj.address]) {
         associatedTokens[tokenObj.address] = {}
       }
+      // init
+      if (!associatedTokens[tokenObj.address].burnGainAmount) {
+        associatedTokens[tokenObj.address].burnGainAmount = ModelValueEther.create({
+          decimals: tokenObj.decimals,
+        })
+      }
+
+      associatedTokens[tokenObj.address].burnGainAmount.state.beforeUpdate()
+
+      // TODO: multi
+      let minVolEther = await contract.methods.uu2lpt(tokenObj.amount.ether, tokenObj.address).call()
+      // TODO: 在 multi 未使用之前暂不使用
+      // const lptBalance = await contract.methods.lptBalance(tokenObj.address).call()
+
+      // // TODO: why?
+      // if(minVolEther == lptBalance) {
+      //   minVolEther = await contract.methods.lpt2uu(tokenObj.address, minVolEther).call()
+      // }
 
       associatedTokens[tokenObj.address].burnGainAmount = ModelValueEther.create({
         decimals: tokenObj.decimals,
         value: minVolEther
       })
+
+      associatedTokens[tokenObj.address].burnGainAmount.state.afterUpdate()
     },
 
     /**

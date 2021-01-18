@@ -2,11 +2,11 @@
   <a-layout-content class="container-lg px-4">
     <div class="px-lg-5 mx-lg-3">
       <div class="mt-lg-4 mb-lg-5 pb-4">
-        <h2 class="fs-2 mb-1">存入稳定币资产，获得 UU</h2>
-        <span class="fs-6 pe-5 d-block">你可以选择存入稳定币池流动性凭证、生息代币或直接存入稳定币获得 UU</span>
+        <h2 class="fs-2 mb-1">{{ $t('global.mint.title') }}</h2>
+        <span class="fs-6 pe-5 d-block">{{ $t('global.mint.subtitle') }}</span>
       </div>
 
-      <a-tabs animated type="card" defaultActiveKey=structure.mintActionsDefaultKey>
+      <a-tabs animated type="card" defaultActiveKey=structure.mintActionsDefaultKey v-model:activeKey=mintAction>
         <a-tab-pane
           v-for="(actionItem, key) of structure.mintActions"
           :key=key
@@ -31,26 +31,32 @@
                   :key="'multipleAssetTokens-' + tokenItem"
                   :label="$t('global.base.deposit')"
                   :placeholder="$t(actionItem.mintAssetMode.placeholderI18n)"
+                  v-on:changeAmount=changeAmount
                   :codes=tokenItem />
               </a-tab-pane>
               <a-tab-pane key="single" :tab="$t(actionItem.mintAssetMode.singleTabI18n)" class="pt-2">
                 <token-select-input
                   v-model:current="singleSelectCode"
                   :label="$t('global.base.deposit')"
+                  :placeholder="$t(actionItem.mintAssetMode.placeholderI18n)"
+                  v-on:changeAmount=changeAmount
                   :codes=structure.singleAssetTokens />
               </a-tab-pane>
             </a-tabs>
           </div>
 
           <div class="line-frame-thin d-flex p-3 p-md-4 pb-2 pb-md-3 flex-column col-12 col-md-4">
-            <span
-              v-for="(item, idx) in preview"
-              :key="`preview-${idx}`"
-              class="d-flex flex-wrap text-nowrap pb-2"
-              :class="item.class"
-            >
-              {{ item.name }}
-              <span class="h4 col text-end">{{ item.view }}</span>
+            <span class="d-flex flex-wrap text-nowrap pb-2">
+              {{ $t('global.mint.liquidityPool') }}
+              <span class="h4 col text-end">UU</span>
+            </span>
+            <span class="d-flex flex-wrap text-nowrap pb-2 text-color-primary">
+              {{ $t(actionItem.preview.leastI18n) }}
+              <span class="h4 col text-end">
+                <busy :busying="ixd.preview.leastBusy">
+                  {{ ixd.preview.leastVol }} UU
+                </busy>
+              </span>
             </span>
             <iIntersect class="d-none d-md-block" />
           </div>
@@ -124,17 +130,20 @@ import {
 
 import TokenSelectInput from '../components/token-select-input'
 import ButtonBusy from '../components/button-busy'
+import Busy from '../components/busy'
 
 export default {
   components: {
     iIntersect,
     TokenSelectInput,
-    ButtonBusy
+    ButtonBusy,
+    Busy
   },
   data() {
     return {
       singleSelectCode: '',
       mintAssetMode: 'single',
+      mintAction: 'deposit',
 
       // TEMP:
       value1: 'a',
@@ -157,7 +166,7 @@ export default {
 
       await singleToken.ensureAllowance(tokens.UU.address)
 
-      await tokens.UU.mint(singleToken.address, singleToken.amount.ether, '1')
+      await tokens.UU.mint(singleToken)
     },
     async onBurn () {
       const { tokens } = this.$store
@@ -166,47 +175,67 @@ export default {
       // await singleToken.ensureAllowance(tokens.UU.address)
 
       await tokens.UU.burn(singleToken)
+    },
+    async changeAmount (tokenObj) {
+      const { UU } = this.$store.tokens
+      const { mintAction } = this
+
+      // TODO:
+      if (mintAction === 'deposit') {
+        await UU.getLpt2UUVol(tokenObj)
+      } else if (mintAction === 'withdraw') {
+        await UU.getUU2LptVol(tokenObj)
+      }
+
+      
     }
   },
   computed: {
     // 结构性
     structure () {
       return {
+        selectTokenTypeDefaultValue: '1',
+        selectTokenTypes: [
+          { value: '1', i18n: 'global.mint.selectTokenTypes.lpt' },
+          { value: '2', i18n: 'global.mint.selectTokenTypes.interestToken', disabled: true },
+          { value: '3', i18n: 'global.mint.selectTokenTypes.stablecoin', disabled: true }
+        ],
+
         mintActionsDefaultKey: 'deposit',
         mintActions: {
           deposit: {
-            tabI18n: '存入获得 UU',
-            selectAssetesI18n: '选择存入资产类型',
+            tabI18n: 'global.mint.deposit.tab',
+            selectAssetesI18n: 'global.mint.deposit.selectAssetes',
             mintAssetMode: {
-              multipleTabI18n: '多资产存入',
-              singleTabI18n: '单资产存入',
-              placeholderI18n: '输入存入数量',
+              multipleTabI18n: 'global.mint.deposit.mintAssetMode.multipleTab',
+              singleTabI18n: 'global.mint.deposit.mintAssetMode.singleTab',
+              placeholderI18n: 'global.mint.deposit.mintAssetMode.placeholder',
             },
-            mintBtnI18n: '存款',
-            mintBtnClick: this.onMint
+            mintBtnI18n: 'global.mint.deposit.mintBtn',
+            mintBtnClick: this.onMint,
+            preview: {
+              leastI18n: 'global.mint.deposit.previewReceiveLeast'
+            }
           },
           withdraw: {
-            tabI18n: '取出销毁 UU',
-            selectAssetesI18n: '选择取出资产类型',
+            tabI18n: 'global.mint.withdraw.tab',
+            selectAssetesI18n: 'global.mint.withdraw.selectAssetes',
             mintAssetMode: {
-              multipleTabI18n: '多资产取出',
-              singleTabI18n: '单资产取出',
-              placeholderI18n: '输入取出数量',
+              multipleTabI18n: 'global.mint.withdraw.mintAssetMode.multipleTab',
+              singleTabI18n: 'global.mint.withdraw.mintAssetMode.singleTab',
+              placeholderI18n: 'global.mint.withdraw.mintAssetMode.placeholder',
             },
-            mintBtnI18n: '取款',
-            mintBtnClick: this.onBurn
+            mintBtnI18n: 'global.mint.withdraw.mintBtn',
+            mintBtnClick: this.onBurn,
+            preview: {
+              leastI18n: 'global.mint.withdraw.previewNeedLeast'
+            }
           },
         },
 
-        selectTokenTypeDefaultValue: '1',
-        selectTokenTypes: [
-          { value: '1', i18n: '流动性凭证' },
-          { value: '2', i18n: '生息代币', disabled: true },
-          { value: '3', i18n: '稳定币', disabled: true }
-        ],
-
-        multipleAssetTokens: [ 'DAI_USDT', 'DAI_USDC', 'DAI', 'USDC', 'USDT'],
-        singleAssetTokens: ['DAI_USDC', 'DAI_USDT', 'USDC', 'USDT', 'DAI', 'UU'],
+        // TODO: 
+        multipleAssetTokens: [ 'DAI_USDC'],
+        singleAssetTokens: ['DAI_USDC'],
       }
     },
     // 交互
@@ -214,8 +243,23 @@ export default {
       const { wallet, tokens } = this.$store
       const { singleSelectCode, mintAssetMode } = this
       // 量值
-      
-      
+
+      const singleToken = tokens[this.singleSelectCode]
+      let leastVol = ''
+      let leastBusy = false
+console.log(this.mintAction)
+      // TODO: temp 单选以及实现方法
+      if (this.mintAction === 'deposit') {
+        if (singleToken && tokens.UU.associatedTokens[singleToken.address] && tokens.UU.associatedTokens[singleToken.address].mintGainAmount) {
+          leastVol = tokens.UU.associatedTokens[singleToken.address].mintGainAmount.view
+          leastBusy = tokens.UU.associatedTokens[singleToken.address].mintGainAmount.state.busy
+        }
+      } else if (this.mintAction === 'withdraw') {
+        if (singleToken && tokens.UU.associatedTokens[singleToken.address] && tokens.UU.associatedTokens[singleToken.address].burnGainAmount) {
+          leastVol = tokens.UU.associatedTokens[singleToken.address].burnGainAmount.view
+          leastBusy = tokens.UU.associatedTokens[singleToken.address].burnGainAmount.state.busy
+        }
+      }
 
       return {
         mintBtn: {
@@ -226,27 +270,14 @@ export default {
             // singleSelectCode 初始为空，由 select 自动填充
             || singleSelectCode && !tokens[singleSelectCode].amount.isValidInput,
           busy: tokens.UU.state.busy
+        },
+        preview: {
+          leastVol,
+          leastBusy
+          // { name: '预计矿工费', view: 'x.xx 美元' },
+          // { name: '最大滑点', view: 'x.xx %' },
         }
       }
-    },
-    preview () {
-      const { tokens } = this.$store
-
-      const singleToken = tokens[this.singleSelectCode]
-      let minVol = ''
-      // TODO: temp
-      if (singleToken && tokens.UU.associatedTokens[singleToken.address] && tokens.UU.associatedTokens[singleToken.address].burnGainAmount) {
-        minVol = tokens.UU.associatedTokens[singleToken.address].burnGainAmount.view
-      }
-
-
-      // TODO: 链数据
-      return [
-        // { name: '预计矿工费', view: 'x.xx 美元' },
-        // { name: '最大滑点', view: 'x.xx %' },
-        { name: '流动性池', view: 'UU' },
-        { name: '你将至少收到', view: minVol + ' UU', class: [ 'text-color-primary' ] },
-      ]
     },
     reserves () {
       // TODO: temp

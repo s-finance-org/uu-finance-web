@@ -13,7 +13,7 @@
         >
           <span class="d-flex align-items-center">
             <component :is="`token-${item.code}`" class="me-2"></component>
-            {{ item.code }}
+            {{ item.symbol.view }}
           </span>
         </a-select-option>
         <template #suffixIcon>
@@ -22,7 +22,7 @@
       </a-select>
       <span v-else class="d-flex align-items-center col-4 token-name">
         <component :is=currentToken.icon class="me-2"></component>
-        {{ currentToken.code }}
+        {{ currentToken.symbol.view }}
       </span>
       <a-tooltip :visible=showInputTip placement="topLeft">
         <template #title>
@@ -34,13 +34,13 @@
           :value="currentToken.amount.input"
           class="pe-0"
           :placeholder=placeholder
-          @change="changeAmount"
+          @change="changeTokenAmount"
         >
-          <template #suffix>
+          <!-- <template #suffix>
             <a-tooltip title="当前值大于已授权的" placement="topRight">
               <a-button type="link" size="small">授权</a-button>
             </a-tooltip>
-          </template>
+          </template> -->
         </a-input>
       </a-tooltip>
     </a-input-group>
@@ -87,20 +87,9 @@ export default {
     },
     current: String,
     label: String,
-    placeholder: String
+    placeholder: String,
+    changeAmount: Function
   },
-  // setup(props,context){
-  //   const changeVal = () => {
-  //     console.log('props', props, this)
-  //       context.emit("update:current", '1');
-  //   }
-  //   // const inputBlur = (e:FocusEvent) => {
-  //   //     context.emit("update:modelValue",(e.target as HTMLLIElement).value);
-  //   // }
-  //   return{
-  //     changeVal
-  //   }
-  // },
   components: {
     Busy,
   },
@@ -115,7 +104,7 @@ export default {
     }
   },
   methods: {
-    changeAmount(e) {
+    changeTokenAmount(e) {
       const { value } = e.target
       const { currentToken } = this
 
@@ -123,6 +112,9 @@ export default {
       currentToken.amount.input = value
       // 有效输入才影响
       this.showInputTip = !!currentToken.amount.inputView
+
+      // 返回当前操作的 token 对象
+      this.$emit('changeAmount', currentToken)
     },
     // 使用全部余额
     useAllBalance () {

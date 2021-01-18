@@ -49,7 +49,7 @@ export default {
     base: {
       reserves: '资产分布',
       deposit: '存入',
-      withdraw: '取出'
+      withdraw: '取出',
     },
     home: {
       cover_t: '有收益的稳定币',
@@ -65,5 +65,37 @@ export default {
       trait4_t: '安全透明',
       trait4_c: 'UU 完全属于社区，充分利用了区块链技术的安全性与透明性',
     },
+    mint: {
+      title: '存入稳定币资产，获得 UU',
+      subtitle: '你可以选择存入稳定币池流动性凭证、生息代币或直接存入稳定币获得 UU',
+      liquidityPool: '流动性池',
+      selectTokenTypes: {
+        lpt: '流动性凭证',
+        interestToken: '生息代币',
+        stablecoin: '稳定币'
+      },
+      deposit: {
+        tab: '存入获得 UU',
+        selectAssetes: '选择存入资产类型',
+        mintAssetMode: {
+          multipleTab: '多资产存入',
+          singleTab: '单资产存入',
+          placeholder: '输入存入数量',
+        },
+        mintBtn: '存款',
+        previewReceiveLeast: '你将至少收到'
+      },
+      withdraw: {
+        tab: '取出销毁 UU',
+        selectAssetes: '选择取出资产类型',
+        mintAssetMode: {
+          multipleTab: '多资产取出',
+          singleTab: '单资产取出',
+          placeholder: '输入取出数量',
+        },
+        mintBtn: '取款',
+        previewNeedLeast: '你将至少需要'
+      }
+    }
   },
 }
