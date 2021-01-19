@@ -2,9 +2,24 @@
 
 // Size
 .icon-s-16 {
+  width: 16px;
+  min-width: 16px;
+  height: 16px;
+}
+.icon-sb-20::before {
+  width: 20px;
+  min-width: 20px;
+  height: 20px;
+}
+.icon-s-32 {
   width: 32px;
   min-width: 32px;
   height: 32px;
+}
+
+// style
+.icon-c-warning::before {
+  color: #F9CA7D;
 }
 
 // icon-group-tokens
@@ -16,10 +31,9 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  align-items: flex-start;
   overflow: hidden;
   border-radius: 4px;
-  &.icon-s-16 {
+  &.icon-s-32 {
     font-size: 14px;
     line-height: 14px;
     zoom: 0.5;
@@ -32,25 +46,24 @@
   > span {
     margin: 0 1px 1px 0;
   }
-  // > span:nth-child(2) ~ div:nth-child(2) {
-  //   flex-wrap: nowrap;
-  // }
-}
-
-.icon-group-tokens > span:nth-child(2):last-child {
-  align-self: flex-end;
+  > span:nth-child(1):first-child {
+    align-self: flex-start;
+  }
+  > span:nth-child(2):last-child {
+    align-self: flex-end;
+  }
 }
 
 // Base
-.icon-downOutlined:before {
+.icon-downOutlined::before {
   content: "\e90e";
 }
-.icon-language:before {
+.icon-language::before {
   content: "\e90f";
 }
-.icon-menu:before {
+.icon-menu::before {
   content: "\e910";
 }
-.icon-select:before {
+.icon-select::before {
   content: "\e911";
 }

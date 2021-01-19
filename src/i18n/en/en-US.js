@@ -54,7 +54,11 @@ export default {
       approve: 'Approve',
       approveTip: 'Please approve',
       resetApprove: 'Reset Approve',
-      resetApproveTip: 'Please reset Approve'
+      resetApproveTip: 'Please reset Approve',
+      reward: 'Reward',
+      estimatedTransactionFee: 'Transaction Fee',
+      apy: 'APY',
+      miningPool: 'Mining pool'
     },
     home: {
       cover_t: 'Yielding United USD',
@@ -100,6 +104,34 @@ export default {
         },
         mintBtn: 'Withdrawal',
         previewNeedLeast: 'You will need at least'
+      }
+    },
+    claim: {
+      title: 'Hold UU, get multiple benefits',
+      subtitle: 'Handling fees and interest-earning income are automatically issued to the wallet, and token rewards need to be collected',
+      own: {
+        tab: 'My reward',
+        pendingReward: 'Reward pending',
+        paidReward: 'Reward received',
+        totalReward: 'Total Reward',
+        receiveAward: 'Receive award',
+        sideTip: 'You can choose to receive only one reward at a time or receive it all at once. The settler needs to settle before receiving the reward. If you have not received the token reward for more than 7 days, you may be collected by someone else. The entrusted person can get 10% of the entrusted entitlement, and the remaining part will be automatically issued to your wallet. '
+      },
+      claimTo: {
+        tab: 'Help Ta take the lead',
+        claimRewards: 'Reward can be claimed on behalf of',
+        rewardRate: 'Reward rate on behalf of you',
+        behalfRewards: 'Representation Rewards',
+        behalfReceiveRewards: 'Representation Reward',
+        sideTip: 'You can choose to receive only one reward at a time or receive it all at once. The settler needs to settle before receiving the reward. If you have not received the token reward for more than 7 days, you may be collected by someone else. The entrusted person can get 10% of the entrusted entitlement, and the remaining part will be automatically issued to your wallet. '
+      },
+      settle: {
+        tab: 'Participate in settle',
+        pendingSettleReward: 'Pending Settle Reward',
+        settleRewardRate: 'Settle Reward Rate',
+        settleReward: 'Settle Reward',
+        participateSettle: 'Participate in settle',
+        sideTip: 'Anyone can become a settler, and the settler can get 1% of the reward to be settled. '
       }
     }
   }

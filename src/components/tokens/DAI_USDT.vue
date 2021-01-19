@@ -1,5 +1,5 @@
 <template>
-  <div class="icon-group-tokens icon-s-16">
+  <div class="icon-group-tokens icon-s-32">
     <token-DAI />
     <token-USDT />
     <token-USDT />

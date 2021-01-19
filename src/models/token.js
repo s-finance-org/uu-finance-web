@@ -8,6 +8,7 @@ import {
 } from './helpers/constant'
 
 import ModelValueEther from './value/ether'
+import ModelValueInput from './value/input'
 import ModelValueWallet from './value/wallet'
 import ModelValueString from './value/string'
 import ModelValueBytes32 from './value/bytes32'
@@ -240,7 +241,7 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
        * TODO: 目前使用 handled
        * @type {Object}
        */
-      amount: ModelValueEther.create({...valueOpts}),
+      amount: ModelValueInput.create({...valueOpts}),
 
       /**
        * 量值是否有效

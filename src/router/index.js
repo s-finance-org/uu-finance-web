@@ -39,16 +39,17 @@ const routes = [
       {
         path: 'claim',
         name: 'Claim',
-        component: Coming,
+        component: Claim,
         meta: {
           suffix: ' - Claim'
         }
       },
-      {
-        path: 'test',
-        name: 'Test',
-        component: Test,
-      },
+      // TODO:
+      // {
+      //   path: 'test',
+      //   name: 'Test',
+      //   component: Test,
+      // },
     ]
   }
 ]

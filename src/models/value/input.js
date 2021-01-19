@@ -5,14 +5,18 @@ import { floor } from '../../utils/math/round'
 import ModelState from '../base/state'
 import ModelValueUint8 from './uint8'
 
+import { MIN_INPUT, MAX_INPUT } from '../helpers/constant'
+
 import { trim } from '../../utils'
 
 export default {
   /**
-   * - 数据关联 value -> ether <-> handled -> view
+   * - 数据关联 value -> ether <-> handled <- input
+   * -                              -> view
    * @param {Object=} opts.decimals 原数据的设定精度
    * @param {string=} opts.value 预设值
    * @param {string=} opts.handled 预设值
+   * @param {string=} opts.input 预设值
    * @param {number=} opts.viewDecimal 显示内容的显示精度
    * @param {Function=} opts.viewMethod 显示内容的舍入方法
    * @param {string=} opts.viewPrefix 显示内容的前缀
@@ -23,6 +27,7 @@ export default {
     decimals = ModelValueUint8.create(),
     value = undefined,
     handled = undefined,
+    input = undefined,
     viewDecimal = 6,
     viewMethod = floor,
     viewPrefix = '',
@@ -32,6 +37,7 @@ export default {
       address: '',
       ether: '0',
       handled: '0',
+      input: '',
       view: '-',
     }
     const __cache__ = {
@@ -40,7 +46,8 @@ export default {
     }
     const __store__ = {
       ether: __default__.ether,
-      handled: __default__.handled
+      handled: __default__.handled,
+      input: __default__.input
     }
 
     const result = {
@@ -109,6 +116,82 @@ export default {
         state.afterUpdate()
       },
 
+      /**
+       * input 数据
+       * - 支持空格
+       * @type {string}
+       */
+      get input () {
+        return __store__.input
+      },
+      set input (val) {
+        const { inputLimitedRe } = this
+        const result = val
+
+        // 仅限为数值和空格
+        if ((!isNaN(result) && inputLimitedRe.test(result)) || result === '') {
+          this.handled = __store__.input = result
+        }
+      },
+      /**
+       * 输入正则限制
+       * @type {RegExp}
+       */
+      inputLimitedRe: /^[0-9]*(\.[0-9]*)?$/,
+      /**
+       * input 视觉值
+       * - 主动式更新
+       * @type {string}
+       */
+      get inputView () {
+        const { input } = this
+        let result = ''
+
+        if (input !== '') {
+          result = formatNumber(input)
+        }
+
+        return result
+      },
+
+      /**
+       * 最小输入值
+       * 
+       */
+      minInput: MIN_INPUT,
+      /**
+       * 最大输入值
+       * 
+       */
+      maxInput: MAX_INPUT,
+
+      resetMaxInput () {
+        this.maxInput = MAX_INPUT
+      },
+
+      /**
+       * input 数据是否有效
+       * - 先更新 input 再调用
+       * - TODO: 要淘汰
+       * @type {boolean}
+       */
+      get isValidInput () {
+        const { input, minInput, maxInput } = this
+        let result = true
+
+        // 允许初始空格
+        if (input === '') return result
+
+        const bnInput = BN(input)
+
+        // 不为isNaN，且大于等于最小值、小于等于最大值
+        result = !bnInput.isNaN()
+          && bnInput.gte(minInput)
+          && bnInput.lte(maxInput)
+
+        return result
+      },
+
       viewDecimal,
       viewMethod,
       viewPrefix,
@@ -130,6 +213,8 @@ export default {
       && (result.value = value)
     handled != null
       && (result.handled = handled)
+    input != null
+      && (result.input = input)
 
     return result
   }

@@ -20,6 +20,8 @@ import iHomeTelegram from '../assets/community/telegram.svg';
 import iHomeTwitter from '../assets/community/twitter.svg';
 import iHomeWechat from '../assets/community/wechat.svg';
 
+import iYellowinfo from '../assets/base/yellowinfo.svg';
+
 export {
   // art
   iIntersect,
@@ -40,4 +42,6 @@ export {
   iHomeTelegram,
   iHomeTwitter,
   iHomeWechat,
+
+  iYellowinfo
 }

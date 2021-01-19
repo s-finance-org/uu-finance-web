@@ -1,89 +1,93 @@
 <template>
   <div class="h5 pb-1">{{ label }}</div>
-    <a-input-group compact :class="{ 'danger': !currentToken.amount.isValidInput }">
-      <a-select
-        class="col-4 pe-0"
-        v-model:value="currentCode"
-        v-if="__base__.isSelect"
+  <a-input-group
+    compact
+    :class="{ 'danger': !currentToken.amount.isValidInput }"
+    >
+    <a-select
+      class="col-4 pe-0"
+      v-model:value="currentCode"
+      v-if="__base__.isSelect"
+    >
+      <a-select-option
+        v-for="item in __base__.tokens"
+        :key="`${item.code}`"
+        :value=item.code
       >
-        <a-select-option
-          v-for="item in __base__.tokens"
-          :key="`${item.code}`"
-          :value=item.code
-        >
-          <span class="d-flex align-items-center">
-            <component :is="`token-${item.code}`" class="me-2"></component>
-            {{ item.symbol.view }}
-          </span>
-        </a-select-option>
-        <template #suffixIcon>
-          <span class="h4 icon-select text-color-heading"></span>
+        <span class="d-flex align-items-center">
+          <component :is="`token-${item.code}`" class="me-2"></component>
+          {{ item.symbol.view }}
+        </span>
+      </a-select-option>
+      <template #suffixIcon>
+        <span class="h4 icon-select text-color-heading"></span>
+      </template>
+    </a-select>
+    <span v-else class="d-flex align-items-center col-4 token-name">
+      <component :is=currentToken.icon class="me-2"></component>
+      {{ currentToken.symbol.view }}
+    </span>
+    <a-tooltip :visible=showInputTip placement="topLeft">
+      <template #title>
+        {{ currentToken.amount.inputView }}
+      </template>
+      <a-input
+        @focus=onInputFocus
+        @blur=onInputBlur
+        :value="currentToken.amount.input"
+        class="pe-0"
+        :placeholder=placeholder
+        @change="changeTokenAmount"
+      >
+        <template #suffix>
+          <a-tooltip :title=$t(approve.tipI18n) placement="topRight">
+            <button-busy
+              :busying=approve.busy
+              v-show=approve.need
+              @click=onApprove
+              type="link"
+              size="small">
+                {{ $t(approve.textI18n) }}
+              </button-busy>
+          </a-tooltip>
         </template>
-      </a-select>
-      <span v-else class="d-flex align-items-center col-4 token-name">
-        <component :is=currentToken.icon class="me-2"></component>
-        {{ currentToken.symbol.view }}
-      </span>
-      <a-tooltip :visible=showInputTip placement="topLeft">
-        <template #title>
-          {{ currentToken.amount.inputView }}
-        </template>
-        <a-input
-          @focus=onInputFocus
-          @blur=onInputBlur
-          :value="currentToken.amount.input"
-          class="pe-0"
-          :placeholder=placeholder
-          @change="changeTokenAmount"
-        >
-          <template #suffix>
-            <a-tooltip :title=$t(approve.tipI18n) placement="topRight">
-              <button-busy
-                :busying=approve.busy
-                v-show=approve.need
-                @click=onApprove
-                type="link"
-                size="small">
-                  {{ $t(approve.textI18n) }}
-                </button-busy>
-            </a-tooltip>
-          </template>
-        </a-input>
-      </a-tooltip>
-    </a-input-group>
-    <small class="py-1 d-flex">
-      {{ $t('global.base.maxBalanceOf') }}:
-      <busy :busying="currentToken.walletBalanceOf.state.busy">
-        <span @click="useAllBalance" class="pointer px-2">{{ currentToken.walletBalanceOf.view }}</span>
-      </busy>
-    </small>
+      </a-input>
+    </a-tooltip>
+  </a-input-group>
+  <small class="pt-1 d-flex" v-if=ensureBalance>
+    {{ $t('global.base.maxBalanceOf') }}:
+    <busy :busying="currentToken.walletBalanceOf.state.busy">
+      <span @click="useAllBalance" class="pointer px-2">{{ currentToken.walletBalanceOf.view }}</span>
+    </busy>
+  </small>
 
-    <small class="d-flex flex-column" style="overflow: hidden;">
-      <span>是否输入错误: {{ !currentToken.amount.isValidInput }}</span>
-      <span>name: {{ currentToken.name.view }}</span>
-      decimals: {{ currentToken.decimals.handled }}<br/>
-      totalSupply: {{ currentToken.totalSupply.handled }}<br/>
-      <a-checkbox v-model:checked="currentToken.isInfiniteAllowance">
-        isInfiniteAllowance: {{ currentToken.isInfiniteAllowance }}
-      </a-checkbox>
-      precision: {{ currentToken.precision }}<br/>
-      walletBalanceOf: {{ currentToken.walletBalanceOf.handled }}<br/>
-      amount: {{ currentToken.amount.ether }} | {{ currentToken.amount.handled }} |  {{ currentToken.amount.input }} | {{ currentToken.amount.view }}<br/>
-      approveAmount: <br/>
-      error: {{ currentToken.error }}<br/>
-      associatedTokens: <br/>
-      <span class="ps-5 d-flex" v-for="(item, key) of currentToken.associatedTokens"
-        :key=key
-        >
-        toContractAddress: {{ key }}<br/>
-        allowance: {{ item.allowance }} <br/>
-        approve: {{ item.approve }}<br/>
-        walletAddress: {{ item.walletAddress }}<br/>
-      </span>
-    </small>
+  <small class="d-flex flex-column" style="overflow: hidden;">
+    <span>是否输入错误: {{ !currentToken.amount.isValidInput }}</span>
+    <span>name: {{ currentToken.name.view }}</span>
+    decimals: {{ currentToken.decimals.handled }}<br/>
+    totalSupply: {{ currentToken.totalSupply.handled }}<br/>
+    <a-checkbox v-model:checked="currentToken.isInfiniteAllowance">
+      isInfiniteAllowance: {{ currentToken.isInfiniteAllowance }}
+    </a-checkbox>
+    precision: {{ currentToken.precision }}<br/>
+    walletBalanceOf: {{ currentToken.walletBalanceOf.handled }}<br/>
+    amount: {{ currentToken.amount.ether }} | {{ currentToken.amount.handled }} |  {{ currentToken.amount.input }} | {{ currentToken.amount.view }}<br/>
+    approveAmount: <br/>
+    error: {{ currentToken.error }}<br/>
+    associatedTokens: <br/>
+    <span class="ps-5 d-flex" v-for="(item, key) of currentToken.associatedTokens"
+      :key=key
+      >
+      toContractAddress: {{ key }}<br/>
+      allowance: {{ item.allowance }} <br/>
+      approve: {{ item.approve }}<br/>
+      walletAddress: {{ item.walletAddress }}<br/>
+    </span>
+  </small>
 </template>
 
 <script>
+import BN from 'bignumber.js'
 import ButtonBusy from '../components/button-busy'
 import { isArray } from '../utils'
 
@@ -128,6 +132,8 @@ export default {
 
       // 限制输入
       currentToken.amount.input = value
+      // input自带限制
+      const result = currentToken.amount.input
       // 有效输入才影响
       this.showInputTip = !!currentToken.amount.inputView
 
@@ -141,10 +147,9 @@ export default {
     // 使用全部余额
     useAllBalance () {
       const { tokens } = this.$store
-      const { currentCode } = this
-      const __token__ = tokens[currentCode]
+      const { currentToken } = this
 
-      __token__.amount.input = __token__.walletBalanceOf.handledView
+      currentToken.amount.input = currentToken.walletBalanceOf.handledView
     },
     onInputBlur (e) {
       this.showInputTip = false

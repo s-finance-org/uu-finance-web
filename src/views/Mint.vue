@@ -1,7 +1,7 @@
 <template>
   <a-layout-content class="container-lg px-4">
     <div class="px-lg-5 mx-lg-3">
-      <div class="mt-lg-4 mb-lg-5 pb-4">
+      <div class="mt-lg-4 mb-4 mb-lg-5 pb-4">
         <h2 class="fs-2 mb-1">{{ $t('global.mint.title') }}</h2>
         <span class="fs-6 pe-5 d-block">{{ $t('global.mint.subtitle') }}</span>
       </div>
@@ -34,6 +34,7 @@
                   v-on:changeAmount=changeAmount
                   :approveToAddress=structure.approveToAddress
                   :codes=tokenItem
+                  :ensureBalance=actionItem.ensureBalance
                   :useApprove=structure.useApprove />
               </a-tab-pane>
               <a-tab-pane key="single" :tab="$t(actionItem.mintAssetMode.singleTabI18n)" class="pt-2">
@@ -44,6 +45,7 @@
                   v-on:changeAmount=changeAmount
                   :approveToAddress=structure.approveToAddress
                   :codes=structure.singleAssetTokens
+                  :ensureBalance=actionItem.ensureBalance
                   :useApprove=actionItem.useApprove />
               </a-tab-pane>
             </a-tabs>
@@ -76,7 +78,7 @@
               type="primary"
               @click=actionItem.mintBtnClick
               >
-              {{ $t(actionItem.mintBtnI18n)}}
+              {{ $t(actionItem.mintBtnI18n) }}
             </button-busy>
           </div>
         </a-tab-pane>
@@ -186,10 +188,19 @@ export default {
 
       // TODO: multi
       if (mintAction === 'deposit') {
-        
+                // 超过上限
+        // TODO: Model 来支持
+        // 更新余额到最大值
+        // TODO: 如果关掉这功能，则应该恢复最大值
+        tokenObj.amount.maxInput = tokenObj.walletBalanceOf.handled
+
         await UU.getLpt2UUVol(tokenObj)
       } else if (mintAction === 'withdraw') {
+        // TODO: 恢复最大值 (存入 超出范围，切回取出无问题，再切回存入还是超出的这种触发关系，)
+        tokenObj.amount.resetMaxInput()
+
         await UU.getUU2LptVol(tokenObj)
+
       }
     }
   },
@@ -232,6 +243,8 @@ export default {
               placeholderI18n: 'global.mint.withdraw.mintAssetMode.placeholder',
             },
             useApprove: false,
+            // TODO: 临时，应该更新参考值，获取最大可取回的 lpt 量
+            ensureBalance: false,
             mintBtnI18n: 'global.mint.withdraw.mintBtn',
             mintBtnClick: this.onBurn,
             preview: {
@@ -283,7 +296,7 @@ export default {
       const singleToken = tokens[this.singleSelectCode]
       let leastVol = ''
       let leastBusy = false
-console.log(this.mintAction)
+
       // TODO: temp 单选以及实现方法 （用Model 结构初始化来解决）
       if (this.mintAction === 'deposit') {
         if (singleToken && singleToken.associatedTokens && singleToken.associatedTokens[structure.approveToAddress]) {
@@ -339,5 +352,4 @@ console.log(this.mintAction)
 </script>
 
 <style lang="less" scoped>
-
 </style>
