@@ -1,3 +1,4 @@
+import ModelValueAddress from './value/address'
 import ModelValueEther from './value/ether'
 // import ModelValueDate from './value/date'
 import ModelValueBytes32 from './value/bytes32'
@@ -14,6 +15,7 @@ import ModelPool from './pool'
 import ModelState from './base/state'
 
 export {
+  ModelValueAddress,
   ModelValueEther,
 //   ModelValueDate,
   ModelValueBytes32,

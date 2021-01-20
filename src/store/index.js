@@ -6,7 +6,7 @@ import notify from './notify'
 import wallet from './wallet'
 import * as swaps from './swaps'
 
-import tokenAddresses from './tokens/helpers/tokenAddresses'
+import tokenAddresses from './tokens/token-addresses'
 
 export default reactive({
   i18n,

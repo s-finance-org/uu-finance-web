@@ -5,8 +5,6 @@ import { floor } from '../../utils/math/round'
 import ModelState from '../base/state'
 import ModelValueUint8 from './uint8'
 
-import { trim } from '../../utils'
-
 export default {
   /**
    * - 数据关联 value -> ether <-> handled -> view
@@ -17,6 +15,7 @@ export default {
    * @param {Function=} opts.viewMethod 显示内容的舍入方法
    * @param {string=} opts.viewPrefix 显示内容的前缀
    * @param {string=} opts.viewSuffix 显示内容的后缀
+   * @param {Function=} opts.trigger 触发器
    * @return {!Object}
    */
   create ({
@@ -27,6 +26,7 @@ export default {
     viewMethod = floor,
     viewPrefix = '',
     viewSuffix = '',
+    trigger = null
   } = {}) {
     const __default__ = {
       address: '',
@@ -88,6 +88,8 @@ export default {
 
         // sync
         __store__.handled = BN(result).div(precision).toString()
+        // TODO: 必须是方法
+        this.trigger && this.trigger()
         state.afterUpdate()
       },
 
@@ -100,14 +102,22 @@ export default {
         return __store__.handled
       },
       set handled (val) {
-        const { state, precision, decimals } = this
+        const { state, precision } = this
         // 避免空字符串赋值
-        let result = __store__.handled = BN(val || __default__.handled).toString()
+        __store__.handled = BN(val || __default__.handled).toString()
 
         // sync
         __store__.ether = BN(result).times(precision).toFixed(0, 1)
+        // TODO: 必须是方法
+        this.trigger && this.trigger()
         state.afterUpdate()
       },
+
+      /**
+       * 触发器
+       * @type {Function}
+       */
+      trigger,
 
       viewDecimal,
       viewMethod,

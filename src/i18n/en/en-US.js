@@ -111,6 +111,8 @@ export default {
       subtitle: 'Handling fees and interest-earning income are automatically issued to the wallet, and token rewards need to be collected',
       own: {
         tab: 'My reward',
+        totalApy: 'Total APY',
+        allClaim: 'All claim',
         pendingReward: 'Reward pending',
         paidReward: 'Reward received',
         totalReward: 'Total Reward',

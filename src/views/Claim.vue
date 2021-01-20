@@ -21,8 +21,18 @@
             item-layout="vertical"
             :pagination="pagination"
             :data-source="ixd.own.list"
-            class="col-12 col-md-8 pe-md-4 order-md-12 mt-2"
+            class="col-12 col-md-8 pe-md-4 order-md-12"
           >
+            <template #header>
+              <div class="d-flex justify-content-between align-items-center">
+                <span>
+                  <!-- {{ $t(structure.claimActions.own.totalApyI18n) }}: -->
+                </span>
+                <button-busy type="link" size="small" @click=ixd.own.claimAllBtn.click :busying=ixd.own.claimAllBtn.disabled :disabled=ixd.own.claimAllBtn.busy>
+                  {{ $t(structure.claimActions.own.claimAllBtnI18n) }}
+                </button-busy>
+              </div>
+            </template>
             <template #renderItem="{ item, index }">
               <a-list-item :key="'item-' + index">
                 <a-list-item-meta>
@@ -31,7 +41,7 @@
                       <component :is="`token-${item.code}`" class="token-icon me-3"></component>
                       <span class="fs-4">
                         {{ item.code }} {{ $t(structure.rewardI18n) }}
-                        <small class="d-block pt-1">{{ item.code }} {{ $t(structure.rewardI18n) }}: {{ item.apy }}</small>
+                        <small class="d-block pt-1">{{ item.code }} {{ $t('global.base.apy') }}: {{ item.apy }}</small>
                       </span>
                     </div>
                   </template>
@@ -129,11 +139,14 @@
 </template>
 
 <script>
+import BN from 'bignumber.js'
 import {
   iIntersect,
   iYellowinfo
 } from '@/components/icons'
 import ButtonBusy from '../components/button-busy'
+
+import { ModelValueEther } from '../models'
 
 export default {
   components: {
@@ -152,7 +165,7 @@ export default {
         hideOnSinglePage: true,
         // showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} items`
       },
-    };
+    }
   },
   computed: {
     structure () {
@@ -164,6 +177,8 @@ export default {
         claimActions: {
           own: {
             tabI18n: 'global.claim.own.tab',
+            totalApyI18n: 'global.claim.own.totalApy',
+            claimAllBtnI18n: 'global.claim.own.allClaim',
             pendingRewardI18n: 'global.claim.own.pendingReward',
             paidRewardI18n: 'global.claim.own.paidReward',
             totalRewardI18n: 'global.claim.own.totalReward',
@@ -186,29 +201,45 @@ export default {
       }
     },
     ixd () {
-
+      const { tokens, tokenAddresses } = this.$store
       const ownList = []
 
+      tokens.UU.supportedRewardAddresses.forEach(_address => {
+        const _token = tokenAddresses[_address.handled]
+        const foo = tokens.UU.associatedTokens[_address.handled]
+        // TODO: 如果没有，则就是项目自带的 token 没有，需要看 claimableReward、claimedReward
 
+        if (!(foo && _token)) return false
+
+        ownList.push({
+          code: _token.code,
+          apy: '?%',
+          pendingReward: foo.claimableReward ? foo.claimableReward.view : '',
+          pendingRewardConvertUSD: '≈$ ?',
+          paidReward: foo.claimedReward ? foo.claimedReward.view : '',
+          // TODO: temp
+          totalReward: foo.claimableReward && foo.claimedReward
+            ? ModelValueEther.create({
+              decimals: _token.decimals,
+              handled: BN(foo.claimableReward.handled).plus(foo.claimedReward.handled).toString()
+            }).view : '',
+          receiveBtn: {
+            disabled: false,
+            busy: false,
+            click: () => tokens.UU.claimReward(_token)
+          },
+          exchangeRate: '1 SFG = 0.5472 DAI'
+        })
+      })
 
       return {
         own: {
-          list: [
-            {
-              code: 'USDT',
-              apy: '?%',
-              pendingReward: '?',
-              pendingRewardConvertUSD: '≈$ ?',
-              paidReward: '?',
-              totalReward: '?',
-              receiveBtn: {
-                disabled: false,
-                busy: false,
-                click: () => {}
-              },
-              exchangeRate: '1 SFG = 0.5472 DAI'
-            }
-          ]
+          claimAllBtn: {
+            disabled: false,
+            busy: tokens.UU.state.busy,
+            click: () => tokens.UU.claimAllRewards()
+          },
+          list: ownList
         },
         claimTo: {
 
@@ -244,24 +275,28 @@ export default {
 
 <style lang="less" scoped>
 .ant-list-split {
-  .ant-list-item {
-    border-bottom-width: 0px;
-    &:last-child {
-      border-bottom-width: 0px;
-    }
-    .ant-list-item-meta {
-      margin-bottom: 0px;
-      .token-icon {
-        font-size: 52px;
-        height: 52px;
+  .ant-spin-container {
+    .ant-list-items {
+      .ant-list-item {
+        border-bottom-width: 0px;
+        &:last-child {
+          border-bottom-width: 0px;
+        }
+        .ant-list-item-meta {
+          margin-bottom: 0px;
+          .token-icon {
+            font-size: 52px;
+            height: 52px;
+          }
+          .icon-group-tokens {
+            zoom: 1.625
+          }
+        }
+        .content {
+          background: rgba(17, 20, 20, 0.03);
+          border-radius: 4px;
+        }
       }
-      .icon-group-tokens {
-        zoom: 1.625
-      }
-    }
-    .content {
-      background: rgba(17, 20, 20, 0.03);
-      border-radius: 4px;
     }
   }
 }

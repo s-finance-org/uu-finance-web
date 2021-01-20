@@ -111,6 +111,8 @@ export default {
       subtitle: '手续费和生息收益自动发放至钱包，代币奖励需要领取',
       own: {
         tab: '我的奖励',
+        totalApy: '合计年化收益率',
+        allClaim: '领取全部',
         pendingReward: '待领取奖励',
         paidReward: '已领取奖励',
         totalReward: '合计奖励',

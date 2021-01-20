@@ -19,7 +19,7 @@ export default {
    * @param {Function=} opts.viewMethod 显示内容的舍入方法
    * @param {string=} opts.viewPrefix 显示内容的前缀
    * @param {string=} opts.viewSuffix 显示内容的后缀
-   * @param {Promise=} opts.trigger 数值来源
+   * @param {Promise=} opts.trigger 触发器
    * @return {!Object}
    */
   create ({

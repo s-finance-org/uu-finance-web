@@ -1,1511 +1,544 @@
 import BN from 'bignumber.js'
+import { reactive } from 'vue'
 
-import { ModelToken, ModelValueEther } from '../../models'
+import { ModelToken, ModelValueEther, ModelValueAddress } from '../../models'
 import { getDotenvAddress } from '../helpers/methods'
 
+import tokenAddresses from './token-addresses'
+
+import swaps from '../swaps'
 import storeWallet from '../wallet'
 import notify from '../notify'
 import i18n from '../../i18n'
 
-const abi = [{
-	"anonymous": false,
-	"inputs": [{
-		"indexed": false,
-		"internalType": "address",
-		"name": "lpt",
-		"type": "address"
-	}, {
-		"indexed": false,
-		"internalType": "address",
-		"name": "swap",
-		"type": "address"
-	}, {
-		"indexed": false,
-		"internalType": "address",
-		"name": "depo",
-		"type": "address"
-	}, {
-		"indexed": false,
-		"internalType": "uint256",
-		"name": "nvi",
-		"type": "uint256"
-	}, {
-		"indexed": false,
-		"internalType": "address",
-		"name": "gauge",
-		"type": "address"
-	}],
-	"name": "AddLPT",
-	"type": "event"
-}, {
-	"anonymous": false,
-	"inputs": [{
-		"indexed": false,
-		"internalType": "address",
-		"name": "reward",
-		"type": "address"
-	}],
-	"name": "AddReward",
-	"type": "event"
-}, {
-	"anonymous": false,
-	"inputs": [{
-		"indexed": true,
-		"internalType": "address",
-		"name": "owner",
-		"type": "address"
-	}, {
-		"indexed": true,
-		"internalType": "address",
-		"name": "spender",
-		"type": "address"
-	}, {
-		"indexed": false,
-		"internalType": "uint256",
-		"name": "value",
-		"type": "uint256"
-	}],
-	"name": "Approval",
-	"type": "event"
-}, {
-	"anonymous": false,
-	"inputs": [{
-		"indexed": true,
-		"internalType": "address",
-		"name": "to",
-		"type": "address"
-	}, {
-		"indexed": true,
-		"internalType": "address",
-		"name": "reward",
-		"type": "address"
-	}, {
-		"indexed": false,
-		"internalType": "uint256",
-		"name": "vol",
-		"type": "uint256"
-	}, {
-		"indexed": false,
-		"internalType": "uint256",
-		"name": "tip",
-		"type": "uint256"
-	}, {
-		"indexed": true,
-		"internalType": "address",
-		"name": "agent",
-		"type": "address"
-	}],
-	"name": "ClaimTo",
-	"type": "event"
-}, {
-	"anonymous": false,
-	"inputs": [{
-		"indexed": true,
-		"internalType": "address",
-		"name": "previousGovernor",
-		"type": "address"
-	}, {
-		"indexed": true,
-		"internalType": "address",
-		"name": "newGovernor",
-		"type": "address"
-	}],
-	"name": "GovernorshipTransferred",
-	"type": "event"
-}, {
-	"anonymous": false,
-	"inputs": [{
-		"indexed": false,
-		"internalType": "address",
-		"name": "lpt",
-		"type": "address"
-	}],
-	"name": "RemoveLPT",
-	"type": "event"
-}, {
-	"anonymous": false,
-	"inputs": [{
-		"indexed": false,
-		"internalType": "address",
-		"name": "reward",
-		"type": "address"
-	}, {
-		"indexed": false,
-		"internalType": "uint256",
-		"name": "remain",
-		"type": "uint256"
-	}],
-	"name": "RemoveReward",
-	"type": "event"
-}, {
-	"anonymous": false,
-	"inputs": [{
-		"indexed": true,
-		"internalType": "address",
-		"name": "agent",
-		"type": "address"
-	}, {
-		"indexed": true,
-		"internalType": "address",
-		"name": "gauge",
-		"type": "address"
-	}, {
-		"indexed": true,
-		"internalType": "address",
-		"name": "reward",
-		"type": "address"
-	}, {
-		"indexed": false,
-		"internalType": "uint256",
-		"name": "vol",
-		"type": "uint256"
-	}, {
-		"indexed": false,
-		"internalType": "uint256",
-		"name": "tip",
-		"type": "uint256"
-	}],
-	"name": "Settle",
-	"type": "event"
-}, {
-	"anonymous": false,
-	"inputs": [{
-		"indexed": true,
-		"internalType": "address",
-		"name": "from",
-		"type": "address"
-	}, {
-		"indexed": true,
-		"internalType": "address",
-		"name": "to",
-		"type": "address"
-	}, {
-		"indexed": false,
-		"internalType": "uint256",
-		"name": "value",
-		"type": "uint256"
-	}],
-	"name": "Transfer",
-	"type": "event"
-}, {
-	"anonymous": false,
-	"inputs": [{
-		"indexed": false,
-		"internalType": "uint256",
-		"name": "upPrice",
-		"type": "uint256"
-	}, {
-		"indexed": false,
-		"internalType": "uint256",
-		"name": "timestamp",
-		"type": "uint256"
-	}],
-	"name": "UpdatePrice",
-	"type": "event"
-}, {
-	"inputs": [],
-	"name": "DOMAIN_TYPEHASH",
-	"outputs": [{
-		"internalType": "bytes32",
-		"name": "",
-		"type": "bytes32"
-	}],
-	"stateMutability": "view",
-	"type": "function"
-}, {
-	"inputs": [],
-	"name": "PERMIT_TYPEHASH",
-	"outputs": [{
-		"internalType": "bytes32",
-		"name": "",
-		"type": "bytes32"
-	}],
-	"stateMutability": "view",
-	"type": "function"
-}, {
-	"inputs": [{
-		"internalType": "address",
-		"name": "lpt",
-		"type": "address"
-	}, {
-		"internalType": "address",
-		"name": "swap",
-		"type": "address"
-	}, {
-		"internalType": "address",
-		"name": "depo",
-		"type": "address"
-	}, {
-		"internalType": "uint256",
-		"name": "nvi",
-		"type": "uint256"
-	}, {
-		"internalType": "address",
-		"name": "gauge",
-		"type": "address"
-	}],
-	"name": "addLPT",
-	"outputs": [],
-	"stateMutability": "nonpayable",
-	"type": "function"
-}, {
-	"inputs": [{
-		"internalType": "address",
-		"name": "owner",
-		"type": "address"
-	}, {
-		"internalType": "address",
-		"name": "spender",
-		"type": "address"
-	}],
-	"name": "allowance",
-	"outputs": [{
-		"internalType": "uint256",
-		"name": "",
-		"type": "uint256"
-	}],
-	"stateMutability": "view",
-	"type": "function"
-}, {
-	"inputs": [{
-		"internalType": "address",
-		"name": "spender",
-		"type": "address"
-	}, {
-		"internalType": "uint256",
-		"name": "amount",
-		"type": "uint256"
-	}],
-	"name": "approve",
-	"outputs": [{
-		"internalType": "bool",
-		"name": "success",
-		"type": "bool"
-	}],
-	"stateMutability": "nonpayable",
-	"type": "function"
-}, {
-	"inputs": [{
-		"internalType": "address",
-		"name": "account",
-		"type": "address"
-	}],
-	"name": "balanceOf",
-	"outputs": [{
-		"internalType": "uint256",
-		"name": "",
-		"type": "uint256"
-	}],
-	"stateMutability": "view",
-	"type": "function"
-}, {
-	"inputs": [{
-		"internalType": "uint256",
-		"name": "amt",
-		"type": "uint256"
-	}, {
-		"internalType": "address",
-		"name": "lpt",
-		"type": "address"
-	}, {
-		"internalType": "uint256",
-		"name": "minVol",
-		"type": "uint256"
-	}],
-	"name": "burn",
-	"outputs": [{
-		"internalType": "uint256",
-		"name": "vol",
-		"type": "uint256"
-	}],
-	"stateMutability": "nonpayable",
-	"type": "function"
-}, {
-	"inputs": [],
-	"name": "calcPrice",
-	"outputs": [{
-		"internalType": "uint256",
-		"name": "",
-		"type": "uint256"
-	}],
-	"stateMutability": "view",
-	"type": "function"
-}, {
-	"inputs": [{
-		"internalType": "address",
-		"name": "reward",
-		"type": "address"
-	}],
-	"name": "claim",
-	"outputs": [{
-		"internalType": "uint256",
-		"name": "vol",
-		"type": "uint256"
-	}],
-	"stateMutability": "nonpayable",
-	"type": "function"
-}, {
-	"inputs": [],
-	"name": "claim",
-	"outputs": [],
-	"stateMutability": "nonpayable",
-	"type": "function"
-}, {
-	"inputs": [{
-		"internalType": "address",
-		"name": "to",
-		"type": "address"
-	}, {
-		"internalType": "address",
-		"name": "reward",
-		"type": "address"
-	}],
-	"name": "claimTo",
-	"outputs": [{
-		"internalType": "uint256",
-		"name": "vol",
-		"type": "uint256"
-	}, {
-		"internalType": "uint256",
-		"name": "tip",
-		"type": "uint256"
-	}],
-	"stateMutability": "nonpayable",
-	"type": "function"
-}, {
-	"inputs": [{
-		"internalType": "address",
-		"name": "acct",
-		"type": "address"
-	}, {
-		"internalType": "address",
-		"name": "reward",
-		"type": "address"
-	}],
-	"name": "claimable",
-	"outputs": [{
-		"internalType": "uint256",
-		"name": "",
-		"type": "uint256"
-	}],
-	"stateMutability": "view",
-	"type": "function"
-}, {
-	"inputs": [{
-		"internalType": "address",
-		"name": "acct",
-		"type": "address"
-	}, {
-		"internalType": "address",
-		"name": "reward",
-		"type": "address"
-	}],
-	"name": "claimed",
-	"outputs": [{
-		"internalType": "uint256",
-		"name": "",
-		"type": "uint256"
-	}],
-	"stateMutability": "view",
-	"type": "function"
-}, {
-	"inputs": [],
-	"name": "decimals",
-	"outputs": [{
-		"internalType": "uint8",
-		"name": "",
-		"type": "uint8"
-	}],
-	"stateMutability": "view",
-	"type": "function"
-}, {
-	"inputs": [{
-		"internalType": "address",
-		"name": "spender",
-		"type": "address"
-	}, {
-		"internalType": "uint256",
-		"name": "decrement",
-		"type": "uint256"
-	}],
-	"name": "decreaseAllowance",
-	"outputs": [{
-		"internalType": "bool",
-		"name": "",
-		"type": "bool"
-	}],
-	"stateMutability": "nonpayable",
-	"type": "function"
-}, {
-	"inputs": [{
-		"internalType": "bytes32",
-		"name": "key",
-		"type": "bytes32"
-	}, {
-		"internalType": "address",
-		"name": "addr",
-		"type": "address"
-	}],
-	"name": "getConfig",
-	"outputs": [{
-		"internalType": "uint256",
-		"name": "",
-		"type": "uint256"
-	}],
-	"stateMutability": "view",
-	"type": "function"
-}, {
-	"inputs": [{
-		"internalType": "bytes32",
-		"name": "key",
-		"type": "bytes32"
-	}],
-	"name": "getConfig",
-	"outputs": [{
-		"internalType": "uint256",
-		"name": "",
-		"type": "uint256"
-	}],
-	"stateMutability": "view",
-	"type": "function"
-}, {
-	"inputs": [{
-		"internalType": "bytes32",
-		"name": "key",
-		"type": "bytes32"
-	}, {
-		"internalType": "uint256",
-		"name": "index",
-		"type": "uint256"
-	}],
-	"name": "getConfig",
-	"outputs": [{
-		"internalType": "uint256",
-		"name": "",
-		"type": "uint256"
-	}],
-	"stateMutability": "view",
-	"type": "function"
-}, {
-	"inputs": [],
-	"name": "governor",
-	"outputs": [{
-		"internalType": "address",
-		"name": "",
-		"type": "address"
-	}],
-	"stateMutability": "view",
-	"type": "function"
-}, {
-	"inputs": [{
-		"internalType": "address",
-		"name": "spender",
-		"type": "address"
-	}, {
-		"internalType": "uint256",
-		"name": "increment",
-		"type": "uint256"
-	}],
-	"name": "increaseAllowance",
-	"outputs": [{
-		"internalType": "bool",
-		"name": "",
-		"type": "bool"
-	}],
-	"stateMutability": "nonpayable",
-	"type": "function"
-}, {
-	"inputs": [{
-		"internalType": "address",
-		"name": "governor_",
-		"type": "address"
-	}, {
-		"internalType": "address",
-		"name": "up_",
-		"type": "address"
-	}],
-	"name": "initialize",
-	"outputs": [],
-	"stateMutability": "nonpayable",
-	"type": "function"
-}, {
-	"inputs": [{
-		"internalType": "address",
-		"name": "governor_",
-		"type": "address"
-	}],
-	"name": "initialize",
-	"outputs": [],
-	"stateMutability": "nonpayable",
-	"type": "function"
-}, {
-	"inputs": [],
-	"name": "initialize2",
-	"outputs": [],
-	"stateMutability": "nonpayable",
-	"type": "function"
-}, {
-	"inputs": [],
-	"name": "lastUpdateTimeSpan",
-	"outputs": [{
-		"internalType": "uint256",
-		"name": "",
-		"type": "uint256"
-	}],
-	"stateMutability": "view",
-	"type": "function"
-}, {
-	"inputs": [{
-		"internalType": "address",
-		"name": "lpt",
-		"type": "address"
-	}, {
-		"internalType": "uint256",
-		"name": "vol",
-		"type": "uint256"
-	}],
-	"name": "lpt2uu",
-	"outputs": [{
-		"internalType": "uint256",
-		"name": "",
-		"type": "uint256"
-	}],
-	"stateMutability": "view",
-	"type": "function"
-}, {
-	"inputs": [{
-		"internalType": "address",
-		"name": "lpt",
-		"type": "address"
-	}],
-	"name": "lptBalance",
-	"outputs": [{
-		"internalType": "uint256",
-		"name": "",
-		"type": "uint256"
-	}],
-	"stateMutability": "view",
-	"type": "function"
-}, {
-	"inputs": [],
-	"name": "lptN",
-	"outputs": [{
-		"internalType": "uint256",
-		"name": "",
-		"type": "uint256"
-	}],
-	"stateMutability": "view",
-	"type": "function"
-}, {
-	"inputs": [{
-		"internalType": "address",
-		"name": "lpt",
-		"type": "address"
-	}],
-	"name": "lptPrice",
-	"outputs": [{
-		"internalType": "uint256",
-		"name": "",
-		"type": "uint256"
-	}],
-	"stateMutability": "view",
-	"type": "function"
-}, {
-	"inputs": [{
-		"internalType": "uint256",
-		"name": "",
-		"type": "uint256"
-	}],
-	"name": "lpts",
-	"outputs": [{
-		"internalType": "address",
-		"name": "",
-		"type": "address"
-	}],
-	"stateMutability": "view",
-	"type": "function"
-}, {
-	"inputs": [{
-		"internalType": "address",
-		"name": "lpt",
-		"type": "address"
-	}, {
-		"internalType": "uint256",
-		"name": "vol",
-		"type": "uint256"
-	}, {
-		"internalType": "uint256",
-		"name": "minMint",
-		"type": "uint256"
-	}],
-	"name": "mint",
-	"outputs": [{
-		"internalType": "uint256",
-		"name": "amt",
-		"type": "uint256"
-	}],
-	"stateMutability": "nonpayable",
-	"type": "function"
-}, {
-	"inputs": [],
-	"name": "name",
-	"outputs": [{
-		"internalType": "string",
-		"name": "",
-		"type": "string"
-	}],
-	"stateMutability": "view",
-	"type": "function"
-}, {
-	"inputs": [{
-		"internalType": "address",
-		"name": "lpt",
-		"type": "address"
-	}, {
-		"internalType": "uint256",
-		"name": "vol",
-		"type": "uint256"
-	}],
-	"name": "netValue",
-	"outputs": [{
-		"internalType": "uint256",
-		"name": "amt",
-		"type": "uint256"
-	}],
-	"stateMutability": "view",
-	"type": "function"
-}, {
-	"inputs": [{
-		"internalType": "address",
-		"name": "lpt",
-		"type": "address"
-	}],
-	"name": "netValue",
-	"outputs": [{
-		"internalType": "uint256",
-		"name": "amt",
-		"type": "uint256"
-	}],
-	"stateMutability": "view",
-	"type": "function"
-}, {
-	"inputs": [{
-		"internalType": "address",
-		"name": "",
-		"type": "address"
-	}],
-	"name": "nonces",
-	"outputs": [{
-		"internalType": "uint256",
-		"name": "",
-		"type": "uint256"
-	}],
-	"stateMutability": "view",
-	"type": "function"
-}, {
-	"inputs": [{
-		"internalType": "address",
-		"name": "owner",
-		"type": "address"
-	}, {
-		"internalType": "address",
-		"name": "spender",
-		"type": "address"
-	}, {
-		"internalType": "uint256",
-		"name": "amount",
-		"type": "uint256"
-	}, {
-		"internalType": "uint256",
-		"name": "deadline",
-		"type": "uint256"
-	}, {
-		"internalType": "uint8",
-		"name": "v",
-		"type": "uint8"
-	}, {
-		"internalType": "bytes32",
-		"name": "r",
-		"type": "bytes32"
-	}, {
-		"internalType": "bytes32",
-		"name": "s",
-		"type": "bytes32"
-	}],
-	"name": "permit",
-	"outputs": [],
-	"stateMutability": "nonpayable",
-	"type": "function"
-}, {
-	"inputs": [{
-		"internalType": "address",
-		"name": "lpt",
-		"type": "address"
-	}],
-	"name": "removeLPT",
-	"outputs": [],
-	"stateMutability": "nonpayable",
-	"type": "function"
-}, {
-	"inputs": [{
-		"internalType": "address",
-		"name": "reward",
-		"type": "address"
-	}],
-	"name": "removeReward",
-	"outputs": [{
-		"internalType": "uint256",
-		"name": "remain",
-		"type": "uint256"
-	}],
-	"stateMutability": "nonpayable",
-	"type": "function"
-}, {
-	"inputs": [],
-	"name": "renounceGovernorship",
-	"outputs": [],
-	"stateMutability": "nonpayable",
-	"type": "function"
-}, {
-	"inputs": [],
-	"name": "rewardN",
-	"outputs": [{
-		"internalType": "uint256",
-		"name": "",
-		"type": "uint256"
-	}],
-	"stateMutability": "view",
-	"type": "function"
-}, {
-	"inputs": [{
-		"internalType": "uint256",
-		"name": "",
-		"type": "uint256"
-	}],
-	"name": "rewards",
-	"outputs": [{
-		"internalType": "address",
-		"name": "",
-		"type": "address"
-	}],
-	"stateMutability": "view",
-	"type": "function"
-}, {
-	"inputs": [{
-		"internalType": "bytes32",
-		"name": "key",
-		"type": "bytes32"
-	}, {
-		"internalType": "uint256",
-		"name": "value",
-		"type": "uint256"
-	}],
-	"name": "setConfig",
-	"outputs": [],
-	"stateMutability": "nonpayable",
-	"type": "function"
-}, {
-	"inputs": [{
-		"internalType": "bytes32",
-		"name": "key",
-		"type": "bytes32"
-	}, {
-		"internalType": "address",
-		"name": "addr",
-		"type": "address"
-	}, {
-		"internalType": "uint256",
-		"name": "value",
-		"type": "uint256"
-	}],
-	"name": "setConfig",
-	"outputs": [],
-	"stateMutability": "nonpayable",
-	"type": "function"
-}, {
-	"inputs": [{
-		"internalType": "bytes32",
-		"name": "key",
-		"type": "bytes32"
-	}, {
-		"internalType": "uint256",
-		"name": "index",
-		"type": "uint256"
-	}, {
-		"internalType": "uint256",
-		"name": "value",
-		"type": "uint256"
-	}],
-	"name": "setConfig",
-	"outputs": [],
-	"stateMutability": "nonpayable",
-	"type": "function"
-}, {
-	"inputs": [{
-		"internalType": "address",
-		"name": "lpt",
-		"type": "address"
-	}, {
-		"internalType": "uint256",
-		"name": "j",
-		"type": "uint256"
-	}],
-	"name": "settle",
-	"outputs": [],
-	"stateMutability": "nonpayable",
-	"type": "function"
-}, {
-	"inputs": [{
-		"internalType": "address",
-		"name": "acct",
-		"type": "address"
-	}, {
-		"internalType": "address",
-		"name": "lpt",
-		"type": "address"
-	}, {
-		"internalType": "uint256",
-		"name": "j",
-		"type": "uint256"
-	}],
-	"name": "settleable",
-	"outputs": [{
-		"internalType": "address",
-		"name": "reward",
-		"type": "address"
-	}, {
-		"internalType": "uint256",
-		"name": "vol",
-		"type": "uint256"
-	}, {
-		"internalType": "uint256",
-		"name": "tip",
-		"type": "uint256"
-	}],
-	"stateMutability": "view",
-	"type": "function"
-}, {
-	"inputs": [],
-	"name": "symbol",
-	"outputs": [{
-		"internalType": "string",
-		"name": "",
-		"type": "string"
-	}],
-	"stateMutability": "view",
-	"type": "function"
-}, {
-	"inputs": [{
-		"internalType": "address",
-		"name": "reward",
-		"type": "address"
-	}],
-	"name": "totalClaimed",
-	"outputs": [{
-		"internalType": "uint256",
-		"name": "",
-		"type": "uint256"
-	}],
-	"stateMutability": "view",
-	"type": "function"
-}, {
-	"inputs": [],
-	"name": "totalNetValue",
-	"outputs": [{
-		"internalType": "uint256",
-		"name": "amt",
-		"type": "uint256"
-	}],
-	"stateMutability": "view",
-	"type": "function"
-}, {
-	"inputs": [],
-	"name": "totalSupply",
-	"outputs": [{
-		"internalType": "uint256",
-		"name": "",
-		"type": "uint256"
-	}],
-	"stateMutability": "view",
-	"type": "function"
-}, {
-	"inputs": [{
-		"internalType": "address",
-		"name": "recipient",
-		"type": "address"
-	}, {
-		"internalType": "uint256",
-		"name": "amount",
-		"type": "uint256"
-	}],
-	"name": "transfer",
-	"outputs": [{
-		"internalType": "bool",
-		"name": "success",
-		"type": "bool"
-	}],
-	"stateMutability": "nonpayable",
-	"type": "function"
-}, {
-	"inputs": [{
-		"internalType": "address",
-		"name": "sender",
-		"type": "address"
-	}, {
-		"internalType": "address",
-		"name": "recipient",
-		"type": "address"
-	}, {
-		"internalType": "uint256",
-		"name": "amount",
-		"type": "uint256"
-	}],
-	"name": "transferFrom",
-	"outputs": [{
-		"internalType": "bool",
-		"name": "success",
-		"type": "bool"
-	}],
-	"stateMutability": "nonpayable",
-	"type": "function"
-}, {
-	"inputs": [{
-		"internalType": "address",
-		"name": "newGovernor",
-		"type": "address"
-	}],
-	"name": "transferGovernorship",
-	"outputs": [],
-	"stateMutability": "nonpayable",
-	"type": "function"
-}, {
-	"inputs": [{
-		"internalType": "address",
-		"name": "reward",
-		"type": "address"
-	}],
-	"name": "tryAddReward",
-	"outputs": [{
-		"internalType": "bool",
-		"name": "success",
-		"type": "bool"
-	}],
-	"stateMutability": "nonpayable",
-	"type": "function"
-}, {
-	"inputs": [],
-	"name": "up",
-	"outputs": [{
-		"internalType": "address",
-		"name": "",
-		"type": "address"
-	}],
-	"stateMutability": "view",
-	"type": "function"
-}, {
-	"inputs": [{
-		"internalType": "uint256",
-		"name": "vol",
-		"type": "uint256"
-	}],
-	"name": "up2uu",
-	"outputs": [{
-		"internalType": "uint256",
-		"name": "",
-		"type": "uint256"
-	}],
-	"stateMutability": "view",
-	"type": "function"
-}, {
-	"inputs": [{
-		"internalType": "address",
-		"name": "",
-		"type": "address"
-	}, {
-		"internalType": "address",
-		"name": "",
-		"type": "address"
-	}],
-	"name": "upAllowance",
-	"outputs": [{
-		"internalType": "uint256",
-		"name": "",
-		"type": "uint256"
-	}],
-	"stateMutability": "view",
-	"type": "function"
-}, {
-	"inputs": [{
-		"internalType": "address",
-		"name": "owner",
-		"type": "address"
-	}, {
-		"internalType": "address",
-		"name": "spender",
-		"type": "address"
-	}, {
-		"internalType": "uint256",
-		"name": "volume",
-		"type": "uint256"
-	}],
-	"name": "upApprove_",
-	"outputs": [{
-		"internalType": "bool",
-		"name": "success",
-		"type": "bool"
-	}],
-	"stateMutability": "nonpayable",
-	"type": "function"
-}, {
-	"inputs": [{
-		"internalType": "address",
-		"name": "account",
-		"type": "address"
-	}],
-	"name": "upBalanceOf",
-	"outputs": [{
-		"internalType": "uint256",
-		"name": "",
-		"type": "uint256"
-	}],
-	"stateMutability": "view",
-	"type": "function"
-}, {
-	"inputs": [{
-		"internalType": "string",
-		"name": "name_",
-		"type": "string"
-	}, {
-		"internalType": "address",
-		"name": "verifyingContract",
-		"type": "address"
-	}, {
-		"internalType": "address",
-		"name": "owner",
-		"type": "address"
-	}, {
-		"internalType": "address",
-		"name": "spender",
-		"type": "address"
-	}, {
-		"internalType": "uint256",
-		"name": "rawAmount",
-		"type": "uint256"
-	}, {
-		"internalType": "uint256",
-		"name": "deadline",
-		"type": "uint256"
-	}, {
-		"internalType": "uint8",
-		"name": "v",
-		"type": "uint8"
-	}, {
-		"internalType": "bytes32",
-		"name": "r",
-		"type": "bytes32"
-	}, {
-		"internalType": "bytes32",
-		"name": "s",
-		"type": "bytes32"
-	}],
-	"name": "upPermit_",
-	"outputs": [],
-	"stateMutability": "nonpayable",
-	"type": "function"
-}, {
-	"inputs": [],
-	"name": "upPrice",
-	"outputs": [{
-		"internalType": "uint256",
-		"name": "",
-		"type": "uint256"
-	}],
-	"stateMutability": "view",
-	"type": "function"
-}, {
-	"inputs": [],
-	"name": "upPriceFactor",
-	"outputs": [{
-		"internalType": "uint256",
-		"name": "",
-		"type": "uint256"
-	}],
-	"stateMutability": "view",
-	"type": "function"
-}, {
-	"inputs": [],
-	"name": "upTotalSupply",
-	"outputs": [{
-		"internalType": "uint256",
-		"name": "",
-		"type": "uint256"
-	}],
-	"stateMutability": "view",
-	"type": "function"
-}, {
-	"inputs": [{
-		"internalType": "address",
-		"name": "spender",
-		"type": "address"
-	}, {
-		"internalType": "address",
-		"name": "sender",
-		"type": "address"
-	}, {
-		"internalType": "address",
-		"name": "recipient",
-		"type": "address"
-	}, {
-		"internalType": "uint256",
-		"name": "volume",
-		"type": "uint256"
-	}],
-	"name": "upTransferFrom_",
-	"outputs": [{
-		"internalType": "bool",
-		"name": "success",
-		"type": "bool"
-	}],
-	"stateMutability": "nonpayable",
-	"type": "function"
-}, {
-	"inputs": [{
-		"internalType": "address",
-		"name": "sender",
-		"type": "address"
-	}, {
-		"internalType": "address",
-		"name": "recipient",
-		"type": "address"
-	}, {
-		"internalType": "uint256",
-		"name": "volume",
-		"type": "uint256"
-	}],
-	"name": "upTransfer_",
-	"outputs": [{
-		"internalType": "bool",
-		"name": "success",
-		"type": "bool"
-	}],
-	"stateMutability": "nonpayable",
-	"type": "function"
-}, {
-	"inputs": [],
-	"name": "updatePrice",
-	"outputs": [],
-	"stateMutability": "nonpayable",
-	"type": "function"
-}, {
-	"inputs": [{
-		"internalType": "uint256",
-		"name": "amt",
-		"type": "uint256"
-	}, {
-		"internalType": "address",
-		"name": "lpt",
-		"type": "address"
-	}],
-	"name": "uu2lpt",
-	"outputs": [{
-		"internalType": "uint256",
-		"name": "",
-		"type": "uint256"
-	}],
-	"stateMutability": "view",
-	"type": "function"
-}, {
-	"inputs": [{
-		"internalType": "uint256",
-		"name": "amount",
-		"type": "uint256"
-	}],
-	"name": "uu2up",
-	"outputs": [{
-		"internalType": "uint256",
-		"name": "",
-		"type": "uint256"
-	}],
-	"stateMutability": "view",
-	"type": "function"
-}]
+const abi = [{"anonymous":false,"inputs":[{"indexed":false,"internalType":"address","name":"lpt","type":"address"},{"indexed":false,"internalType":"address","name":"swap","type":"address"},{"indexed":false,"internalType":"address","name":"depo","type":"address"},{"indexed":false,"internalType":"uint256","name":"nvi","type":"uint256"},{"indexed":false,"internalType":"address","name":"gauge","type":"address"}],"name":"AddLPT","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"address","name":"reward","type":"address"}],"name":"AddReward","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"owner","type":"address"},{"indexed":true,"internalType":"address","name":"spender","type":"address"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"Approval","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":true,"internalType":"address","name":"reward","type":"address"},{"indexed":false,"internalType":"uint256","name":"vol","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"tip","type":"uint256"},{"indexed":true,"internalType":"address","name":"agent","type":"address"}],"name":"ClaimTo","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"previousGovernor","type":"address"},{"indexed":true,"internalType":"address","name":"newGovernor","type":"address"}],"name":"GovernorshipTransferred","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"address","name":"lpt","type":"address"}],"name":"RemoveLPT","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"address","name":"reward","type":"address"},{"indexed":false,"internalType":"uint256","name":"remain","type":"uint256"}],"name":"RemoveReward","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"agent","type":"address"},{"indexed":true,"internalType":"address","name":"gauge","type":"address"},{"indexed":true,"internalType":"address","name":"reward","type":"address"},{"indexed":false,"internalType":"uint256","name":"vol","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"tip","type":"uint256"}],"name":"Settle","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"from","type":"address"},{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"Transfer","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint256","name":"upPrice","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"timestamp","type":"uint256"}],"name":"UpdatePrice","type":"event"},{"inputs":[],"name":"DOMAIN_TYPEHASH","outputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"PERMIT_TYPEHASH","outputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"lpt","type":"address"},{"internalType":"address","name":"swap","type":"address"},{"internalType":"address","name":"depo","type":"address"},{"internalType":"uint256","name":"nvi","type":"uint256"},{"internalType":"address","name":"gauge","type":"address"}],"name":"addLPT","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"spender","type":"address"}],"name":"allowance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"approve","outputs":[{"internalType":"bool","name":"success","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"amt","type":"uint256"},{"internalType":"address","name":"lpt","type":"address"},{"internalType":"uint256","name":"minVol","type":"uint256"}],"name":"burn","outputs":[{"internalType":"uint256","name":"vol","type":"uint256"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"calcPrice","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"reward","type":"address"}],"name":"claim","outputs":[{"internalType":"uint256","name":"vol","type":"uint256"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"claim","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"address","name":"reward","type":"address"}],"name":"claimTo","outputs":[{"internalType":"uint256","name":"vol","type":"uint256"},{"internalType":"uint256","name":"tip","type":"uint256"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"acct","type":"address"},{"internalType":"address","name":"reward","type":"address"}],"name":"claimable","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"acct","type":"address"},{"internalType":"address","name":"reward","type":"address"}],"name":"claimed","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"decimals","outputs":[{"internalType":"uint8","name":"","type":"uint8"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"decrement","type":"uint256"}],"name":"decreaseAllowance","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"bytes32","name":"key","type":"bytes32"},{"internalType":"address","name":"addr","type":"address"}],"name":"getConfig","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"bytes32","name":"key","type":"bytes32"}],"name":"getConfig","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"bytes32","name":"key","type":"bytes32"},{"internalType":"uint256","name":"index","type":"uint256"}],"name":"getConfig","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"governor","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"increment","type":"uint256"}],"name":"increaseAllowance","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"governor_","type":"address"},{"internalType":"address","name":"up_","type":"address"}],"name":"initialize","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"governor_","type":"address"}],"name":"initialize","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"initialize2","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"lastUpdateTimeSpan","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"lpt","type":"address"},{"internalType":"uint256","name":"vol","type":"uint256"}],"name":"lpt2uu","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"lpt","type":"address"}],"name":"lptBalance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"lptN","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"lpt","type":"address"}],"name":"lptPrice","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"lpts","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"lpt","type":"address"},{"internalType":"uint256","name":"vol","type":"uint256"},{"internalType":"uint256","name":"minMint","type":"uint256"}],"name":"mint","outputs":[{"internalType":"uint256","name":"amt","type":"uint256"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"name","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"lpt","type":"address"},{"internalType":"uint256","name":"vol","type":"uint256"}],"name":"netValue","outputs":[{"internalType":"uint256","name":"amt","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"lpt","type":"address"}],"name":"netValue","outputs":[{"internalType":"uint256","name":"amt","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"nonces","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"},{"internalType":"uint256","name":"deadline","type":"uint256"},{"internalType":"uint8","name":"v","type":"uint8"},{"internalType":"bytes32","name":"r","type":"bytes32"},{"internalType":"bytes32","name":"s","type":"bytes32"}],"name":"permit","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"lpt","type":"address"}],"name":"removeLPT","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"reward","type":"address"}],"name":"removeReward","outputs":[{"internalType":"uint256","name":"remain","type":"uint256"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"renounceGovernorship","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"rewardN","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"rewards","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"bytes32","name":"key","type":"bytes32"},{"internalType":"uint256","name":"value","type":"uint256"}],"name":"setConfig","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"bytes32","name":"key","type":"bytes32"},{"internalType":"address","name":"addr","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"}],"name":"setConfig","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"bytes32","name":"key","type":"bytes32"},{"internalType":"uint256","name":"index","type":"uint256"},{"internalType":"uint256","name":"value","type":"uint256"}],"name":"setConfig","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"lpt","type":"address"},{"internalType":"uint256","name":"j","type":"uint256"}],"name":"settle","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"acct","type":"address"},{"internalType":"address","name":"lpt","type":"address"},{"internalType":"uint256","name":"j","type":"uint256"}],"name":"settleable","outputs":[{"internalType":"address","name":"reward","type":"address"},{"internalType":"uint256","name":"vol","type":"uint256"},{"internalType":"uint256","name":"tip","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"symbol","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"reward","type":"address"}],"name":"totalClaimed","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"totalNetValue","outputs":[{"internalType":"uint256","name":"amt","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"totalSupply","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"recipient","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"transfer","outputs":[{"internalType":"bool","name":"success","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"sender","type":"address"},{"internalType":"address","name":"recipient","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"transferFrom","outputs":[{"internalType":"bool","name":"success","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"newGovernor","type":"address"}],"name":"transferGovernorship","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"reward","type":"address"}],"name":"tryAddReward","outputs":[{"internalType":"bool","name":"success","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"up","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"vol","type":"uint256"}],"name":"up2uu","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"},{"internalType":"address","name":"","type":"address"}],"name":"upAllowance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"volume","type":"uint256"}],"name":"upApprove_","outputs":[{"internalType":"bool","name":"success","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"upBalanceOf","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"string","name":"name_","type":"string"},{"internalType":"address","name":"verifyingContract","type":"address"},{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"rawAmount","type":"uint256"},{"internalType":"uint256","name":"deadline","type":"uint256"},{"internalType":"uint8","name":"v","type":"uint8"},{"internalType":"bytes32","name":"r","type":"bytes32"},{"internalType":"bytes32","name":"s","type":"bytes32"}],"name":"upPermit_","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"upPrice","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"upPriceFactor","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"upTotalSupply","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"address","name":"sender","type":"address"},{"internalType":"address","name":"recipient","type":"address"},{"internalType":"uint256","name":"volume","type":"uint256"}],"name":"upTransferFrom_","outputs":[{"internalType":"bool","name":"success","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"sender","type":"address"},{"internalType":"address","name":"recipient","type":"address"},{"internalType":"uint256","name":"volume","type":"uint256"}],"name":"upTransfer_","outputs":[{"internalType":"bool","name":"success","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"updatePrice","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"amt","type":"uint256"},{"internalType":"address","name":"lpt","type":"address"}],"name":"uu2lpt","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"uu2up","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"}]
 
-export default ModelToken.create({
+// TODO: 最好能自带，要让内部每一层都可以调用 __root__
+const __root__ = reactive(ModelToken.create({
   code: 'UU',
   address: getDotenvAddress('UU_TOKEN'),
   abi,
   isInfiniteAllowance: true,
   customSeries () {
-    const { address, contract, supportedLptNum } = this
+    const {
+      address,
+      contract,
+      supportedLptNum,
+      supportedRewardNum,
+    } = this
 
     return [
-      { decodeType: supportedLptNum.type, call: [address, contract.methods.lptN().encodeABI()], target: supportedLptNum }
+      // 支持的 lpt 数量
+      { decodeType: supportedLptNum.type, call: [address, contract.methods.lptN().encodeABI()], target: supportedLptNum },
+      // 支持的奖励 token 数量
+      { decodeType: supportedRewardNum.type, call: [address, contract.methods.rewardN().encodeABI()], target: supportedRewardNum },
     ]
   },
-  values: {
-    /**
-     * 支持的 lpt 数量
-     * @type {Object}
-     */
-    supportedLptNum: ModelValueEther.create(),
-    /**
-     * 支持的 lpt 地址
-     * @type {Array}
-     */
-    supportedLptAddresses: [],
+  // TODO: 要可持续，并可以内部 .update()
+  // associatedTokens: {
 
-    /**
-     * 
-     */
-    burnMinVol: ModelValueEther.create(),
-  },
-  methods: {
-    /**
-     * TODO: 
-     * lpt 铸造 UU
-     * @param {Object} tokenObj
-     */
-    async mint (tokenObj) {
-      const { contract, address, state, associatedTokens } = this
-      const walletAddress = storeWallet.address
+  // }
+}))
 
-      // 限制当前提交待确认的交易只有一份
-      state.beforeUpdate()
+/**
+ * 支持的 lpt 数量
+ * @type {Object}
+ */
+__root__.supportedLptNum = ModelValueEther.create()
 
-      const { update, dismiss } = notify.notification({ message: '正准备拉起' })
+/**
+ * 支持的 lpt 地址
+ * @type {Array}
+ */
+// TODO: 遍历 lpts()
+__root__.supportedLptAddresses = [],
 
-      try {
-        // update mintGainAmount
-        await this.getLpt2UUVol(tokenObj)
+/**
+ * 
+ */
+// TODO: 
+__root__.burnMinVol = ModelValueEther.create(),
 
-        const sendOpts = {
-          from: walletAddress,
-        }
+/**
+ * 支持的奖励 token 数量
+ * - supportedRewardNum -> supportedRewardAddresses -> associatedTokens
+ * @type {Object}
+ */
+__root__.supportedRewardNum = ModelValueEther.create({
+  async trigger () {
+    const { handled } = this
+    const { contract, address } = __root__
 
-        const _method = await contract.methods.mint(
-          tokenObj.address,
-          tokenObj.amount.ether,
-          associatedTokens[tokenObj.address].mintGainAmount.ether
-        )
+    // TODO: 这里 handled 是字符串
+    // __root__.supportedRewardAddresses = Array(+handled)
+    //   .fill(ModelValueAddress.create({
+    //     async trigger () {
+    //       const { handled } = this
+    //       const { associatedTokens } = __root__
 
-        try {
-          sendOpts.gas = await _method.estimateGas({
-            from: walletAddress,
+    //       // XXX: 如果没有在 tokenAddresses 内的，则应该自动创建
+    //       // TODO: 考虑如何 multi
+    //       await __root__.claimableReward(tokenAddresses[handled])
+    //       await __root__.claimedReward(tokenAddresses[handled])
+    //     }
+    //   }))
+
+//     const series = __root__.supportedRewardAddresses.map((item, idx) => {
+// console.log('idx', idx)
+//       return {
+//         decodeType: item.type,
+//         call: [
+//           address,
+//           contract.methods.rewards(idx).encodeABI()
+//         ],
+//         target: item
+//       }
+//     })
+    const series = []
+
+    for (let i =0; i < +handled; i++ ) {
+      const _address = ModelValueAddress.create({
+            async trigger () {
+              const { handled } = this
+              const { associatedTokens } = __root__
+    
+              // XXX: 如果没有在 tokenAddresses 内的，则应该自动创建
+              // TODO: 考虑如何 multi
+              await __root__.claimableReward(tokenAddresses[handled])
+              await __root__.claimedReward(tokenAddresses[handled])
+            }
           })
-        } catch(err) {
-          console.error(err)
-        }
+      __root__.supportedRewardAddresses[i] = _address
 
-        return _method.send(sendOpts)
-          .once('transactionHash', hash => {
-            dismiss()
-            notify.handler(hash)
-            state.afterUpdate()
-          })
-          .catch(err =>{
-            console.log(err)
-
-            notify.updateError({
-              update,
-              code: err.code,
-              message: err.message
-            })
-
-            state.afterUpdate()
-          })
-      } catch (err) {
-        console.error(err)
-
-        notify.updateError({
-          update,
-          code: err.code,
-          message: err.message
-        })
-
-        state.afterUpdate()
-      }
-    },
-
-    /**
-     * 铸造 UU 可获得的 lpt 量
-     * - 更新 associatedTokens[].mintGainAmount
-     * @param {Object} tokenObj
-     * @return {Promise}
-     */
-    async getLpt2UUVol (tokenObj) {
-      const { contract, associatedTokens } = this
-
-      // TODO: TEMP
-      if (!associatedTokens[tokenObj.address]) {
-        associatedTokens[tokenObj.address] = {}
-      }
-      // init
-      if (!associatedTokens[tokenObj.address].mintGainAmount) {
-        associatedTokens[tokenObj.address].mintGainAmount = ModelValueEther.create({
-          decimals: tokenObj.decimals,
-        })
-      }
-
-      associatedTokens[tokenObj.address].mintGainAmount.state.beforeUpdate()
-
-      // TODO: multi
-      let minVolEther = await contract.methods.lpt2uu(tokenObj.address, tokenObj.amount.ether).call()
-      // TODO: 在 multi 未使用之前暂不使用
-      // const lptBalance = await contract.methods.lptBalance(tokenObj.address).call()
-
-      // // TODO: why?
-      // if(minVolEther == lptBalance) {
-      //   minVolEther = await contract.methods.lpt2uu(tokenObj.address, minVolEther).call()
-      // }
-
-      associatedTokens[tokenObj.address].mintGainAmount = ModelValueEther.create({
-        decimals: tokenObj.decimals,
-        value: minVolEther
+      series.push({
+        decodeType: __root__.supportedRewardAddresses[i].type,
+        call: [
+          address,
+          contract.methods.rewards(i).encodeABI()
+        ],
+        target: __root__.supportedRewardAddresses[i]
       })
-
-      associatedTokens[tokenObj.address].mintGainAmount.state.afterUpdate()
-
-
-      // _updatePrice();
-      //   amt = lpt2uu(lpt, vol);
-      //   require(amt >= minMint, 'Slippage screwed you');
-      //   lpt.safeTransferFrom(_msgSender(), address(this), vol);
-      //   address gauge = address(getConfig(_gaugeOfLPT_, lpt));
-      //   if(gauge != address(0)) {
-      //       lpt.safeApprove(gauge, vol);
-      //       Gauge(gauge).deposit(vol);
-      //   }
-      //   _mint(_msgSender(), amt);
-      //   _adjustPriceFactor();
-    },
-
-    /**
-     * 销毁 UU 可获得的 lpt 量
-     * - 取回 lpt 将销毁 UU 的量
-     * - 更新 associatedTokens[].burnGainAmount
-     * @param {Object} tokenObj
-     * @return {Promise}
-     */
-    async getUU2LptVol (tokenObj) {
-      const { contract, associatedTokens } = this
-
-      // TODO: TEMP
-      if (!associatedTokens[tokenObj.address]) {
-        associatedTokens[tokenObj.address] = {}
-      }
-      // init
-      if (!associatedTokens[tokenObj.address].burnGainAmount) {
-        associatedTokens[tokenObj.address].burnGainAmount = ModelValueEther.create({
-          decimals: tokenObj.decimals,
-        })
-      }
-
-      associatedTokens[tokenObj.address].burnGainAmount.state.beforeUpdate()
-
-      // TODO: multi
-      let minVolEther = await contract.methods.uu2lpt(tokenObj.amount.ether, tokenObj.address).call()
-      // TODO: 在 multi 未使用之前暂不使用
-      // const lptBalance = await contract.methods.lptBalance(tokenObj.address).call()
-
-      // // TODO: why?
-      // if(minVolEther == lptBalance) {
-      //   minVolEther = await contract.methods.lpt2uu(tokenObj.address, minVolEther).call()
-      // }
-
-      associatedTokens[tokenObj.address].burnGainAmount = ModelValueEther.create({
-        decimals: tokenObj.decimals,
-        value: minVolEther
-      })
-
-      associatedTokens[tokenObj.address].burnGainAmount.state.afterUpdate()
-    },
-
-    /**
-     * lpt 在 UU 中的余额
-     * - 更新 associatedTokens[].balance
-     * @param {Object} tokenObj
-     */
-    async lptBalance (tokenObj) {
-      const { contract, associatedTokens } = this
-
-
-      // TODO: TEMP
-
-      if (!associatedTokens[tokenObj.address]) {
-        associatedTokens[tokenObj.address] = {}
-      }
-      let lptBalance = await contract.methods.lptBalance(tokenObj.address).call()
-console.log('lptBalance', lptBalance)
-      associatedTokens[tokenObj.address].balance = ModelValueEther.create({
-        decimals: tokenObj.decimals,
-        value: lptBalance
-      })
-    },
-
-    /**
-     * lpt 销毁 UU
-     * TODO:
-     * @param {Object} tokenObj
-     */
-    async burn (tokenObj) {
-      const { contract, address, state, associatedTokens } = this
-      const walletAddress = storeWallet.address
-
-      // 限制当前提交待确认的交易只有一份
-      state.beforeUpdate()
-
-      const { update, dismiss } = notify.notification({ message: '正准备拉起' })
-
-      try {
-        // update burnGainAmount
-        await this.getUU2LptVol(tokenObj)
-
-        const sendOpts = {
-          from: walletAddress,
-        }
-
-        const method = await contract.methods.burn(
-          tokenObj.amount.ether,
-          tokenObj.address,
-          associatedTokens[tokenObj.address].burnGainAmount.ether
-        )
-
-        try {
-          sendOpts.gas = await method.estimateGas({
-            from: walletAddress,
-          })
-        } catch(err) {
-          console.error(err)
-        }
-
-        return method.send(sendOpts)
-          .once('transactionHash', hash => {
-            dismiss()
-            notify.handler(hash)
-            state.afterUpdate()
-          })
-          .catch(err =>{
-            console.log(err)
-
-            notify.updateError({
-              update,
-              code: err.code,
-              message: err.message
-            })
-
-            state.afterUpdate()
-          })
-      } catch (err) {
-        console.error(err)
-
-        notify.updateError({
-          update,
-          code: err.code,
-          message: err.message
-        })
-
-        state.afterUpdate()
-      }
     }
+
+    await swaps.multicall.batcher(series)
   }
 })
+
+/**
+ * 支持的奖励 token 地址
+ */
+// TODO: rewards()
+// TODO: temp
+// TODO: 过渡品
+__root__.supportedRewardAddresses = []
+
+/**
+ * TODO: 
+ * lpt 铸造 UU
+ * @param {Object} tokenObj
+ */
+__root__.mint = async tokenObj => {
+  const { contract, address, state, associatedTokens } = __root__
+  const walletAddress = storeWallet.address
+
+  // 限制当前提交待确认的交易只有一份
+  state.beforeUpdate()
+
+  const { update, dismiss } = notify.notification({ message: '正准备拉起' })
+
+  try {
+    // update mintGainAmount
+    await this.getLpt2UUVol(tokenObj)
+
+    const sendOpts = {
+      from: walletAddress,
+    }
+
+    const _method = await contract.methods.mint(
+      tokenObj.address,
+      tokenObj.amount.ether,
+      associatedTokens[tokenObj.address].mintGainAmount.ether
+    )
+
+    try {
+      sendOpts.gas = await _method.estimateGas({
+        from: walletAddress,
+      })
+    } catch(err) {
+      console.error(err)
+    }
+
+    return _method.send(sendOpts)
+      .once('transactionHash', hash => {
+        dismiss()
+        notify.handler(hash)
+        state.afterUpdate()
+      })
+      .catch(err =>{
+        console.log(err)
+
+        notify.updateError({
+          update,
+          code: err.code,
+          message: err.message
+        })
+
+        state.afterUpdate()
+      })
+  } catch (err) {
+    console.error(err)
+
+    notify.updateError({
+      update,
+      code: err.code,
+      message: err.message
+    })
+
+    state.afterUpdate()
+  }
+},
+
+/**
+ * 铸造 UU 可获得的 lpt 量
+ * - 更新 associatedTokens[].mintGainAmount
+ * @param {Object} tokenObj
+ * @return {Promise}
+ */
+__root__.getLpt2UUVol = async (tokenObj) => {
+  const { contract, associatedTokens } = __root__
+
+  // TODO: TEMP
+  if (!associatedTokens[tokenObj.address]) {
+    associatedTokens[tokenObj.address] = {}
+  }
+  // init
+  if (!associatedTokens[tokenObj.address].mintGainAmount) {
+    associatedTokens[tokenObj.address].mintGainAmount = ModelValueEther.create({
+      decimals: tokenObj.decimals,
+    })
+  }
+
+  associatedTokens[tokenObj.address].mintGainAmount.state.beforeUpdate()
+
+  // TODO: multi
+  let minVolEther = await contract.methods.lpt2uu(tokenObj.address, tokenObj.amount.ether).call()
+  // TODO: 在 multi 未使用之前暂不使用
+  // const lptBalance = await contract.methods.lptBalance(tokenObj.address).call()
+
+  // // TODO: why?
+  // if(minVolEther == lptBalance) {
+  //   minVolEther = await contract.methods.lpt2uu(tokenObj.address, minVolEther).call()
+  // }
+
+  associatedTokens[tokenObj.address].mintGainAmount = ModelValueEther.create({
+    decimals: tokenObj.decimals,
+    value: minVolEther
+  })
+
+  associatedTokens[tokenObj.address].mintGainAmount.state.afterUpdate()
+
+
+  // _updatePrice();
+  //   amt = lpt2uu(lpt, vol);
+  //   require(amt >= minMint, 'Slippage screwed you');
+  //   lpt.safeTransferFrom(_msgSender(), address(this), vol);
+  //   address gauge = address(getConfig(_gaugeOfLPT_, lpt));
+  //   if(gauge != address(0)) {
+  //       lpt.safeApprove(gauge, vol);
+  //       Gauge(gauge).deposit(vol);
+  //   }
+  //   _mint(_msgSender(), amt);
+  //   _adjustPriceFactor();
+}
+
+/**
+ * 销毁 UU 可获得的 lpt 量
+ * - 取回 lpt 将销毁 UU 的量
+ * - 更新 associatedTokens[].burnGainAmount
+ * @param {Object} tokenObj
+ * @return {Promise}
+ */
+__root__.getUU2LptVol = async (tokenObj) => {
+  const { contract, associatedTokens } = __root__
+
+  // TODO: TEMP
+  if (!associatedTokens[tokenObj.address]) {
+    associatedTokens[tokenObj.address] = {}
+  }
+  // init
+  if (!associatedTokens[tokenObj.address].burnGainAmount) {
+    associatedTokens[tokenObj.address].burnGainAmount = ModelValueEther.create({
+      decimals: tokenObj.decimals,
+    })
+  }
+
+  associatedTokens[tokenObj.address].burnGainAmount.state.beforeUpdate()
+
+  // TODO: multi
+  let minVolEther = await contract.methods.uu2lpt(tokenObj.amount.ether, tokenObj.address).call()
+  // TODO: 在 multi 未使用之前暂不使用
+  // const lptBalance = await contract.methods.lptBalance(tokenObj.address).call()
+
+  // // TODO: why?
+  // if(minVolEther == lptBalance) {
+  //   minVolEther = await contract.methods.lpt2uu(tokenObj.address, minVolEther).call()
+  // }
+
+  associatedTokens[tokenObj.address].burnGainAmount = ModelValueEther.create({
+    decimals: tokenObj.decimals,
+    value: minVolEther
+  })
+
+  associatedTokens[tokenObj.address].burnGainAmount.state.afterUpdate()
+},
+
+/**
+ * 领取全部奖励
+ * - 钱包地址
+ * TODO:
+ */
+__root__.claimAllRewards = async () => {
+  const { contract, state } = __root__
+  const walletAddress = storeWallet.address
+
+  // 限制当前提交待确认的交易只有一份
+  state.beforeUpdate()
+
+  const { update, dismiss } = notify.notification({ message: '提交领取全部奖励' })
+
+  try {
+    const sendOpts = {
+      from: walletAddress,
+    }
+
+    const _method = await contract.methods.claim()
+
+    try {
+      sendOpts.gas = await _method.estimateGas({
+        from: walletAddress,
+      })
+    } catch(err) {
+      console.error(err)
+    }
+
+    return _method.send(sendOpts)
+      .once('transactionHash', hash => {
+        dismiss()
+        notify.handler(hash)
+        state.afterUpdate()
+      })
+      .catch(err =>{
+        console.log(err)
+
+        notify.updateError({
+          update,
+          code: err.code,
+          message: err.message
+        })
+
+        state.afterUpdate()
+      })
+  } catch (err) {
+    console.error(err)
+
+    notify.updateError({
+      update,
+      code: err.code,
+      message: err.message
+    })
+
+    state.afterUpdate()
+  }
+},
+
+/**
+ * 领取奖励
+ * - 钱包地址
+ * TODO: 与 claimRewards 类似，可合成一个
+ */
+__root__.claimReward = async (_token) => {
+  const { contract, state } = __root__
+  const walletAddress = storeWallet.address
+
+  // 限制当前提交待确认的交易只有一份
+  state.beforeUpdate()
+
+  const { update, dismiss } = notify.notification({ message: `领取${_token.code}奖励` })
+
+  try {
+    const sendOpts = {
+      from: walletAddress,
+    }
+
+    const _method = await contract.methods.claim(_token.address)
+
+    try {
+      sendOpts.gas = await _method.estimateGas({
+        from: walletAddress,
+      })
+    } catch(err) {
+      console.error(err)
+    }
+
+    return _method.send(sendOpts)
+      .once('transactionHash', hash => {
+        dismiss()
+        notify.handler(hash)
+        state.afterUpdate()
+      })
+      .catch(err =>{
+        console.log(err)
+
+        notify.updateError({
+          update,
+          code: err.code,
+          message: err.message
+        })
+
+        state.afterUpdate()
+      })
+  } catch (err) {
+    console.error(err)
+
+    notify.updateError({
+      update,
+      code: err.code,
+      message: err.message
+    })
+
+    state.afterUpdate()
+  }
+},
+
+/**
+  * 获取待领取奖励数
+  * - 钱包地址
+  * @param {Object} _token 奖励代币对象
+  */
+__root__.claimableReward = async (_token) => {
+  // TODO: 应该自动批量处理
+  const { contract, associatedTokens } = __root__
+  const walletAddress = storeWallet.address
+
+  if (!associatedTokens[_token.address]) {
+    associatedTokens[_token.address] = {}
+  }
+  associatedTokens[_token.address].claimableReward = ModelValueEther.create({
+    decimals: _token.decimals,
+  })
+
+  // update
+  associatedTokens[_token.address].claimableReward.ether = await contract.methods.claimable(walletAddress, _token.address).call()
+},
+
+/**
+  * 获取已领取奖励数
+  * - 钱包地址
+  * @param {Object} _token 奖励代币对象
+  */
+__root__.claimedReward = async (_token) => {
+  // TODO: 应该自动批量处理
+  const { contract, associatedTokens } = __root__
+  const walletAddress = storeWallet.address
+
+  if (!associatedTokens[_token.address]) {
+    associatedTokens[_token.address] = {}
+  }
+
+  associatedTokens[_token.address].claimedReward = ModelValueEther.create({
+    decimals: _token.decimals,
+  })
+
+  associatedTokens[_token.address].claimedReward.ether = await contract.methods.claimed(walletAddress, _token.address).call()
+},
+
+/**
+  * lpt 在 UU 中的余额
+  * - 更新 associatedTokens[].balance
+  * @param {Object} tokenObj
+  */
+__root__.lptBalance = async (tokenObj) => {
+  const { contract, associatedTokens } = __root__
+
+
+  // TODO: TEMP
+
+  if (!associatedTokens[tokenObj.address]) {
+    associatedTokens[tokenObj.address] = {}
+  }
+  let lptBalance = await contract.methods.lptBalance(tokenObj.address).call()
+console.log('lptBalance', lptBalance)
+  associatedTokens[tokenObj.address].balance = ModelValueEther.create({
+    decimals: tokenObj.decimals,
+    value: lptBalance
+  })
+},
+
+/**
+  * lpt 销毁 UU
+  * TODO:
+  * @param {Object} tokenObj
+  */
+__root__.burn = async (tokenObj) => {
+  const { contract, address, state, associatedTokens } = __root__
+  const walletAddress = storeWallet.address
+
+  // 限制当前提交待确认的交易只有一份
+  state.beforeUpdate()
+
+  const { update, dismiss } = notify.notification({ message: '正准备拉起' })
+
+  try {
+    // update burnGainAmount
+    await this.getUU2LptVol(tokenObj)
+
+    const sendOpts = {
+      from: walletAddress,
+    }
+
+    const method = await contract.methods.burn(
+      tokenObj.amount.ether,
+      tokenObj.address,
+      associatedTokens[tokenObj.address].burnGainAmount.ether
+    )
+
+    try {
+      sendOpts.gas = await method.estimateGas({
+        from: walletAddress,
+      })
+    } catch(err) {
+      console.error(err)
+    }
+
+    return method.send(sendOpts)
+      .once('transactionHash', hash => {
+        dismiss()
+        notify.handler(hash)
+        state.afterUpdate()
+      })
+      .catch(err =>{
+        console.log(err)
+
+        notify.updateError({
+          update,
+          code: err.code,
+          message: err.message
+        })
+
+        state.afterUpdate()
+      })
+  } catch (err) {
+    console.error(err)
+
+    notify.updateError({
+      update,
+      code: err.code,
+      message: err.message
+    })
+
+    state.afterUpdate()
+  }
+}
+
+
+export default __root__
