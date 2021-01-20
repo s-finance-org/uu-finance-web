@@ -34,17 +34,73 @@ const __root__ = reactive(ModelToken.create({
       { decodeType: supportedRewardNum.type, call: [address, contract.methods.rewardN().encodeABI()], target: supportedRewardNum },
     ]
   },
-  // TODO: 要可持续，并可以内部 .update()
-  // associatedTokens: {
+  // TODO: 要追加而不是覆盖（有默认的）
+  associatedTokenModel: {
+    create (_token) {
+      const { decimals } = _token
 
-  // }
+      return {
+        // 待领取奖励数
+        claimableReward: ModelValueEther.create({ decimals }),
+        // 已领取奖励数
+        claimedReward: ModelValueEther.create({ decimals }),
+        // 合计奖励数
+        totalReward: ModelValueEther.create({ decimals }),
+        // 在 UU 中的余额
+        balance: ModelValueEther.create({ decimals }),
+        // 铸造 UU 可获得的量（由不同 token address 区分）
+        mintGainAmount: ModelValueEther.create({ decimals }),
+        // 取回将销毁 UU 的量（由不同 token address 区分）
+        burnGainAmount: ModelValueEther.create({ decimals }),
+        // 挖矿奖励数量
+        miningPendingRewards: ModelValueEther.create({ decimals }),
+        // 待结算奖励数
+        settleableReward: ModelValueEther.create({ decimals }),
+
+
+      }
+    }
+  }
 }))
 
 /**
  * 支持的 lpt 数量
+ * - supportedLptNum -> supportedLptAddresses
  * @type {Object}
  */
-__root__.supportedLptNum = ModelValueEther.create()
+__root__.supportedLptNum = ModelValueEther.create({
+  async trigger () {
+    const { handled } = this
+    const { contract, address } = __root__
+
+    // TODO: 
+    const series = []
+
+    for (let i =0; i < +handled; i++ ) {
+      const _address = ModelValueAddress.create({
+        async trigger () {
+          const { handled } = this
+
+          // XXX: 如果没有在 tokenAddresses 内的，则应该自动创建
+          // TODO: 考虑如何 multi
+          await __root__.settleableReward(tokenAddresses[handled], i)
+        }
+      })
+      __root__.supportedLptAddresses[i] = _address
+
+      series.push({
+        decodeType: __root__.supportedLptAddresses[i].type,
+        call: [
+          address,
+          contract.methods.lpts(i).encodeABI()
+        ],
+        target: __root__.supportedLptAddresses[i]
+      })
+    }
+
+    await swaps.multicall.batcher(series)
+  }
+})
 
 /**
  * 支持的 lpt 地址
@@ -61,7 +117,7 @@ __root__.burnMinVol = ModelValueEther.create(),
 
 /**
  * 支持的奖励 token 数量
- * - supportedRewardNum -> supportedRewardAddresses -> associatedTokens
+ * - supportedRewardNum -> supportedRewardAddresses
  * @type {Object}
  */
 __root__.supportedRewardNum = ModelValueEther.create({
@@ -100,7 +156,6 @@ __root__.supportedRewardNum = ModelValueEther.create({
       const _address = ModelValueAddress.create({
             async trigger () {
               const { handled } = this
-              const { associatedTokens } = __root__
     
               // XXX: 如果没有在 tokenAddresses 内的，则应该自动创建
               // TODO: 考虑如何 multi
@@ -135,10 +190,10 @@ __root__.supportedRewardAddresses = []
 /**
  * TODO: 
  * lpt 铸造 UU
- * @param {Object} tokenObj
+ * @param {Object} _token
  */
-__root__.mint = async tokenObj => {
-  const { contract, address, state, associatedTokens } = __root__
+__root__.mint = async function (_token) {
+  const { contract, address, state } = this
   const walletAddress = storeWallet.address
 
   // 限制当前提交待确认的交易只有一份
@@ -148,16 +203,16 @@ __root__.mint = async tokenObj => {
 
   try {
     // update mintGainAmount
-    await this.getLpt2UUVol(tokenObj)
+    await this.getLpt2UUVol(_token)
 
     const sendOpts = {
       from: walletAddress,
     }
 
     const _method = await contract.methods.mint(
-      tokenObj.address,
-      tokenObj.amount.ether,
-      associatedTokens[tokenObj.address].mintGainAmount.ether
+      _token.address,
+      _token.amount.ether,
+      this.getAssociatedToken(_token).mintGainAmount.ether
     )
 
     try {
@@ -200,44 +255,27 @@ __root__.mint = async tokenObj => {
 
 /**
  * 铸造 UU 可获得的 lpt 量
- * - 更新 associatedTokens[].mintGainAmount
- * @param {Object} tokenObj
+ * @param {Object} _token
  * @return {Promise}
  */
-__root__.getLpt2UUVol = async (tokenObj) => {
-  const { contract, associatedTokens } = __root__
+__root__.getLpt2UUVol = async function (_token) {
+  const { contract } = this
+  const result = __root__.getAssociatedToken(_token)
 
-  // TODO: TEMP
-  if (!associatedTokens[tokenObj.address]) {
-    associatedTokens[tokenObj.address] = {}
-  }
-  // init
-  if (!associatedTokens[tokenObj.address].mintGainAmount) {
-    associatedTokens[tokenObj.address].mintGainAmount = ModelValueEther.create({
-      decimals: tokenObj.decimals,
-    })
-  }
-
-  associatedTokens[tokenObj.address].mintGainAmount.state.beforeUpdate()
-
+  // update
   // TODO: multi
-  let minVolEther = await contract.methods.lpt2uu(tokenObj.address, tokenObj.amount.ether).call()
+  result.mintGainAmount.state.beforeUpdate()
+  result.mintGainAmount.ether = await contract.methods.lpt2uu(_token.address, _token.amount.ether).call()
+
   // TODO: 在 multi 未使用之前暂不使用
-  // const lptBalance = await contract.methods.lptBalance(tokenObj.address).call()
+  // const lptBalance = await contract.methods.lptBalance(_token.address).call()
 
   // // TODO: why?
   // if(minVolEther == lptBalance) {
-  //   minVolEther = await contract.methods.lpt2uu(tokenObj.address, minVolEther).call()
+  //   minVolEther = await contract.methods.lpt2uu(_token.address, minVolEther).call()
   // }
 
-  associatedTokens[tokenObj.address].mintGainAmount = ModelValueEther.create({
-    decimals: tokenObj.decimals,
-    value: minVolEther
-  })
-
-  associatedTokens[tokenObj.address].mintGainAmount.state.afterUpdate()
-
-
+  // TODO: 参考
   // _updatePrice();
   //   amt = lpt2uu(lpt, vol);
   //   require(amt >= minMint, 'Slippage screwed you');
@@ -252,44 +290,25 @@ __root__.getLpt2UUVol = async (tokenObj) => {
 }
 
 /**
- * 销毁 UU 可获得的 lpt 量
- * - 取回 lpt 将销毁 UU 的量
- * - 更新 associatedTokens[].burnGainAmount
- * @param {Object} tokenObj
+ * 取回 lpt 将销毁 UU 的量
+ * @param {Object} _token
  * @return {Promise}
  */
-__root__.getUU2LptVol = async (tokenObj) => {
-  const { contract, associatedTokens } = __root__
+__root__.getUU2LptVol = async function (_token) {
+  const { contract } = this
+  const result = __root__.getAssociatedToken(_token)
 
-  // TODO: TEMP
-  if (!associatedTokens[tokenObj.address]) {
-    associatedTokens[tokenObj.address] = {}
-  }
-  // init
-  if (!associatedTokens[tokenObj.address].burnGainAmount) {
-    associatedTokens[tokenObj.address].burnGainAmount = ModelValueEther.create({
-      decimals: tokenObj.decimals,
-    })
-  }
-
-  associatedTokens[tokenObj.address].burnGainAmount.state.beforeUpdate()
-
+  // update
   // TODO: multi
-  let minVolEther = await contract.methods.uu2lpt(tokenObj.amount.ether, tokenObj.address).call()
+  result.burnGainAmount.state.beforeUpdate()
+  result.burnGainAmount.ether = await contract.methods.uu2lpt(_token.amount.ether, _token.address).call()
   // TODO: 在 multi 未使用之前暂不使用
-  // const lptBalance = await contract.methods.lptBalance(tokenObj.address).call()
+  // const lptBalance = await contract.methods.lptBalance(_token.address).call()
 
   // // TODO: why?
   // if(minVolEther == lptBalance) {
-  //   minVolEther = await contract.methods.lpt2uu(tokenObj.address, minVolEther).call()
+  //   minVolEther = await contract.methods.lpt2uu(_token.address, minVolEther).call()
   // }
-
-  associatedTokens[tokenObj.address].burnGainAmount = ModelValueEther.create({
-    decimals: tokenObj.decimals,
-    value: minVolEther
-  })
-
-  associatedTokens[tokenObj.address].burnGainAmount.state.afterUpdate()
 },
 
 /**
@@ -415,20 +434,17 @@ __root__.claimReward = async (_token) => {
   * - 钱包地址
   * @param {Object} _token 奖励代币对象
   */
-__root__.claimableReward = async (_token) => {
+__root__.claimableReward = async function (_token) {
   // TODO: 应该自动批量处理
-  const { contract, associatedTokens } = __root__
-  const walletAddress = storeWallet.address
-
-  if (!associatedTokens[_token.address]) {
-    associatedTokens[_token.address] = {}
-  }
-  associatedTokens[_token.address].claimableReward = ModelValueEther.create({
-    decimals: _token.decimals,
-  })
+  const { contract } = this
+  const result = this.getAssociatedToken(_token)
 
   // update
-  associatedTokens[_token.address].claimableReward.ether = await contract.methods.claimable(walletAddress, _token.address).call()
+  result.claimableReward.state.beforeUpdate()
+  result.claimableReward.ether = await contract.methods.claimable(storeWallet.address, _token.address).call()
+
+  // TODO: 待考虑合并
+  result.totalReward.ether = BN(result.claimableReward.ether).plus(result.claimedReward.ether).toFixed(0, 1)
 },
 
 /**
@@ -436,51 +452,127 @@ __root__.claimableReward = async (_token) => {
   * - 钱包地址
   * @param {Object} _token 奖励代币对象
   */
-__root__.claimedReward = async (_token) => {
+__root__.claimedReward = async function (_token) {
   // TODO: 应该自动批量处理
-  const { contract, associatedTokens } = __root__
+  const { contract } = this
+  const result = this.getAssociatedToken(_token)
+
+  // update
+  result.claimedReward.state.beforeUpdate()
+  result.claimedReward.ether = await contract.methods.claimed(storeWallet.address, _token.address).call()
+
+  result.totalReward.ether = BN(result.claimableReward.ether).plus(result.claimedReward.ether).toFixed(0, 1)
+},
+
+/**
+  * 获取待结算奖励数
+  * - 查询用户在某矿池中可以领取的奖励
+  * @param {Object} _token 奖励代币对象
+  */
+ __root__.settleableReward = async function (_token, idx) {
+  // TODO: 应该自动批量处理
+  const { contract, supportedLptAddresses } = this
+  // TODO: 待优化
+  const result = this.getAssociatedToken(_token)
+
+  // update
+  result.miningPendingRewards.state.beforeUpdate()
+  result.settleableReward.state.beforeUpdate()
+
+  /* data
+    reward: _token.address, // address
+    vol: 0, // uint256 挖矿奖励数量
+    tip: 0, // uint256 结算小费，与 vol 比例为 99:1
+   */
+  const { vol, tip } = await contract.methods.settleable(storeWallet.address, _token.address, idx).call()
+
+  result.miningPendingRewards.ether = vol
+  result.settleableReward.ether = tip
+},
+
+
+/**
+ * 参与流动性池代币结算
+ * - 钱包地址
+ * @param {number} idx 在 supportedLptAddresses 内的索引
+ */
+// TODO: 
+__root__.settleReward = async function (idx) {
+  const { contract, state, supportedLptAddresses } = this
   const walletAddress = storeWallet.address
 
-  if (!associatedTokens[_token.address]) {
-    associatedTokens[_token.address] = {}
+  // 限制当前提交待确认的交易只有一份
+  state.beforeUpdate()
+
+  const { update, dismiss } = notify.notification({ message: `领取结算` })
+
+  try {
+    const sendOpts = {
+      from: walletAddress,
+    }
+
+    const _method = await contract.methods.settle(supportedLptAddresses[idx].handled, idx)
+
+    try {
+      sendOpts.gas = await _method.estimateGas({
+        from: walletAddress,
+      })
+    } catch(err) {
+      console.error(err)
+    }
+
+    return _method.send(sendOpts)
+      .once('transactionHash', hash => {
+        dismiss()
+        notify.handler(hash)
+        state.afterUpdate()
+      })
+      .catch(err =>{
+        console.log(err)
+
+        notify.updateError({
+          update,
+          code: err.code,
+          message: err.message
+        })
+
+        state.afterUpdate()
+      })
+  } catch (err) {
+    console.error(err)
+
+    notify.updateError({
+      update,
+      code: err.code,
+      message: err.message
+    })
+
+    state.afterUpdate()
   }
-
-  associatedTokens[_token.address].claimedReward = ModelValueEther.create({
-    decimals: _token.decimals,
-  })
-
-  associatedTokens[_token.address].claimedReward.ether = await contract.methods.claimed(walletAddress, _token.address).call()
 },
 
 /**
   * lpt 在 UU 中的余额
   * - 更新 associatedTokens[].balance
-  * @param {Object} tokenObj
+  * @param {Object} _token
   */
-__root__.lptBalance = async (tokenObj) => {
-  const { contract, associatedTokens } = __root__
+__root__.lptBalance = async function (_token) {
+  // TODO: 应该自动批量处理
+  const { contract } = this
+  const result = this.getAssociatedToken(_token)
 
-
-  // TODO: TEMP
-
-  if (!associatedTokens[tokenObj.address]) {
-    associatedTokens[tokenObj.address] = {}
-  }
-  let lptBalance = await contract.methods.lptBalance(tokenObj.address).call()
-console.log('lptBalance', lptBalance)
-  associatedTokens[tokenObj.address].balance = ModelValueEther.create({
-    decimals: tokenObj.decimals,
-    value: lptBalance
-  })
+  // update
+  result.balance.state.beforeUpdate()
+  result.balance.ether = await contract.methods.lptBalance(_token.address).call()
 },
 
 /**
   * lpt 销毁 UU
   * TODO:
-  * @param {Object} tokenObj
+  * @param {Object} _token
   */
-__root__.burn = async (tokenObj) => {
-  const { contract, address, state, associatedTokens } = __root__
+__root__.burn = async function (_token) {
+  const { contract, address, state } = this
   const walletAddress = storeWallet.address
 
   // 限制当前提交待确认的交易只有一份
@@ -490,16 +582,16 @@ __root__.burn = async (tokenObj) => {
 
   try {
     // update burnGainAmount
-    await this.getUU2LptVol(tokenObj)
+    await this.getUU2LptVol(_token)
 
     const sendOpts = {
       from: walletAddress,
     }
 
     const method = await contract.methods.burn(
-      tokenObj.amount.ether,
-      tokenObj.address,
-      associatedTokens[tokenObj.address].burnGainAmount.ether
+      _token.amount.ether,
+      _token.address,
+      this.getAssociatedToken(_token).burnGainAmount.ether
     )
 
     try {

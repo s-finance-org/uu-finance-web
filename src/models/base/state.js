@@ -3,6 +3,7 @@ import { now } from '../../utils'
 /*
               init   beforeUpdate   afterUpdate
 updated       false  false          true
+loading       true   true           false
 busy          false  true           false
 initialized   false  true           true
  */
@@ -20,6 +21,7 @@ export default {
       initialized: false,
       updated: false,
       busy: false,
+      loading: true,
       updatedAt: 0,
       handledCounter: 0
     }
@@ -50,10 +52,18 @@ export default {
       busy: __default__.busy,
 
       /**
+       * 是否加载中
+       * - 由 beforeUpdate()、afterUpdate()、reset() 维护
+       * @type {boolean}
+       */
+      loading: __default__.loading,
+
+      /**
        * 更新前的方法
        */
       beforeUpdate () {
         this.updated = false
+        this.loading = true
         this.busy = true
       },
 
@@ -63,6 +73,7 @@ export default {
       afterUpdate () {
         this.updated = true
         this.busy = false
+        this.loading = false
         this.handledCounter += 1
         this.updatedAt = now()
 
@@ -111,11 +122,12 @@ export default {
        * 重置为未初始
        */
       reset () {
-        const { initialized, updated, busy, updatedAt, handledCounter } = __default__
+        const { initialized, updated, busy, loading, updatedAt, handledCounter } = __default__
 
         this.initialized = initialized
         this.updated = updated
         this.busy = busy
+        this.loading = loading
         this.handledCounter = handledCounter
         this.updatedAt = updatedAt
       }

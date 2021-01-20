@@ -32,6 +32,7 @@ export default {
    * @param {Array} opts.abi
    * @param {boolean=} opts.isLPT 是否为 lp token // TODO: 暂无作用
    * @param {Function=} opts.customSeries
+   * @param {Object=} opts.associatedTokenModel
    * 
    * @param {boolean=} opts.isInfiniteAllowance
    * @param {number=} opts.viewDecimal
@@ -51,6 +52,7 @@ export default {
     abi = ERC20,
     isLPT = false,
     customSeries = () => [],
+    associatedTokenModel = { create: () => ({}) },
 
     viewDecimal = 4,
     moneyOfAccount = USD,
@@ -152,25 +154,23 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
       isLPT,
 
       get initiateSeries () {
-
-        // FIXME: 待完善
-        return [
-          ...this.baseSeries,
-          // 自定义的
-          ...this.customSeries()
-        ]
-      },
-      get baseSeries () {
         const {
           decimals
         } = valueOpts
         const { address, contract, name, symbol, totalSupply } = this
 
-        return [
+        const baseSeries = [
           { decodeType: decimals.type, call: [address, contract.methods[decimalsMethodName]().encodeABI()], target: decimals },
           { decodeType: name.type, call: [address, contract.methods[nameMethodName]().encodeABI()], target: name },
           { decodeType: symbol.type, call: [address, contract.methods[symbolMethodName]().encodeABI()], target: symbol },
           { decodeType: totalSupply.type, call: [address, contract.methods[totalSupplyMethodName]().encodeABI()], target: totalSupply }
+        ]
+
+        // FIXME: 待完善
+        return [
+          ...baseSeries,
+          // 自定义的
+          ...this.customSeries()
         ]
       },
       /**
@@ -269,18 +269,32 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
 
       /**
        * 与其他 token 产生的关联数据
-       * - 由 isSufficientAmount() 更新
-       * - 只保存当前钱包地址的相关数据，当钱包切换、断开后重置
-       * - 与 toContractAddresses 产生关系
-       * - 目标合约地址: { At: 1231233, amount: 量值对象, 钱包地址: 0000 }
+       * - TODO: ??? 由 isSufficientAmount() 更新
+       * - ??? 只保存当前钱包地址的相关数据，当钱包切换、断开后重置
+       * - ???? 与 toContractAddresses 产生关系
+       * - token address: { At: 1231233, amount: 量值对象 }
        * @type {Object}
        */
-      associatedTokens: {
-        // 'address': {
-          // burnGainAmount: ModelValueEther(lpt),
-          // mintGainAmount: ModelValueEther(UU),
-          // balance: ModelValueEther
-        // }
+      associatedTokens: {},
+      /**
+       * associatedTokens 数据集的单元 Model
+       * @type {Object}
+       */
+      associatedTokenModel,
+      /**
+       * 获取 associatedTokens 数据集中的值
+       * - 不存在则使用 associatedTokenModel 创建
+       * @param {Object} _token
+       * @return {Object}
+       */
+      getAssociatedToken (_token) {
+        const { associatedTokens, associatedTokenModel } = this
+        // TODO: 如果 address 不存在，则可以支持别的，待考虑
+        const { address } = _token
+
+        return associatedTokens[address]
+          // 创建
+          || (associatedTokens[address] = associatedTokenModel.create(_token))
       },
       /**
        * 关联合约的地址集
@@ -298,7 +312,6 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
       //  * @type {boolean}
       //  */
       // needResetAllowance: false,
-      // isNeed
 
       /**
        * s

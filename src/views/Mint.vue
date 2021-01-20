@@ -306,16 +306,17 @@ export default {
           }
         }
 
-        if (singleToken && tokens.UU.associatedTokens[singleToken.address] && tokens.UU.associatedTokens[singleToken.address].mintGainAmount) {
+        // TODO: 
+        const foo = tokens.UU.getAssociatedToken(singleToken)
 
-          leastVol = tokens.UU.associatedTokens[singleToken.address].mintGainAmount.view
-          leastBusy = tokens.UU.associatedTokens[singleToken.address].mintGainAmount.state.busy
-        }
+        leastVol = foo.mintGainAmount.view
+        leastBusy = foo.mintGainAmount.state.busy
       } else if (this.mintAction === 'withdraw') {
-        if (singleToken && tokens.UU.associatedTokens[singleToken.address] && tokens.UU.associatedTokens[singleToken.address].burnGainAmount) {
-          leastVol = tokens.UU.associatedTokens[singleToken.address].burnGainAmount.view
-          leastBusy = tokens.UU.associatedTokens[singleToken.address].burnGainAmount.state.busy
-        }
+        // TODO: 
+        const foo = tokens.UU.getAssociatedToken(singleToken)
+
+        leastVol = foo.burnGainAmount.view
+        leastBusy = foo.burnGainAmount.state.busy
       }
 
       return {
@@ -333,19 +334,13 @@ export default {
       }
     },
     reserves () {
-      // TODO: temp
       const { UU, DAI_USDC } = this.$store.tokens
-
-      let result = []
-
-      if (UU.associatedTokens[DAI_USDC.address] && UU.associatedTokens[DAI_USDC.address].balance) {
-        result.push({
-          code: DAI_USDC.symbol.view, balance: UU.associatedTokens[DAI_USDC.address].balance.view, proportion: '100'
-        })
-      }
-
-      // TODO: 链数据
-      return result
+      const foo = UU.getAssociatedToken(DAI_USDC)
+      
+      // TODO: 自动连接数据，并考虑数据同步更新的可能性
+      return [
+        { code: DAI_USDC.symbol.view, balance: foo.balance.view, proportion: '100' }
+      ]
     }
   }
 }

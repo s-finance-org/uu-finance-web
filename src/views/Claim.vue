@@ -124,7 +124,7 @@
                   </div>
                   <div class="content px-3 pt-2 d-flex flex-wrap mt-2">
                     <small class="col-6 mb-2">{{ $t(structure.claimActions.settle.settleRewardRateI18n) }}: {{ reward.settleRewardRate }}</small>
-                    <small class="col-6 mb-2">{{ $t(structure.claimActions.settle.settleRewardI18n) }}: {{ reward.settleReward }} {{ item.code }}</small>
+                    <small class="col-6 mb-2">{{ $t(structure.claimActions.settle.settleRewardI18n) }}: {{ reward.settleReward }} {{ reward.code }}</small>
                     <small class="col-6 mb-2">{{ reward.exchangeRate }}</small>
                     <small class="col-6 mb-2">{{ $t('global.base.estimatedTransactionFee') }}：x</small>
                   </div>
@@ -203,10 +203,15 @@ export default {
     ixd () {
       const { tokens, tokenAddresses } = this.$store
       const ownList = []
+      const settleList = []
 
       tokens.UU.supportedRewardAddresses.forEach(_address => {
+        // TODO: 优化 tokenAddresses 的数据同步
         const _token = tokenAddresses[_address.handled]
-        const foo = tokens.UU.associatedTokens[_address.handled]
+
+        if (!_token) return false
+
+        const foo = tokens.UU.getAssociatedToken(_token)
         // TODO: 如果没有，则就是项目自带的 token 没有，需要看 claimableReward、claimedReward
 
         if (!(foo && _token)) return false
@@ -214,15 +219,11 @@ export default {
         ownList.push({
           code: _token.code,
           apy: '?%',
-          pendingReward: foo.claimableReward ? foo.claimableReward.view : '',
+          pendingReward: foo.claimableReward.view,
+          // pendingRewardLoading: foo.claimableReward.state.loading,
           pendingRewardConvertUSD: '≈$ ?',
-          paidReward: foo.claimedReward ? foo.claimedReward.view : '',
-          // TODO: temp
-          totalReward: foo.claimableReward && foo.claimedReward
-            ? ModelValueEther.create({
-              decimals: _token.decimals,
-              handled: BN(foo.claimableReward.handled).plus(foo.claimedReward.handled).toString()
-            }).view : '',
+          paidReward: foo.claimedReward.view,
+          totalReward: foo.totalReward.view,
           receiveBtn: {
             disabled: false,
             busy: false,
@@ -231,6 +232,41 @@ export default {
           exchangeRate: '1 SFG = 0.5472 DAI'
         })
       })
+
+      tokens.UU.supportedLptAddresses.forEach((_address, idx) => {
+        // TODO: 优化
+        const _token = tokenAddresses[_address.handled]
+// TODO:  这里的奖励应该是 lpt 挖矿出来的奖励 token
+        if (!_token) return false
+// XXX: 这里应该不对，如果挖矿有多个奖励呢？
+        const foo = tokens.UU.getAssociatedToken(_token)
+
+        if (!(foo && _token)) return false
+
+        settleList.push({
+          lpt: _token.code,
+          name: _token.name.view,
+          rewards: [
+            {
+              // TODO: 应该是奖励的 token
+              code: '?SFG',
+              // XXX: 这里应该不对，如果挖矿有多个奖励呢？
+              pendingSettleReward: foo.miningPendingRewards.view,
+              pendingSettleRewardConvertUSD: '≈$ ?',
+              settleBtn: {
+                disabled: false,
+                busy: false,
+                click: () => tokens.UU.settleReward(idx)
+              },
+              settleRewardRate: '1.00 %',
+              // XXX: 这里应该不对，如果挖矿有多个奖励呢？
+              settleReward: foo.settleableReward.view,
+              exchangeRate: '1 SFG = 0.5472 DAI'
+            }
+          ]
+        })
+      })
+
 
       return {
         own: {
@@ -245,27 +281,7 @@ export default {
 
         },
         settle: {
-          list: [
-            {
-              lpt: 'DAI_USDC',
-              name: '5pool',
-              rewards: [
-                {
-                  code: 'SFG',
-                  pendingSettleReward: '?',
-                  pendingSettleRewardConvertUSD: '?',
-                  settleBtn: {
-                    disabled: false,
-                    busy: false,
-                    click: () => {}
-                  },
-                  settleRewardRate: '? %',
-                  settleReward: '?',
-                  exchangeRate: '1 SFG = 0.5472 DAI'
-                }
-              ],
-            }
-          ]
+          list: settleList
         }
       }
     }
