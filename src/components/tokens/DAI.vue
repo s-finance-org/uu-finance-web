@@ -1,8 +1,5 @@
 <template>
-  <span class="icon-token-DAI">
-    <span class="path1"></span>
-    <span class="path2"></span>
-  </span>
+  <span class="icon-token-DAI"></span>
 </template>
 
 <script>
@@ -12,13 +9,7 @@ export default {
 </script>
 
 <style lang="less" scoped>
-.icon-token-DAI .path1:before {
-  content: "\e910";
-  color: #f5ac37;
-}
-.icon-token-DAI .path2:before {
-  content: "\e911";
-  color: #fefefd;
-  margin-left: -1em;
+.icon-token-DAI {
+  background-image: url('/img/tokens/DAI.png');
 }
 </style>

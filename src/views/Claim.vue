@@ -45,7 +45,7 @@
                 <a-list-item-meta>
                   <template #title>
                     <div class="d-flex align-items-center">
-                      <component :is="`token-${item.code}`" class="token-icon me-3"></component>
+                      <icon-token :code=item.code size="52" class="me-3" />
                       <span class="fs-4">
                         {{ item.code }} {{ $t('global.base.reward') }}
                         <!-- <small class="d-block pt-1">{{ item.code }} {{ $t('global.base.apy') }}: {{ item.apy }}</small> -->
@@ -114,7 +114,7 @@
                 <a-list-item-meta>
                   <template #title>
                     <div class="d-flex align-items-center">
-                      <component :is="`token-${item.lpt}`" class="me-2"></component>
+                      <icon-token :code=item.lpt size="52" class="me-2" />
                       <span class="fs-4 pt-1">
                         {{ item.name }} {{ $t('global.base.miningPool') }}
                       </span>
@@ -170,11 +170,14 @@ import ButtonBusy from '../components/button-busy'
 
 import { ModelValueEther } from '../models'
 
+import IconToken from '../components/icon-token'
+
 export default {
   components: {
     iIntersect,
     iYellowinfo,
-    ButtonBusy
+    ButtonBusy,
+    IconToken
   },
   data() {
     return {
@@ -310,6 +313,7 @@ export default {
           margin-bottom: 0px;
           .token-icon {
             font-size: 52px;
+            width: 52px;
             height: 52px;
           }
           .icon-group-tokens {

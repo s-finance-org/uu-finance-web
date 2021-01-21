@@ -1,8 +1,5 @@
 <template>
-  <span class="icon-token-USDT">
-    <span class="path1"></span>
-    <span class="path2"></span>
-  </span>
+  <span class="icon-token-CRV"></span>
 </template>
 
 <script>
@@ -12,13 +9,7 @@ export default {
 </script>
 
 <style lang="less" scoped>
-.icon-token-USDT .path1:before {
-  content: "\e90a";
-  color: #26a17b;
-}
-.icon-token-USDT .path2:before {
-  content: "\e90b";
-  color: #fff;
-  margin-left: -1em;
+.icon-token-CRV {
+  background-image: url('/img/tokens/CRV.png');
 }
 </style>

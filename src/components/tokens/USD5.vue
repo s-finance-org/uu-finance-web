@@ -1,8 +1,5 @@
 <template>
-  <span class="icon-token-USD5">
-    <span class="path1"></span>
-    <span class="path2"></span>
-  </span>
+  <span class="icon-token-USD5"></span>
 </template>
 
 <script>
@@ -12,13 +9,7 @@ export default {
 </script>
 
 <style lang="less" scoped>
-.icon-token-USD5 .path1:before {
-  content: "\e904";
-  color: #50b3b3;
-}
-.icon-token-USD5 .path2:before {
-  content: "\e905";
-  color: #fff;
-  margin-left: -1em;
+.icon-token-USD5 {
+  background-image: url('/img/tokens/USD5.png');
 }
 </style>
