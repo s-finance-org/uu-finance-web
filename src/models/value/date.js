@@ -1,7 +1,6 @@
 import BN from 'BN.js'
 
-import { formatNumber } from '../../utils'
-import { floor } from '../../utils/math/round'
+import { formatNumber, floor } from '../../utils'
 
 const ModelValueDate = {
   /**

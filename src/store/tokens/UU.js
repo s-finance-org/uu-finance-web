@@ -56,8 +56,8 @@ const __root__ = reactive(ModelToken.create({
         miningPendingRewards: ModelValueEther.create({ decimals }),
         // 待结算奖励数
         settleableReward: ModelValueEther.create({ decimals }),
-
-
+        // TODO: temp lpt 对应的奖励 token
+        lptRewards: []
       }
     }
   }
@@ -81,9 +81,17 @@ __root__.supportedLptNum = ModelValueEther.create({
         async trigger () {
           const { handled } = this
 
+          // XXX: 目前无法得知 lpt 对应多少奖励币种
+          // TODO: temp
+          // TODO: 应该先知道 lpt 对应哪些奖励 token
+          if (handled === '0xd9976960b50e0966626673480C70b1da07E5AC1b') {
+            await __root__.settleableReward(tokenAddresses[handled], 0)
+            await __root__.settleableReward(tokenAddresses[handled], 1)
+            await __root__.settleableReward(tokenAddresses[handled], 2)
+          }
           // XXX: 如果没有在 tokenAddresses 内的，则应该自动创建
           // TODO: 考虑如何 multi
-          await __root__.settleableReward(tokenAddresses[handled], i)
+          // await __root__.settleableReward(tokenAddresses[handled], i)
         }
       })
       __root__.supportedLptAddresses[i] = _address
@@ -471,20 +479,21 @@ __root__.claimedReward = async function (_token) {
   */
  __root__.settleableReward = async function (_token, idx) {
   // TODO: 应该自动批量处理
-  const { contract, supportedLptAddresses } = this
-  // TODO: 待优化
-  const result = this.getAssociatedToken(_token)
-
-  // update
-  result.miningPendingRewards.state.beforeUpdate()
-  result.settleableReward.state.beforeUpdate()
+  const { contract } = this
 
   /* data
-    reward: _token.address, // address
+    reward: _token.address, // address 该奖励的 token address，异常时返回 0x0000000000000000000000000000000000000000
     vol: 0, // uint256 挖矿奖励数量
     tip: 0, // uint256 结算小费，与 vol 比例为 99:1
    */
-  const { vol, tip } = await contract.methods.settleable(storeWallet.address, _token.address, idx).call()
+  const { vol, tip, reward } = await contract.methods.settleable(storeWallet.address, _token.address, idx).call()
+  // TODO:
+  const lpt__ = this.associatedTokens[_token.address].lptRewards[idx] = reward
+
+  // TODO: 这里的数据应该跟 pool 相关
+  const result = this.getAssociatedToken({ address: reward })
+
+  console.log('reward', reward)
 
   result.miningPendingRewards.ether = vol
   result.settleableReward.ether = tip
@@ -497,8 +506,8 @@ __root__.claimedReward = async function (_token) {
  * @param {number} idx 在 supportedLptAddresses 内的索引
  */
 // TODO: 
-__root__.settleReward = async function (idx) {
-  const { contract, state, supportedLptAddresses } = this
+__root__.settleReward = async function (lptAddress, idx) {
+  const { contract, state } = this
   const walletAddress = storeWallet.address
 
   // 限制当前提交待确认的交易只有一份
@@ -511,7 +520,7 @@ __root__.settleReward = async function (idx) {
       from: walletAddress,
     }
 
-    const _method = await contract.methods.settle(supportedLptAddresses[idx].handled, idx)
+    const _method = await contract.methods.settle(lptAddress, idx)
 
     try {
       sendOpts.gas = await _method.estimateGas({

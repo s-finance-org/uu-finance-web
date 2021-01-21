@@ -1,7 +1,6 @@
 import BN from 'bignumber.js'
 
-import { floor } from '../../utils/math/round'
-import { formatNumber } from '../../utils'
+import { formatNumber, floor } from '../../utils'
 
 import ModelState from '../base/state'
 import ModelValueUint8 from './uint8'
@@ -130,7 +129,6 @@ console.log('[update] --------- wallet ether:')
       viewSuffix,
       /**
        * 视觉处理值
-       * - 主动式更新
        * - view 的可用数值
        * @type {string}
        */
@@ -141,25 +139,19 @@ console.log('[update] --------- wallet ether:')
       },
       /**
        * 视觉格式化的数据
-       * - 主动式更新
        * - 格式化
        * @type {string}
        */
       get view () {
-        const { viewDecimal, state, handledView } = this
-        let result = __default__.view
+        const { state, handledView } = this
 
-        // TODO: 如果数据没变动，则不再次处理
-        if (state.updated) {
-          result = viewPrefix + formatNumber(handledView) + viewSuffix
-console.log('view ------', result)
-        }
-
-        return result
+        return state.updated
+          ? viewPrefix + formatNumber(handledView) + viewSuffix
+          : __default__.view
       },
 
+      // 钱包数据有效期
       state: ModelState.create({ expireSec: 5 })
     }
   }
 }
-

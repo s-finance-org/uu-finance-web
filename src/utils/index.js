@@ -1,4 +1,6 @@
 
+const MAX_SAFE_PRECISION_LENGTH = 292
+
 export const ObjectProto = Object.prototype
 export const ObjectToString = ObjectProto.toString
 export const hasOwn = ObjectProto.hasOwnProperty
@@ -215,3 +217,85 @@ export const nativeIsNaN = window.isNaN
  * @return {boolean}
  */
 export const isNaN = val => isNumber(val) && nativeIsNaN(val)
+
+/**
+ * 转整数
+ * @param {*} val
+ * @return {number}
+ */
+export const toInteger = val => parseInt(val, 10)
+
+/**
+ * baseClamp
+ * @param {number} num
+ * @param {number=} lower
+ * @param {number=} upper
+ * @return {number}
+ */
+function baseClamp (num, lower, upper) {
+  if (num === num) {
+    lower !== undefined
+      && num < lower
+      && (num = lower, 1)
+    || upper !== undefined
+      && num > upper
+      && (num = upper)
+  }
+
+  return num
+}
+
+/**
+ * @param {number} precision
+ * @return {number}
+ */
+function baseRevisePrecision (precision) {
+  return baseClamp(precision, -MAX_SAFE_PRECISION_LENGTH, MAX_SAFE_PRECISION_LENGTH)
+}
+
+/**
+ * - lodash
+ * @see {@link https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Math/round}
+ * @param {string} methodName ceil、floor、round
+ * @return {Function(number,number):number}
+ */
+export const baseRound = (methodName) => {
+  var func = Math[methodName]
+
+  return (num, precision = 0) => {
+    precision = baseRevisePrecision(toInteger(precision))
+    if (precision) {
+      let pair = `${num}e`.split('e')
+      const val = func(`${pair[0]}e${+pair[1] + precision}`)
+
+      pair = `${val}e`.split('e')
+      return +`${pair[0]}e${+pair[1] - precision}`
+    }
+
+    return func(num)
+  }
+}
+
+/**
+ * 向上舍入
+ * @param {string|number} num
+ * @param {number=} [precision=0]
+ * @return {number}
+ */
+export const ceil = baseRound('ceil')
+
+/**
+ * 向下舍入
+ * @param {string|number} num
+ * @param {number=} [precision]
+ * @return {number}
+ */
+export const floor = baseRound('floor')
+
+/**
+ * 四舍五入
+ * @param {string|number} num
+ * @param {number=} [precision=0]
+ * @return {number}
+ */
+export const round = baseRound('round')

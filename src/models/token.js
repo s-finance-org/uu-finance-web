@@ -22,20 +22,24 @@ import notify from '../store/notify'
 
 import { USD } from '../store/currencies'
 
-import { now } from '../utils'
+import { now, floor } from '../utils'
 
 export default {
   /**
    * @param {Object} opts
-   * @param {string} opts.code // TODO: 暂无作用
+   * @param {string} opts.code 内部 token code
    * @param {string} opts.address
-   * @param {Array} opts.abi
-   * @param {boolean=} opts.isLPT 是否为 lp token // TODO: 暂无作用
-   * @param {Function=} opts.customSeries
-   * @param {Object=} opts.associatedTokenModel
+   * @param {Array=} opts.abi
+   * @param {boolean=} opts.isLpt 是否为 lp token // TODO: 暂无作用
+   * @param {Function=} opts.customSeries 自定义列队 multi call
+   * @param {Object=} opts.associatedTokenModel associatedToken 数据集的单元 Modal
+   * 
+   * 
+   * 
+   * @param {number=} opts.viewDecimal 显示内容的显示精度
+   * @param {Function=} opts.viewMethod 显示内容的舍入方法
    * 
    * @param {boolean=} opts.isInfiniteAllowance
-   * @param {number=} opts.viewDecimal
    * @param {Object=} opts.moneyOfAccount
    * @param {Object=} opts.getPrice
    * @param {Object=} opts.symbol
@@ -50,11 +54,15 @@ export default {
     code = '',
     address = '',
     abi = ERC20,
-    isLPT = false,
+    isLpt = false,
     customSeries = () => [],
     associatedTokenModel = { create: () => ({}) },
 
     viewDecimal = 4,
+    viewMethod = floor,
+
+
+
     moneyOfAccount = USD,
     // XXX: default
     getPrice = null,
@@ -86,15 +94,14 @@ export default {
       decimals: undefined,
       precision: undefined
     }
-    const valueOpts = {
-      // TODO: temp
-      decimal: 18,
+    const parameters = {
       decimals: ModelValueUint8.create({ value: 18 }),
-      viewDecimal
+      viewDecimal,
+      viewMethod
     }
 
     const result = {
-      ...valueOpts,
+      ...parameters,
       ...methods,
       ...values,
 
@@ -145,18 +152,18 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
       },
 
       /** @type {string} */
-      totalSupply: ModelValueEther.create(valueOpts),
+      totalSupply: ModelValueEther.create(parameters),
 
       /**
        * 是否为 LP token
        * @type {boolean}
        */
-      isLPT,
+      isLpt,
 
       get initiateSeries () {
         const {
           decimals
-        } = valueOpts
+        } = parameters
         const { address, contract, name, symbol, totalSupply } = this
 
         const baseSeries = [
@@ -178,7 +185,7 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
        */
       customSeries,
 
-      price: ModelValueEther.create(valueOpts),
+      price: ModelValueEther.create(parameters),
       // XXX: this.getPriceMethod 为合约方法，getPrice为自定义方法，取其一
       // this.getPrice && await this.getPrice()
       getPrice,
@@ -212,7 +219,7 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
        * @type {Object}
        */
       minAmount: ModelValueEther.create({
-        ...valueOpts,
+        ...parameters,
         value: TOKEN_MIN_AMOUNT_ETHER,
       }),
       /**
@@ -221,7 +228,7 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
        * @type {Object}
        */
       maxAmount: ModelValueEther.create({
-        ...valueOpts,
+        ...parameters,
         value: TOKEN_MAX_AMOUNT_ETHER,
       }),
       /**
@@ -230,7 +237,7 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
        * @type {Object}
        */
       infiniteMinAmount: ModelValueEther.create({
-        ...valueOpts,
+        ...parameters,
         value: TOKEN_INFINITE_MIN_AMOUNT_ETHER,
       }),
 
@@ -241,7 +248,7 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
        * TODO: 目前使用 handled
        * @type {Object}
        */
-      amount: ModelValueInput.create({...valueOpts}),
+      amount: ModelValueInput.create({...parameters}),
 
       /**
        * 量值是否有效
@@ -571,7 +578,7 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
        * Wallet
        */
       walletBalanceOf: ModelValueWallet.create({
-        ...valueOpts,
+        ...parameters,
         async trigger (address) {
           const result = await __store__.contract.methods[balanceOfMethodName](address).call()
 

@@ -1,7 +1,6 @@
 import BN from 'bignumber.js'
 
-import { formatNumber, isNaN } from '../../utils'
-import { floor } from '../../utils/math/round'
+import { formatNumber, floor } from '../../utils'
 import ModelState from '../base/state'
 import ModelValueUint8 from './uint8'
 
@@ -123,12 +122,26 @@ export default {
       viewMethod,
       viewPrefix,
       viewSuffix,
-      /** @type {string} */
+      /**
+       * 视觉处理值
+       * - view 的可用数值
+       * @type {string}
+       */
+      get handledView () {
+        const { handled, viewDecimal } = this
+
+        return viewMethod(handled, viewDecimal)
+      },
+      /**
+       * 视觉格式化的数据
+       * - 格式化
+       * @type {string}
+       */
       get view () {
         const { handled, viewDecimal, state } = this
 
         return state.updated
-          ? viewPrefix + formatNumber(BN(viewMethod(handled, viewDecimal)).toFixed(viewDecimal)) + viewSuffix
+          ? viewPrefix + formatNumber(BN(handled).toFixed(viewDecimal)) + viewSuffix
           : __default__.view
       },
 

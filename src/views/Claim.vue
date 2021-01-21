@@ -60,8 +60,8 @@
                 <div class="content px-3 pt-2 d-flex flex-wrap mt-2">
                   <small class="col-6 mb-2">{{ $t(structure.claimActions.own.paidRewardI18n) }}: {{ item.paidReward }} {{ item.code }}</small>
                   <small class="col-6 mb-2">{{ $t(structure.claimActions.own.totalRewardI18n) }}: {{ item.totalReward }} {{ item.code }}</small>
-                  <small class="col-6 mb-2">{{ item.exchangeRate }}</small>
-                  <small class="col-6 mb-2">{{ $t('global.base.estimatedTransactionFee') }}：x</small>
+                  <!-- <small class="col-6 mb-2">{{ item.exchangeRate }}</small> -->
+                  <!-- <small class="col-6 mb-2">{{ $t('global.base.estimatedTransactionFee') }}：x</small> -->
                 </div>
               </a-list-item>
             </template>
@@ -108,7 +108,7 @@
                   </template>
                 </a-list-item-meta>
                 <div
-                  v-for="reward in item.rewards"
+                  v-for="(reward, idx) in item.rewards"
                   :key="`reward-${reward.code}`"
                 >
                   <div class="d-flex justify-content-between align-items-end">
@@ -118,15 +118,15 @@
                         {{ reward.pendingSettleReward }} {{ reward.code }}<small class="ps-2 text-color-secondary">{{ reward.pendingSettleRewardConvertUSD }}</small>
                       </span>
                     </small>
-                    <button-busy type="primary" size="small" @click=reward.settleBtn.click :busying=reward.settleBtn.disabled :disabled=reward.settleBtn.busy>
+                    <button-busy type="primary" size="small" @click=reward.settleBtn.click(idx) :busying=reward.settleBtn.disabled :disabled=reward.settleBtn.busy>
                       {{ $t(structure.claimActions.settle.settleBtnI18n) }}
                     </button-busy>
                   </div>
                   <div class="content px-3 pt-2 d-flex flex-wrap mt-2">
                     <small class="col-6 mb-2">{{ $t(structure.claimActions.settle.settleRewardRateI18n) }}: {{ reward.settleRewardRate }}</small>
                     <small class="col-6 mb-2">{{ $t(structure.claimActions.settle.settleRewardI18n) }}: {{ reward.settleReward }} {{ reward.code }}</small>
-                    <small class="col-6 mb-2">{{ reward.exchangeRate }}</small>
-                    <small class="col-6 mb-2">{{ $t('global.base.estimatedTransactionFee') }}：x</small>
+                    <!-- <small class="col-6 mb-2">{{ reward.exchangeRate }}</small> -->
+                    <!-- <small class="col-6 mb-2">{{ $t('global.base.estimatedTransactionFee') }}：x</small> -->
                   </div>
                   </div>
               </a-list-item>
@@ -243,27 +243,40 @@ export default {
 
         if (!(foo && _token)) return false
 
-        settleList.push({
-          lpt: _token.code,
-          name: _token.name.view,
-          rewards: [
-            {
+        const rewards = []
+        // TODO: temp
+        if (_address.handled === '0xd9976960b50e0966626673480C70b1da07E5AC1b') {
+
+          foo.lptRewards.forEach(item => {
+            const _t = tokenAddresses[item]
+
+            if (!_t) return false
+            const fo = tokens.UU.getAssociatedToken(_t)
+
+            rewards.push({
               // TODO: 应该是奖励的 token
-              code: '?SFG',
+              code: _t.code,
               // XXX: 这里应该不对，如果挖矿有多个奖励呢？
-              pendingSettleReward: foo.miningPendingRewards.view,
+              pendingSettleReward: fo.miningPendingRewards.view,
               pendingSettleRewardConvertUSD: '≈$ ?',
               settleBtn: {
                 disabled: false,
                 busy: false,
-                click: () => tokens.UU.settleReward(idx)
+                idx,
+                click: (idx) => tokens.UU.settleReward(_address.handled, idx)
               },
               settleRewardRate: '1.00 %',
               // XXX: 这里应该不对，如果挖矿有多个奖励呢？
-              settleReward: foo.settleableReward.view,
+              settleReward: fo.settleableReward.view,
               exchangeRate: '1 SFG = 0.5472 DAI'
-            }
-          ]
+            })
+          })
+        }
+
+        settleList.push({
+          lpt: _token.code,
+          name: _token.name.view,
+          rewards
         })
       })
 

@@ -1,7 +1,6 @@
 import BN from 'bignumber.js'
 
-import { formatNumber, isNaN } from '../../utils'
-import { floor } from '../../utils/math/round'
+import { formatNumber, isNaN, floor } from '../../utils'
 import ModelState from '../base/state'
 import ModelValueUint8 from './uint8'
 
