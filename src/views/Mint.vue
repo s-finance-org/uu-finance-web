@@ -299,24 +299,30 @@ export default {
 
       // TODO: temp 单选以及实现方法 （用Model 结构初始化来解决）
       if (this.mintAction === 'deposit') {
-        if (singleToken && singleToken.associatedTokens && singleToken.associatedTokens[structure.approveToAddress]) {
-          let aaa  = singleToken.associatedTokens[structure.approveToAddress].needApprove
-          if (aaa) {
-            mintBtnDisabled = true
-          }
-        }
-
         // TODO: 
-        const foo = tokens.UU.getAssociatedToken(singleToken)
+        if (singleToken) {
+          if (singleToken.associatedTokens && singleToken.associatedTokens[structure.approveToAddress]) {
+            let aaa  = singleToken.associatedTokens[structure.approveToAddress].needApprove
+            if (aaa) {
+              mintBtnDisabled = true
+            }
+          }
 
-        leastVol = foo.mintGainAmount.view
-        leastBusy = foo.mintGainAmount.state.busy
+          // TODO: 
+          const foo = tokens.UU.getAssociatedToken(singleToken)
+
+          leastVol = foo.mintGainAmount.view
+          leastBusy = foo.mintGainAmount.state.busy
+        }
       } else if (this.mintAction === 'withdraw') {
         // TODO: 
-        const foo = tokens.UU.getAssociatedToken(singleToken)
+        if (singleToken) {
+          // TODO: 
+          const foo = tokens.UU.getAssociatedToken(singleToken)
 
-        leastVol = foo.burnGainAmount.view
-        leastBusy = foo.burnGainAmount.state.busy
+          leastVol = foo.burnGainAmount.view
+          leastBusy = foo.burnGainAmount.state.busy
+        }
       }
 
       return {

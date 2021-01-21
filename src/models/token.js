@@ -296,7 +296,8 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
        */
       getAssociatedToken (_token) {
         const { associatedTokens, associatedTokenModel } = this
-        const { address } = _token || { address: 'UNDEFINED' }
+        // TODO: 如果 _token 不存在，而 create() 还依赖其结构，需要默认化
+        const { address } = _token || { address: '__UNDEFINED_ADDRESS__' }
 
         return associatedTokens[address]
           // 创建
