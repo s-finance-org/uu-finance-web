@@ -7,12 +7,12 @@
       </div>
 
       <a-tabs animated type="card" defaultActiveKey=structure.claimActionsDefaultKey v-model:activeKey=tabClaimAction>
-        <a-tab-pane key="own" :tab=$t(structure.claimActions.own.tabI18n) class="d-flex flex-wrap">
+        <a-tab-pane key="own" :tab="$t('global.claim.own.tab')" class="d-flex flex-wrap">
           <!-- TODO: 重复的 -->
           <div class="line-frame-thin d-flex px-3 py-2 p-md-4 mt-3 flex-column col-12 col-md-4 order-md-1">
             <small class="d-flex">
               <span class="me-2 d-flex"><iYellowinfo /></span>
-              {{ $t(structure.claimActions.own.sideTipI18n) }}
+              {{ $t('global.claim.own.sideTip') }}
             </small>
             <iIntersect class="d-none d-md-block text-align-justify" />
           </div>
@@ -26,10 +26,17 @@
             <template #header>
               <div class="d-flex justify-content-between align-items-center">
                 <span>
-                  <!-- {{ $t(structure.claimActions.own.totalApyI18n) }}: -->
+                  <!-- {{ $t('global.claim.own.totalApy') }}: -->
                 </span>
-                <button-busy type="link" size="small" @click=ixd.own.claimAllBtn.click :busying=ixd.own.claimAllBtn.disabled :disabled=ixd.own.claimAllBtn.busy>
-                  {{ $t(structure.claimActions.own.claimAllBtnI18n) }}
+                <button-busy
+                  type="link"
+                  size="small"
+                  @click=ixd.own.claimAllBtn.click
+                  :busying=ixd.own.claimAllBtn.disabled
+                  :disabled=ixd.own.claimAllBtn.busy
+                  className="col-12 col-sm-auto"
+                >
+                  {{ $t('global.claim.own.allClaim') }}
                 </button-busy>
               </div>
             </template>
@@ -40,51 +47,58 @@
                     <div class="d-flex align-items-center">
                       <component :is="`token-${item.code}`" class="token-icon me-3"></component>
                       <span class="fs-4">
-                        {{ item.code }} {{ $t(structure.rewardI18n) }}
-                        <small class="d-block pt-1">{{ item.code }} {{ $t('global.base.apy') }}: {{ item.apy }}</small>
+                        {{ item.code }} {{ $t('global.base.reward') }}
+                        <!-- <small class="d-block pt-1">{{ item.code }} {{ $t('global.base.apy') }}: {{ item.apy }}</small> -->
                       </span>
                     </div>
                   </template>
                 </a-list-item-meta>
-                <div class="d-flex justify-content-between align-items-end">
+                <div class="d-flex justify-content-between align-items-end flex-wrap">
                   <small>
-                    {{ $t(structure.claimActions.own.pendingRewardI18n) }}
+                    {{ $t('global.claim.own.pendingReward') }}
                     <span class="d-block fs-5 pt-1">
-                      {{ item.pendingReward }} {{ item.code }}<small class="ps-2 text-color-secondary">{{ item.pendingRewardConvertUSD }}</small>
+                      {{ item.pendingReward }} {{ item.code }}
+                      <!-- <small class="ps-2 text-color-secondary">≈{{ item.pendingRewardConvertUSD }}</small> -->
                     </span>
                   </small>
-                  <button-busy type="primary" size="small" @click=item.receiveBtn.click :busying=item.receiveBtn.disabled :disabled=item.receiveBtn.busy>
-                    {{ $t(structure.claimActions.own.receiveBtnI18n) }}
+                  <button-busy
+                    type="primary"
+                    size="small"
+                    @click=item.receiveBtn.click
+                    :busying=item.receiveBtn.disabled
+                    :disabled=item.receiveBtn.busy
+                    className="col-12 col-sm-auto mt-2"
+                  >
+                    {{ $t('global.claim.own.receiveAward') }}
                   </button-busy>
                 </div>
                 <div class="content px-3 pt-2 d-flex flex-wrap mt-2">
-                  <small class="col-6 mb-2">{{ $t(structure.claimActions.own.paidRewardI18n) }}: {{ item.paidReward }} {{ item.code }}</small>
-                  <small class="col-6 mb-2">{{ $t(structure.claimActions.own.totalRewardI18n) }}: {{ item.totalReward }} {{ item.code }}</small>
-                  <!-- <small class="col-6 mb-2">{{ item.exchangeRate }}</small> -->
-                  <!-- <small class="col-6 mb-2">{{ $t('global.base.estimatedTransactionFee') }}：x</small> -->
+                  <small class="col-12 col-sm-6 mb-2">{{ $t('global.claim.own.paidReward') }}: {{ item.paidReward }} {{ item.code }}</small>
+                  <small class="col-12 col-sm-6 mb-2">{{ $t('global.claim.own.totalReward') }}: {{ item.totalReward }} {{ item.code }}</small>
+                  <!-- <small class="col-12 col-sm-6 mb-2">{{ item.exchangeRate }}</small> -->
+                  <!-- <small class="col-12 col-sm-6 mb-2">{{ $t('global.base.estimatedTransactionFee') }}：x</small> -->
                 </div>
               </a-list-item>
             </template>
           </a-list>
         </a-tab-pane>
 
-        <a-tab-pane key="claimTo" disabled :tab=$t(structure.claimActions.claimTo.tabI18n) class="d-flex flex-wrap">
-          <!-- TODO: 重复的 -->
+        <!-- <a-tab-pane key="claimTo" disabled :tab="$t('global.claim.claimTo.tab')" class="d-flex flex-wrap">
           <div class="line-frame-thin d-flex px-3 py-2 p-md-4 mt-3 flex-column col-12 col-md-4 order-md-1">
             <small class="d-flex">
               <span class="me-2 d-flex"><iYellowinfo /></span>
-              {{ $t(structure.claimActions.claimTo.sideTipI18n) }}
+              {{ $t('global.claim.claimTo.sideTip') }}
             </small>
             <iIntersect class="d-none d-md-block text-align-justify" />
           </div>
-        </a-tab-pane>
+        </a-tab-pane> -->
 
-        <a-tab-pane key="settle" :tab=$t(structure.claimActions.settle.tabI18n) class="d-flex flex-wrap">
+        <a-tab-pane key="settle" :tab="$t('global.claim.settle.tab')" class="d-flex flex-wrap">
           <!-- TODO: 重复的 -->
           <div class="line-frame-thin d-flex px-3 py-2 p-md-4 mt-3 flex-column col-12 col-md-4 order-md-1">
             <small class="d-flex">
               <span class="me-2 d-flex"><iYellowinfo /></span>
-              {{ $t(structure.claimActions.settle.sideTipI18n) }}
+              {{ $t('global.claim.settle.sideTip') }}
             </small>
             <iIntersect class="d-none d-md-block text-align-justify" />
           </div>
@@ -111,22 +125,30 @@
                   v-for="(reward, idx) in item.rewards"
                   :key="`reward-${reward.code}`"
                 >
-                  <div class="d-flex justify-content-between align-items-end">
+                  <div class="d-flex justify-content-between align-items-end flex-wrap">
                     <small>
-                      {{ $t(structure.claimActions.settle.pendingSettleRewardI18n) }}
+                      {{ $t('global.claim.settle.pendingSettleReward') }}
                       <span class="d-block fs-5 pt-1">
-                        {{ reward.pendingSettleReward }} {{ reward.code }}<small class="ps-2 text-color-secondary">{{ reward.pendingSettleRewardConvertUSD }}</small>
+                        {{ reward.pendingSettleReward }} {{ reward.code }}
+                        <!-- <small class="ps-2 text-color-secondary">≈{{ reward.pendingSettleRewardConvertUSD }}</small> -->
                       </span>
                     </small>
-                    <button-busy type="primary" size="small" @click=reward.settleBtn.click(idx) :busying=reward.settleBtn.disabled :disabled=reward.settleBtn.busy>
-                      {{ $t(structure.claimActions.settle.settleBtnI18n) }}
+                    <button-busy
+                      type="primary"
+                      size="small"
+                      @click=reward.settleBtn.click(idx)
+                      :busying=reward.settleBtn.disabled
+                      :disabled=reward.settleBtn.busy
+                      className="col-12 col-sm-auto mt-2"
+                    >
+                      {{ $t('global.claim.settle.participateSettle') }}
                     </button-busy>
                   </div>
                   <div class="content px-3 pt-2 d-flex flex-wrap mt-2">
-                    <small class="col-6 mb-2">{{ $t(structure.claimActions.settle.settleRewardRateI18n) }}: {{ reward.settleRewardRate }}</small>
-                    <small class="col-6 mb-2">{{ $t(structure.claimActions.settle.settleRewardI18n) }}: {{ reward.settleReward }} {{ reward.code }}</small>
-                    <!-- <small class="col-6 mb-2">{{ reward.exchangeRate }}</small> -->
-                    <!-- <small class="col-6 mb-2">{{ $t('global.base.estimatedTransactionFee') }}：x</small> -->
+                    <small class="col-12 col-sm-6 mb-2">{{ $t('global.claim.settle.settleRewardRate') }}: {{ reward.settleRewardRate }}</small>
+                    <small class="col-12 col-sm-6 mb-2">{{ $t('global.claim.settle.settleReward') }}: {{ reward.settleReward }} {{ reward.code }}</small>
+                    <!-- <small class="col-12 col-sm-6 mb-2">{{ reward.exchangeRate }}</small> -->
+                    <!-- <small class="col-12 col-sm-6 mb-2">{{ $t('global.base.estimatedTransactionFee') }}：x</small> -->
                   </div>
                   </div>
               </a-list-item>
@@ -170,34 +192,7 @@ export default {
   computed: {
     structure () {
       return {
-        rewardI18n: 'global.base.reward',
-        apyI18n: 'global.base.apy',
-
         claimActionsDefaultKey: 'own',
-        claimActions: {
-          own: {
-            tabI18n: 'global.claim.own.tab',
-            totalApyI18n: 'global.claim.own.totalApy',
-            claimAllBtnI18n: 'global.claim.own.allClaim',
-            pendingRewardI18n: 'global.claim.own.pendingReward',
-            paidRewardI18n: 'global.claim.own.paidReward',
-            totalRewardI18n: 'global.claim.own.totalReward',
-            receiveBtnI18n: 'global.claim.own.receiveAward',
-            sideTipI18n: 'global.claim.own.sideTip'
-          },
-          claimTo: {
-            tabI18n: 'global.claim.claimTo.tab',
-            sideTipI18n: 'global.claim.claimTo.sideTip'
-          },
-          settle: {
-            tabI18n: 'global.claim.settle.tab',
-            sideTipI18n: 'global.claim.settle.sideTip',
-            pendingSettleRewardI18n: 'global.claim.settle.pendingSettleReward',
-            settleRewardRateI18n: 'global.claim.settle.settleRewardRate',
-            settleRewardI18n: 'global.claim.settle.settleReward',
-            settleBtnI18n: 'global.claim.settle.participateSettle'
-          }
-        }
       }
     },
     ixd () {
@@ -221,7 +216,7 @@ export default {
           apy: '?%',
           pendingReward: foo.claimableReward.view,
           // pendingRewardLoading: foo.claimableReward.state.loading,
-          pendingRewardConvertUSD: '≈$ ?',
+          pendingRewardConvertUSD: '$ ?',
           paidReward: foo.claimedReward.view,
           totalReward: foo.totalReward.view,
           receiveBtn: {
@@ -258,7 +253,7 @@ export default {
               code: _t.code,
               // XXX: 这里应该不对，如果挖矿有多个奖励呢？
               pendingSettleReward: fo.miningPendingRewards.view,
-              pendingSettleRewardConvertUSD: '≈$ ?',
+              pendingSettleRewardConvertUSD: '$ ?',
               settleBtn: {
                 disabled: false,
                 busy: false,

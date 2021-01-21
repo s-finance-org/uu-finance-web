@@ -25,7 +25,7 @@
             </a-radio-group>
 
             <a-tabs size="small" animated type="card" defaultActiveKey="single" v-model:activeKey="mintAssetMode">
-              <a-tab-pane key="multiple" :tab="$t(actionItem.mintAssetMode.multipleTabI18n)" class="pt-2">
+              <!-- <a-tab-pane key="multiple" :tab="$t(actionItem.mintAssetMode.multipleTabI18n)" class="pt-2">
                 <token-select-input
                   v-for="tokenItem in structure.multipleAssetTokens"
                   :key="'multipleAssetTokens-' + tokenItem"
@@ -36,7 +36,7 @@
                   :codes=tokenItem
                   :ensureBalance=actionItem.ensureBalance
                   :useApprove=structure.useApprove />
-              </a-tab-pane>
+              </a-tab-pane> -->
               <a-tab-pane key="single" :tab="$t(actionItem.mintAssetMode.singleTabI18n)" class="pt-2">
                 <token-select-input
                   v-model:current="singleSelectCode"
@@ -68,9 +68,10 @@
           </div>
 
           <div class="d-flex flex-wrap col-12 col-md-8 pe-md-4 pt-4 justify-content-between align-items-end">
-            <a-button type="link" size="small" class="p-0 mt-2 order-1 order-md-12 col-12 col-md-auto">
+            <!-- <a-button type="link" size="small" class="p-0 mt-2 order-1 order-md-12 col-12 col-md-auto">
               高级选项
-            </a-button>
+            </a-button> -->
+            <span></span>
             <button-busy
               :busying=ixd.mintBtn.busy
               className="col-12 col-md-auto order-12 order-md-1"
@@ -212,9 +213,10 @@ export default {
       return {
         selectTokenTypeDefaultValue: '1',
         selectTokenTypes: [
+          // TODO: value 的定义
           { value: '1', i18n: 'global.mint.selectTokenTypes.lpt' },
-          { value: '2', i18n: 'global.mint.selectTokenTypes.interestToken', disabled: true },
-          { value: '3', i18n: 'global.mint.selectTokenTypes.stablecoin', disabled: true }
+          // { value: '2', i18n: 'global.mint.selectTokenTypes.interestToken' },
+          // { value: '3', i18n: 'global.mint.selectTokenTypes.stablecoin' }
         ],
 
         mintActionsDefaultKey: 'deposit',
