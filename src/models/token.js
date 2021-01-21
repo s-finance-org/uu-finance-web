@@ -285,12 +285,11 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
        * 获取 associatedTokens 数据集中的值
        * - 不存在则使用 associatedTokenModel 创建
        * @param {Object} _token
-       * @return {Object}
+       * @return {!Object}
        */
       getAssociatedToken (_token) {
         const { associatedTokens, associatedTokenModel } = this
-        // TODO: 如果 address 不存在，则可以支持别的，待考虑
-        const { address } = _token
+        const { address } = _token || { address: 'UNDEFINED' }
 
         return associatedTokens[address]
           // 创建
