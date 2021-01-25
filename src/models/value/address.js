@@ -2,13 +2,12 @@ import ModelState from '../base/state'
 
 export default {
   /**
+   * - 数据关联 value -> handled -> view
    * @param {Object} opts
-   * @param {string=} opts.value 预设值
    * @param {Promise=} opts.trigger 触发器
    * @return {!Object}
    */
   create ({
-    value = undefined,
     trigger = null
   } = {}) {
     const __default__ = {
@@ -19,7 +18,7 @@ export default {
       handled: __default__.handled,
     }
 
-    const result = {
+    return {
       type: 'address',
 
       /**
@@ -30,7 +29,17 @@ export default {
         return this.handled
       },
       set value (val) {
+        this.setValue(val)
+      },
+      /**
+       * value 链式方法赋值
+       * @param {string} val
+       * @type {Function}
+       */
+      setValue (val) {
         this.handled = val
+
+        return this
       },
 
       /** @type {string} */
@@ -73,11 +82,5 @@ export default {
 
       state: ModelState.create()
     }
-
-    // 预设
-    value != undefined
-      && (result.value = value)
-
-    return result
   }
 }

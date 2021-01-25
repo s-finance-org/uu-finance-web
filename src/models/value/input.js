@@ -195,12 +195,23 @@ export default {
       viewMethod,
       viewPrefix,
       viewSuffix,
+      /**
+       * 视觉处理值
+       * - view 的可用数值
+       * @type {string}
+       */
+      get handledView () {
+        const { handled, viewDecimal } = this
+
+        return viewMethod(handled, viewDecimal)
+      },
       /** @type {string} */
       get view () {
-        const { handled, viewDecimal, state } = this
+        const { viewDecimal, state, handledView } = this
 
         return state.updated
-          ? viewPrefix + formatNumber(BN(viewMethod(handled, viewDecimal)).toFixed(viewDecimal)) + viewSuffix
+        // TODO: 淘汰 toFixed
+          ? viewPrefix + formatNumber(BN(handledView).toFixed(viewDecimal)) + viewSuffix
           : __default__.view
       },
 

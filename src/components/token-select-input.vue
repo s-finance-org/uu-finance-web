@@ -61,7 +61,7 @@
     </busy>
   </small>
 
-  <!-- <small class="d-flex flex-column" style="overflow: hidden;">
+  <small class="d-flex flex-column" style="overflow: hidden;">
     <span>是否输入错误: {{ !currentToken.amount.isValidInput }}</span>
     <span>name: {{ currentToken.name.view }}</span>
     decimals: {{ currentToken.decimals.handled }}<br/>
@@ -71,7 +71,13 @@
     </a-checkbox>
     precision: {{ currentToken.precision }}<br/>
     walletBalanceOf: {{ currentToken.walletBalanceOf.handled }}<br/>
-    amount: {{ currentToken.amount.ether }} | {{ currentToken.amount.handled }} |  {{ currentToken.amount.input }} | {{ currentToken.amount.view }}<br/>
+    amount: <br/>
+    {{ currentToken.amount.ether }} | <br/>
+    {{ currentToken.amount.handled }} |  <br/>
+    {{ currentToken.amount.input }} | <br/>
+    {{ currentToken.amount.inputView }} | <br/>
+    {{ currentToken.amount.handledView }}<br/>
+    {{ currentToken.amount.view }}<br/>
     approveAmount: <br/>
     error: {{ currentToken.error }}<br/>
     associatedTokens: <br/>
@@ -81,9 +87,8 @@
       toContractAddress: {{ key }}<br/>
       allowance: {{ item.allowance }} <br/>
       approve: {{ item.approve }}<br/>
-      walletAddress: {{ item.walletAddress }}<br/>
     </span>
-  </small> -->
+  </small>
 </template>
 
 <script>
@@ -100,6 +105,7 @@ export default {
     label: String,
     placeholder: String,
     changeAmount: Function,
+    // 授权到的目标地址
     approveToAddress: String,
     // 是否使用授权功能（
     useApprove: {
@@ -141,7 +147,6 @@ export default {
       this.$emit('changeAmount', currentToken)
 
       useApprove
-        && approveToAddress
         && await currentToken.isNeedApprove(approveToAddress)
     },
     // 使用全部余额
@@ -196,9 +201,9 @@ export default {
       // TODO: 
       // 使用授权功能、
       if (useApprove && approveToAddress && currentToken.associatedTokens && currentToken.associatedTokens[approveToAddress]) {
-        need = currentToken.associatedTokens[approveToAddress].needApprove
-        reset = currentToken.associatedTokens[approveToAddress].resetApprove
-        busy = currentToken.associatedTokens[approveToAddress].approveState.busy
+        need = currentToken.associatedTokens[approveToAddress].isNeedApprove
+        reset = currentToken.associatedTokens[approveToAddress].isResetApprove
+        busy = currentToken.associatedTokens[approveToAddress].state.busy
       }
 
       return {

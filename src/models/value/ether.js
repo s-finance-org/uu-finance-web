@@ -8,8 +8,6 @@ export default {
   /**
    * - 数据关联 value -> ether <-> handled -> view
    * @param {Object=} opts.decimals 原数据的设定精度
-   * @param {string=} opts.value 预设值
-   * @param {string=} opts.handled 预设值
    * @param {number=} opts.viewDecimal 显示内容的显示精度
    * @param {Function=} opts.viewMethod 显示内容的舍入方法
    * @param {string=} opts.viewPrefix 显示内容的前缀
@@ -19,8 +17,6 @@ export default {
    */
   create ({
     decimals = ModelValueUint8.create(),
-    value = undefined,
-    handled = undefined,
     viewDecimal = 6,
     viewMethod = floor,
     viewPrefix = '',
@@ -65,13 +61,14 @@ export default {
 
       /**
        * IO
+       * - 对应 ether
        * @type {(string|number)}
        */
       get value () {
         return this.ether
       },
       set value (val) {
-        this.ether = val
+        this.setEther(val)
       },
 
       /**
@@ -83,13 +80,23 @@ export default {
       },
       set ether (val) {
         const { state, precision } = this
-        const result = __store__.ether = val || __default__.handled
+        const result = __store__.ether = val || __default__.ether
 
         // sync
         __store__.handled = BN(result).div(precision).toString()
         // TODO: 必须是方法
         this.trigger && this.trigger()
         state.afterUpdate()
+      },
+      /**
+       * ether 链式方法赋值
+       * @param {string} val
+       * @type {Function}
+       */
+      setEther (val) {
+        this.ether = val
+
+        return this
       },
 
       /**
@@ -110,6 +117,16 @@ export default {
         // TODO: 必须是方法
         this.trigger && this.trigger()
         state.afterUpdate()
+      },
+      /**
+       * handled 链式方法赋值
+       * @param {string} val
+       * @type {Function}
+       */
+      setHandled (val) {
+        this.handled = val
+
+        return this
       },
 
       /**
@@ -138,21 +155,16 @@ export default {
        * @type {string}
        */
       get view () {
-        const { handled, viewDecimal, state } = this
+        const { handledView, viewDecimal, state } = this
 
         return state.updated
-          ? viewPrefix + formatNumber(BN(handled).toFixed(viewDecimal)) + viewSuffix
+        // TODO: 淘汰 toFixed
+          ? viewPrefix + formatNumber(BN(handledView).toFixed(viewDecimal)) + viewSuffix
           : __default__.view
       },
 
       state: ModelState.create()
     }
-
-    // 预设
-    value != null
-      && (result.value = value)
-    handled != null
-      && (result.handled = handled)
 
     return result
   }

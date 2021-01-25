@@ -304,7 +304,7 @@ export default {
         // TODO: 
         if (singleToken) {
           if (singleToken.associatedTokens && singleToken.associatedTokens[structure.approveToAddress]) {
-            let aaa  = singleToken.associatedTokens[structure.approveToAddress].needApprove
+            let aaa  = singleToken.associatedTokens[structure.approveToAddress].isNeedApprove
             if (aaa) {
               mintBtnDisabled = true
             }

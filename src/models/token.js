@@ -23,6 +23,7 @@ import notify from '../store/notify'
 import { USD } from '../store/currencies'
 
 import { now, floor } from '../utils'
+import { ModelValueAddress } from '.'
 
 export default {
   /**
@@ -32,7 +33,7 @@ export default {
    * @param {Array=} opts.abi
    * @param {boolean=} opts.isLpt 是否为 lp token // TODO: 暂无作用
    * @param {Function=} opts.customSeries 自定义列队 multi call
-   * @param {Object=} opts.associatedTokenModel associatedToken 数据集的单元 Modal
+   * @param {Object=} opts.customAssociatedTokenModel 追加 associatedToken 数据集的单元 Modal
    * 
    * 
    * 
@@ -56,7 +57,7 @@ export default {
     abi = ERC20,
     isLpt = false,
     customSeries = () => [],
-    associatedTokenModel = { create: () => ({}) },
+    customAssociatedTokenModel = { create: () => ({}) },
 
     viewDecimal = 4,
     viewMethod = floor,
@@ -90,10 +91,13 @@ export default {
     }
     const __cache__ = {
       networkId: undefined,
-      walletAddress: undefined,
       decimals: undefined,
       precision: undefined
     }
+    /**
+       * 参数接口
+       * @type {!Object}
+       */
     const parameters = {
       decimals: ModelValueUint8.create({ value: 18 }),
       viewDecimal,
@@ -101,6 +105,8 @@ export default {
     }
 
     const result = {
+      parameters,
+      // TODO: 待考虑取消
       ...parameters,
       ...methods,
       ...values,
@@ -218,28 +224,19 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
        * 最小量
        * @type {Object}
        */
-      minAmount: ModelValueEther.create({
-        ...parameters,
-        value: TOKEN_MIN_AMOUNT_ETHER,
-      }),
+      minAmount: ModelValueEther.create(parameters).setEther(TOKEN_MIN_AMOUNT_ETHER),
       /**
        * 最大量
        * - 等同无限授权量
        * @type {Object}
        */
-      maxAmount: ModelValueEther.create({
-        ...parameters,
-        value: TOKEN_MAX_AMOUNT_ETHER,
-      }),
+      maxAmount: ModelValueEther.create(parameters).setEther(TOKEN_MAX_AMOUNT_ETHER),
       /**
        * 无限授权量的的最小阈值
        * - 无限授权开启时，当已授权低于该值，将再次授权
        * @type {Object}
        */
-      infiniteMinAmount: ModelValueEther.create({
-        ...parameters,
-        value: TOKEN_INFINITE_MIN_AMOUNT_ETHER,
-      }),
+      infiniteMinAmount: ModelValueEther.create(parameters).setEther(TOKEN_INFINITE_MIN_AMOUNT_ETHER),
 
       /**
        * 量值
@@ -248,7 +245,7 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
        * TODO: 目前使用 handled
        * @type {Object}
        */
-      amount: ModelValueInput.create({...parameters}),
+      amount: ModelValueInput.create(parameters),
 
       /**
        * 量值是否有效
@@ -285,9 +282,100 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
       associatedTokens: {},
       /**
        * associatedTokens 数据集的单元 Model
-       * @type {Object}
+       * @param {Object} _token
+       * @return {Object}
        */
-      associatedTokenModel,
+      associatedTokenModel (_token) {
+        const __root__ = this
+        // TODO: 采用哪个
+        // const { parameters } = _token
+        const _default_ = {
+          isNeedApprove: false,
+          isResetApprove: false
+        }
+        const _store_ = {
+          isNeedApprove: _default_.isNeedApprove,
+          isResetApprove: _default_.isResetApprove
+        }
+        const approve = ModelValueEther.create()
+
+        return {
+          // 与 key 相同
+          address: ModelValueAddress.create().setValue(_token.address),
+          ...customAssociatedTokenModel(_token),
+
+          // 授权量
+          allowance: ModelValueEther.create({
+            async trigger () {
+              const { isInfiniteAllowance, infiniteMinAmount, amount } = __root__
+              const { ether } = this
+              const bnAllowanceEther = BN(ether)
+
+              // sync
+              const isNeedApprove = _store_.isNeedApprove = isInfiniteAllowance
+                // 小于无限授权量最小阈值
+                ? bnAllowanceEther.lt(infiniteMinAmount.ether)
+                // 授权量不足当前量
+                : bnAllowanceEther.lt(amount.ether)
+
+              // 需要授权，且当前授权量大于0
+              if (isNeedApprove && bnAllowanceEther.gt(0)) {
+                // 清零授权，防止攻击
+                approve.ether = 0
+                _store_.isResetApprove = true
+              }
+            }
+          }),
+
+          // 在当前父 token 中的余额
+          // TODO: 采用哪个
+          balance: ModelValueEther.create(),
+
+          /**
+           * 需要授权
+           * @type {boolean}
+           */
+          get isNeedApprove () {
+            return _store_.isNeedApprove
+          },
+
+          /**
+           * 重置授权
+           * @type {Function}
+           */
+          resetApprove () {
+            
+          },
+
+          /**
+           * 重置授权
+           * - 防攻击
+           * @type {boolean}
+           */
+          get isResetApprove () {
+            return _store_.isResetApprove
+          },
+
+          // 申请授权量
+          approve,
+
+          state: ModelState.create(),
+
+          /**
+           * 重置
+           */
+          // TODO: 待考虑，可能销毁再创建更完整
+          reset () {
+            const { isNeedApprove, resetApprove } = _default_
+            const { state } = this
+
+            this.isNeedApprove = isNeedApprove
+            this.resetApprove = resetApprove
+
+            state.reset()
+          }
+        }
+      },
       /**
        * 获取 associatedTokens 数据集中的值
        * - 不存在则使用 associatedTokenModel 创建
@@ -295,13 +383,13 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
        * @return {!Object}
        */
       getAssociatedToken (_token) {
-        const { associatedTokens, associatedTokenModel } = this
+        const { associatedTokens } = this
         // TODO: 如果 _token 不存在，而 create() 还依赖其结构，需要默认化
         const { address } = _token || { address: '__UNDEFINED_ADDRESS__' }
 
         return associatedTokens[address]
           // 创建
-          || (associatedTokens[address] = associatedTokenModel.create(_token))
+          || (associatedTokens[address] = this.associatedTokenModel(_token))
       },
       /**
        * 关联合约的地址集
@@ -338,79 +426,48 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
       // },
 
       /**
+       * 获取授权量
+       * - 自动关联钱包
+       * - 自动关联 associatedTokens
+       * @param {string} toAddress 目标地址
+       * @return {Promise}
+       */
+      async getAllowance (toAddress) {
+        const { contract } = this
+        let result = '0'
+
+        // 必须有授权到的目标地址、钱包数据可用
+        if (!(toAddress && storeWallet.isValidated)) return result
+
+        const associatedToken = this.getAssociatedToken({ address: toAddress })
+
+        // TODO: 考虑如何 multi
+        // sync
+        associatedToken.allowance.ether = result = await contract.methods[allowanceMethodName](storeWallet.address, toAddress).call()
+
+        return result
+      },
+
+      /**
        * 是否需要授权
        * - 自动关联钱包
-       * @param {string} toContractAddress
+       * - true 需要授权时
+       * @param {string} toAddress
        */
-      async isNeedApprove (toContractAddress) {
+      async isNeedApprove (toAddress) {
         // TODO: 待优化
-        const { contract, precision, amount, isValidAmount, isInfiniteAllowance, maxAmount, infiniteMinAmount, associatedTokens } = this
-        // const bnAmountEther = BN(amount.handled).times(precision)
+        const { contract, amount, isValidAmount, isInfiniteAllowance, infiniteMinAmount, associatedTokens } = this
         const bnAmountEther = BN(amount.ether)
         let result = false
 
-        // TODO: 加 error 打点
-        // 不在有效范围内
-        if (!isValidAmount
-          // 钱包数据无效
-          || !storeWallet.isValidated) {
+        // 必须有授权到的目标地址、输入量有效、钱包数据可用
+        if (!(toAddress && isValidAmount && storeWallet.isValidated)) return result
 
-          // TODO: 要用方法管理
-          associatedTokens[toContractAddress] = {
-            expireAt: now() + 10000 * 1000,
-            allowance: {},
-            needApprove: false,
-            resetApprove: false,
-            approve: {},
-            approveState: ModelState.create(),
-            walletAddress: storeWallet.address
-          }
-          return result
-        }
 
-        // sync
-        // TODO: 要用方法管理
-        associatedTokens[toContractAddress] = {
-          expireAt: now() + 10000 * 1000,
-          allowance: { ether: 0 },
-          needApprove: false,
-          resetApprove: false,
-          approve: {},
-          approveState: ModelState.create(),
-          walletAddress: storeWallet.address
-        }
-
-        // TODO: 从 associatedTokens 内先获取，然后看是否有效
         // 流程中的主动更新
-        const bnAllowanceEther = BN(await contract.methods[allowanceMethodName](storeWallet.address, toContractAddress).call())
-        
-        // 
-        associatedTokens[toContractAddress].allowance.ether = bnAllowanceEther
+        await this.getAllowance(toAddress)
 
-        result = isInfiniteAllowance
-          // 小于无限授权量最小阈值
-          ? bnAllowanceEther.lt(infiniteMinAmount.ether)
-          // 授权量不足当前量
-          : bnAllowanceEther.lt(bnAmountEther)
-
-        associatedTokens[toContractAddress].needApprove = result
-
-        // TODO: 定位信息
-        if (result) {
-          if (bnAllowanceEther.gt(0)) {
-            associatedTokens[toContractAddress].approve.ether = 0
-            // update
-            associatedTokens[toContractAddress].needApprove = true
-            associatedTokens[toContractAddress].resetApprove = true
-          }
-        }
-
-        // XXX: 测试代码，重置授权
-        // associatedTokens[toContractAddress].approve.ether = 0
-        // // update
-        // associatedTokens[toContractAddress].needApprove = true
-        // associatedTokens[toContractAddress].resetApprove = true
-        // await this.approve(toContractAddress)
+        // XXX: 由于内部处理，这里不应该返回
 
         return result
       },
@@ -429,7 +486,6 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
         if (await this.isNeedApprove(toContractAddress)) {
           const bnAllowanceEther = associatedTokens[toContractAddress].allowance.ether
 
-
           const { update, dismiss } = notify.notification({ message: '准备授权' })
           this.approveNotifyDismiss = dismiss
           // 将要授权的量
@@ -447,7 +503,7 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
             })
             associatedTokens[toContractAddress].approve.ether = 0
             // update
-            associatedTokens[toContractAddress].needApprove = true
+            associatedTokens[toContractAddress].isNeedApprove = true
             associatedTokens[toContractAddress].resetApprove = true
             await this.approve(toContractAddress)
           } else {
@@ -460,7 +516,7 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
   
             associatedTokens[toContractAddress].approve.ether = approveAmountEther
             // update
-            associatedTokens[toContractAddress].needApprove = true
+            associatedTokens[toContractAddress].isNeedApprove = true
   
             await this.approve(toContractAddress)
           }
@@ -483,7 +539,7 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
         // 钱包数据无效
         if (!storeWallet.isValidated) return false
 
-        associatedTokens[toContractAddress].approveState.beforeUpdate()
+        associatedTokens[toContractAddress].state.beforeUpdate()
 
         // 限制当前提交待确认的交易只有一份
         state.beforeUpdate()
@@ -532,14 +588,14 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
                 // TODO: double event
                 onceLock = true
           console.log(spender, toContractAddress)
-                associatedTokens[spender].needApprove = false
+                associatedTokens[spender].isNeedApprove = false
                 // TODO: 等授权完
-                associatedTokens[spender].approveState.afterUpdate()
+                associatedTokens[spender].state.afterUpdate()
               }
             })
             .on('error', err => {
               error.handler(err)
-              associatedTokens[spender].approveState.afterUpdate()
+              associatedTokens[spender].state.afterUpdate()
 
               reject(err)
               state.afterUpdate()
@@ -569,7 +625,7 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
               .catch(err => {
                 error.handler(err)
                 reject(err)
-                associatedTokens[toContractAddress].approveState.afterUpdate()
+                associatedTokens[toContractAddress].state.afterUpdate()
                 state.afterUpdate()
               })
           })

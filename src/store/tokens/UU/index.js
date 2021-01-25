@@ -35,30 +35,28 @@ const __root__ = reactive(ModelToken.create({
     ]
   },
   // TODO: 要追加而不是覆盖（有默认的）
-  associatedTokenModel: {
-    create (_token) {
-      const { decimals } = _token
+  customAssociatedTokenModel (_token) {
+    // TODO: 等待传值
+    // const { parameters } = _token
 
-      return {
-        // 待领取奖励数
-        claimableReward: ModelValueEther.create({ decimals }),
-        // 已领取奖励数
-        claimedReward: ModelValueEther.create({ decimals }),
-        // 合计奖励数
-        totalReward: ModelValueEther.create({ decimals }),
-        // 在 UU 中的余额
-        balance: ModelValueEther.create({ decimals }),
-        // 铸造 UU 可获得的量（由不同 token address 区分）
-        mintGainAmount: ModelValueEther.create({ decimals }),
-        // 取回将销毁 UU 的量（由不同 token address 区分）
-        burnGainAmount: ModelValueEther.create({ decimals }),
-        // 挖矿奖励数量
-        miningPendingRewards: ModelValueEther.create({ decimals }),
-        // 待结算奖励数
-        settleableReward: ModelValueEther.create({ decimals }),
-        // TODO: temp lpt 对应的奖励 token
-        lptRewards: []
-      }
+    return {
+      // 待领取奖励数
+      claimableReward: ModelValueEther.create(),
+      // 已领取奖励数
+      claimedReward: ModelValueEther.create(),
+      // 合计奖励数
+      totalReward: ModelValueEther.create(),
+
+      // 铸造 UU 可获得的量（由不同 token address 区分）
+      mintGainAmount: ModelValueEther.create(),
+      // 取回将销毁 UU 的量（由不同 token address 区分）
+      burnGainAmount: ModelValueEther.create(),
+      // 挖矿奖励数量
+      miningPendingRewards: ModelValueEther.create(),
+      // 待结算奖励数
+      settleableReward: ModelValueEther.create(),
+      // TODO: temp lpt 对应的奖励 token
+      lptRewards: [],
     }
   }
 }))
@@ -115,13 +113,13 @@ __root__.supportedLptNum = ModelValueEther.create({
  * @type {Array}
  */
 // TODO: 遍历 lpts()
-__root__.supportedLptAddresses = [],
+__root__.supportedLptAddresses = []
 
 /**
  * 
  */
 // TODO: 
-__root__.burnMinVol = ModelValueEther.create(),
+__root__.burnMinVol = ModelValueEther.create()
 
 /**
  * 支持的奖励 token 数量
@@ -160,17 +158,17 @@ __root__.supportedRewardNum = ModelValueEther.create({
 //     })
     const series = []
 
-    for (let i =0; i < +handled; i++ ) {
+    for (let i = 0; i < +handled; i++ ) {
       const _address = ModelValueAddress.create({
-            async trigger () {
-              const { handled } = this
-    
-              // XXX: 如果没有在 tokenAddresses 内的，则应该自动创建
-              // TODO: 考虑如何 multi
-              await __root__.claimableReward(tokenAddresses[handled])
-              await __root__.claimedReward(tokenAddresses[handled])
-            }
-          })
+        async trigger () {
+          const { handled } = this
+
+          // XXX: 如果没有在 tokenAddresses 内的，则应该自动创建
+          // TODO: 考虑如何 multi
+          await __root__.claimableReward(tokenAddresses[handled])
+          await __root__.claimedReward(tokenAddresses[handled])
+        }
+      })
       __root__.supportedRewardAddresses[i] = _address
 
       series.push({
@@ -259,7 +257,7 @@ __root__.mint = async function (_token) {
 
     state.afterUpdate()
   }
-},
+}
 
 /**
  * 铸造 UU 可获得的 lpt 量
@@ -317,7 +315,7 @@ __root__.getUU2LptVol = async function (_token) {
   // if(minVolEther == lptBalance) {
   //   minVolEther = await contract.methods.lpt2uu(_token.address, minVolEther).call()
   // }
-},
+}
 
 /**
  * 领取全部奖励
@@ -376,7 +374,7 @@ __root__.claimAllRewards = async () => {
 
     state.afterUpdate()
   }
-},
+}
 
 /**
  * 领取奖励
@@ -435,7 +433,7 @@ __root__.claimReward = async (_token) => {
 
     state.afterUpdate()
   }
-},
+}
 
 /**
   * 获取待领取奖励数
@@ -453,7 +451,7 @@ __root__.claimableReward = async function (_token) {
 
   // TODO: 待考虑合并
   result.totalReward.ether = BN(result.claimableReward.ether).plus(result.claimedReward.ether).toFixed(0, 1)
-},
+}
 
 /**
   * 获取已领取奖励数
@@ -470,7 +468,7 @@ __root__.claimedReward = async function (_token) {
   result.claimedReward.ether = await contract.methods.claimed(storeWallet.address, _token.address).call()
 
   result.totalReward.ether = BN(result.claimableReward.ether).plus(result.claimedReward.ether).toFixed(0, 1)
-},
+}
 
 /**
   * 获取待结算奖励数
@@ -497,8 +495,7 @@ __root__.claimedReward = async function (_token) {
 
   result.miningPendingRewards.ether = vol
   result.settleableReward.ether = tip
-},
-
+}
 
 /**
  * 参与流动性池代币结算
@@ -558,7 +555,7 @@ __root__.settleReward = async function (lptAddress, idx) {
 
     state.afterUpdate()
   }
-},
+}
 
 /**
   * lpt 在 UU 中的余额
@@ -573,7 +570,7 @@ __root__.lptBalance = async function (_token) {
   // update
   result.balance.state.beforeUpdate()
   result.balance.ether = await contract.methods.lptBalance(_token.address).call()
-},
+}
 
 /**
   * lpt 销毁 UU
@@ -640,6 +637,5 @@ __root__.burn = async function (_token) {
     state.afterUpdate()
   }
 }
-
 
 export default __root__
