@@ -411,9 +411,15 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
        */
       getAssociatedToken (_token) {
         const { associatedTokens } = this
-        // TODO: 如果 _token 不存在，而 create() 还依赖其结构，需要默认化
-        const { address } = _token || { address: '__UNDEFINED_ADDRESS__' }
 
+
+        if (!_token) {
+          // TODO: 如果 _token 不存在，而 create() 还依赖其结构，需要默认化
+          _token = { address: '__UNDEFINED_ADDRESS__' }
+        }
+
+
+        const { address } = _token
         return associatedTokens[address]
           // 创建
           || (associatedTokens[address] = this.associatedTokenModel(_token))
@@ -475,6 +481,7 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
           allowance.state.beforeUpdate()
           // 更新
           // TODO: 考虑如何 multi
+          // TODO: 可以考虑把该地址得信息都获得，并存起来
           allowance.ether = await contract.methods[allowanceMethodName](storeWallet.address, toAddress).call()
         }
 
@@ -487,32 +494,32 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
        * 触发授权
        * - 自带授权量更新、是否需要授权的校验
        * @param {string} toContractAddress
-       * @return {Promise}
+       * @param {boolean=} forcedReset 无视条件强制重置
+       * @return {Promise} { successful: false }
        */
-      async approve (toContractAddress) {
+      async approve (toContractAddress, forcedReset = false) {
         const { contract, error, state } = this
 
         // 必须钱包数据可用
         if (!storeWallet.isValidated) return false
-        // TODO: 考虑是否有必要
+        // 校验作用
         await this.getAllowance(toContractAddress)
         // getAllowance 处理完数据后
         const associatedToken = this.getAssociatedToken({ address: toContractAddress })
-console.log('associatedToken.isNeedApprove', !associatedToken.isNeedApprove)
+
+        const isNeedApprove = forcedReset || associatedToken.isNeedApprove
         // 是否需要授权
-        if (!associatedToken.isNeedApprove) return false
-
-
-        const isResetApprove = associatedToken.isResetApprove
-
+        if (!isNeedApprove) return false
+        // TODO: 这里要能拿到 toContractAddress 的 code
         const { update, dismiss } = notify.notification({
-          message: isResetApprove
-            ? '准备重置授权'
-            : '准备授权'
+          message: forcedReset || associatedToken.isResetApprove
+            ? '重置授权'
+            : '正在授权'
         })
 
-        // TODO: 
-        const approveEther = associatedToken.approve.ether
+        const approveEther = forcedReset
+          ? '0'
+          : associatedToken.approve.ether
 
         associatedToken.state.beforeUpdate()
         state.beforeUpdate()
@@ -553,22 +560,28 @@ console.log('associatedToken.isNeedApprove', !associatedToken.isNeedApprove)
                 if (filter) {
                   // TODO: ? 到期后 3秒重置
                   window.setTimeout(() => onceLock = false, 3000)
-                  resolve(data)
+
                   // TODO: double event
                   onceLock = true
-
+                  dismiss() // 销毁
                   // sync
                   associatedToken.allowance.ether = approveEther
-              console.log(associatedToken.isResetApprove )
                   associatedToken.state.afterUpdate()
+
+                  resolve({
+                    successful: true
+                  })
                 }
               })
               .on('error', err => {
                 error.handler(err)
 
-                reject(err)
                 associatedToken.state.afterUpdate()
                 state.afterUpdate()
+
+                reject({
+                  successful: false
+                })
               })
           }
 
@@ -580,7 +593,6 @@ console.log('associatedToken.isNeedApprove', !associatedToken.isNeedApprove)
               // gas: ,
             })
             .once('transactionHash', hash => {
-              dismiss() // 销毁
               // TODO: 自定义该提示（支持 i18n）
               notify.handler(hash) // 改为 hash
 
@@ -594,10 +606,13 @@ console.log('associatedToken.isNeedApprove', !associatedToken.isNeedApprove)
             .catch(err => {
               dismiss() // 销毁
               error.handler(err)
-              reject(err)
 
               associatedToken.state.afterUpdate()
               state.afterUpdate()
+
+              reject({
+                successful: false
+              })
             })
         })
       },

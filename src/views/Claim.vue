@@ -16,7 +16,6 @@
             </small>
             <iIntersect class="d-none d-md-block text-align-justify" />
           </div>
-
           <a-list
             item-layout="vertical"
             :pagination="pagination"
@@ -250,14 +249,13 @@ export default {
           foo.lptRewards.forEach(item => {
             const _t = tokenAddresses[item]
 
-            if (!_t) return false
-            const fo = tokens.UU.getAssociatedToken(_t)
+            const associatedToken = tokens.UU.getAssociatedToken(_t)
 
             rewards.push({
               // TODO: 应该是奖励的 token
               code: _t.code,
               // XXX: 这里应该不对，如果挖矿有多个奖励呢？
-              pendingSettleReward: fo.miningPendingRewards.view,
+              pendingSettleReward: associatedToken.miningPendingRewards.view,
               pendingSettleRewardConvertUSD: '$ ?',
               settleBtn: {
                 disabled: false,
@@ -267,7 +265,7 @@ export default {
               },
               settleRewardRate: '1.00 %',
               // XXX: 这里应该不对，如果挖矿有多个奖励呢？
-              settleReward: fo.settleableReward.view,
+              settleReward: associatedToken.settleableReward.view,
               exchangeRate: '1 SFG = 0.5472 DAI'
             })
           })

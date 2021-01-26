@@ -154,16 +154,24 @@ export default {
       },
 
       /**
+       * 是否为焦点
+       * @type {boolean}
+       */
+      isFocus: false,
+
+      /**
        * 最小输入值
-       * 
+       * @type {string}
        */
       minInput: MIN_INPUT,
       /**
        * 最大输入值
-       * 
+       * @type {string}
        */
       maxInput: MAX_INPUT,
-      
+      /**
+       * 重置最大输入值
+       */
       resetMaxInput () {
         this.maxInput = MAX_INPUT
       },
@@ -175,11 +183,11 @@ export default {
        * @type {boolean}
        */
       get isValidInput () {
-        const { input, minInput, maxInput } = this
+        const { input, minInput, maxInput, isEmptyInput } = this
         let result = true
 
         // 允许初始空格
-        if (input === '') return result
+        if (isEmptyInput) return result
 
         const bnInput = BN(input)
 
@@ -189,6 +197,16 @@ export default {
           && bnInput.lte(maxInput)
 
         return result
+      },
+
+      /**
+       * input 是否为空
+       * @type {boolean}
+       */
+      get isEmptyInput () {
+        const { input } = this
+
+        return input === ''
       },
 
       viewDecimal,

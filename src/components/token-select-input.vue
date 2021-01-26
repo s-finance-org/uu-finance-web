@@ -6,8 +6,8 @@
     >
     <a-select
       class="col-4 pe-0"
-      v-model:value="currentCode"
-      v-if="__base__.isSelect"
+      v-model:value="__base__.currentCode"
+      v-if="__base__.isSelectMode"
     >
       <a-select-option
         v-for="item in __base__.tokens"
@@ -27,13 +27,13 @@
       <icon-lpt :code=currentToken.code size=16 class="me-2" />
       {{ currentToken.symbol.view }}
     </span>
-    <a-tooltip :visible=showInputTip placement="topLeft">
+    <a-tooltip :visible="currentToken.amount.isFocus && !!currentToken.amount.inputView" placement="topLeft">
       <template #title>
         {{ currentToken.amount.inputView }}
       </template>
       <a-input
         @focus=onInputFocus
-        @blur=onInputBlur
+        @blur=onInputFocus
         :value="currentToken.amount.input"
         class="pe-0"
         :placeholder=placeholder
@@ -42,17 +42,17 @@
         <template #suffix>
           <a-tooltip :title="$t(associatedToken.isResetApprove ? 'global.base.resetApproveTip' : 'global.base.approveTip')" placement="topRight">
             <button-busy
-              :busying=associatedToken.state.busy
+              :busying=associatedToken.busy
               v-show=associatedToken.isNeedApprove
               @click=onApprove
               type="link"
-              size="small">
-                {{ $t(associatedToken.isResetApprove ? 'global.base.resetApprove' : 'global.base.approve') }}
-              </button-busy>
+              size="small"
+            >
+              {{ $t(associatedToken.isResetApprove ? 'global.base.resetApprove' : 'global.base.approve') }}
+            </button-busy>
           </a-tooltip>
         </template>
       </a-input>
-      associatedToken.isNeedApprove: {{ associatedToken.isNeedApprove }}
     </a-tooltip>
   </a-input-group>
   <small class="pt-1 d-flex" v-if=ensureBalance>
@@ -63,6 +63,7 @@
   </small>
 
   <small class="d-flex flex-column" style="overflow: hidden;">
+    <a @click=_onForcedResetApprove>_onForcedResetApprove</a>
     <span>是否输入错误: {{ !currentToken.amount.isValidInput }}</span>
     <span>name: {{ currentToken.name.view }}</span>
     decimals: {{ currentToken.decimals.handled }}<br/>
@@ -125,18 +126,8 @@ export default {
     IconLpt
   },
   data () {
-    const { codes } = this
-
     return {
-      currentCode: isArray(codes)
-        ? codes[0]
-        : codes,
       showInputTip: false,
-      associatedToken: {
-        isNeedApprove: false,
-        state: { busy: false },
-        isResetApprove: false
-      }
     }
   },
   methods: {
@@ -146,62 +137,83 @@ export default {
 
       // sync
       currentToken.amount.input = value
-      // 有效输入才影响
-      const isValidInput = this.showInputTip = !!currentToken.amount.inputView
 
       // 返回当前操作的 token 对象
       this.$emit('changeAmount', currentToken)
 
-      if (!(useApprove && approveToAddress)) return false
-
-      await currentToken.getAllowance(approveToAddress)
-      // sync
-      // TODO: 待优化，由input 触发
-      const { isNeedApprove, isResetApprove, state } = currentToken.getAssociatedToken({ address: approveToAddress })
-      // sync
-      this.associatedToken = {
-        isNeedApprove,
-        isResetApprove,
-        state
-      }
-    },
-    onInputBlur (e) {
-      this.showInputTip = false
+      useApprove
+        && approveToAddress
+        && await currentToken.getAllowance(approveToAddress)
     },
     onInputFocus (e) {
-      this.showInputTip = !!this.currentToken.amount.inputView
+      const { currentToken } = this
+      const isFocus = e.type === 'focus'
+
+      currentToken.amount.isFocus = isFocus
     },
     // 提交授权
     async onApprove () {
-      const { approveToAddress } = this
+      const { approveToAddress, currentToken } = this
 
-      await this.currentToken.approve(approveToAddress)
+      await currentToken.approve(approveToAddress)
+    },
+    /**
+     * 强制重置授权（私有）
+     */
+    async _onForcedResetApprove () {
+      const { approveToAddress, currentToken } = this
+
+      await currentToken.approve(approveToAddress, true)
     }
   },
   computed: {
     __base__ () {
       const { tokens } = this.$store
       const { codes } = this
-
-      const isSelect = isArray(codes)
+      // 是否为选择模式
+      const isSelectMode = isArray(codes)
 
       return {
-        // 是否为选择模式
-        isSelect,
-        tokens: isSelect
+        isSelectMode,
+        tokens: isSelectMode
           ? codes.map(code => tokens[code])
-          : tokens[codes]
+          : tokens[codes],
+        currentCode: isSelectMode
+          // 默认选择第一项
+          ? codes[0]
+          : codes,
       }
     },
     // 当前(选中)的 token
     currentToken () {
       const { tokens } = this.$store
-      const { currentCode } = this
+      const { currentCode } = this.__base__
 
       this.$emit('update:current', currentCode)
 // TODO: icon-lpt 部分要支持 lpt、token
       return tokens[currentCode]
     },
+    associatedToken () {
+      const { approveToAddress, useApprove, currentToken } = this
+      let result = {
+        isNeedApprove: false,
+        busy: false,
+        isResetApprove: false
+      }
+
+      if (useApprove && approveToAddress) {
+        const { isNeedApprove, isResetApprove, state } = currentToken.getAssociatedToken({ address: approveToAddress })
+        result = {
+          // input 为空时不显示
+          isNeedApprove: !currentToken.amount.isEmptyInput && isNeedApprove,
+          // TODO: 由 currentToken.state 的状态变更触发
+          busy: state.busy && currentToken.state.busy,
+          isResetApprove,
+        }
+      }
+
+      return result
+    }
   }
 }
 </script>
