@@ -22,7 +22,7 @@ import notify from '../store/notify'
 
 import { USD } from '../store/currencies'
 
-import { now, floor } from '../utils'
+import { now, floor, isPlainObject } from '../utils'
 import { ModelValueAddress } from '.'
 
 export default {
@@ -39,6 +39,7 @@ export default {
    * 
    * @param {number=} opts.viewDecimal 显示内容的显示精度
    * @param {Function=} opts.viewMethod 显示内容的舍入方法
+   * @param {Object} opts.stateParams 状态参数
    * 
    * @param {boolean=} opts.isInfiniteAllowance
    * @param {Object=} opts.moneyOfAccount
@@ -57,12 +58,12 @@ export default {
     abi = ERC20,
     isLpt = false,
     customSeries = () => [],
-    customAssociatedTokenModel = { create: () => ({}) },
+    customAssociatedTokenModel = () => ({}),
 
     viewDecimal = 4,
     viewMethod = floor,
 
-
+    stateParams = {},
 
     moneyOfAccount = USD,
     // XXX: default
@@ -99,12 +100,12 @@ export default {
        * @type {!Object}
        */
     const parameters = {
-      decimals: ModelValueUint8.create({ value: 18 }),
+      decimals: ModelValueUint8.create().setValue(18),
       viewDecimal,
       viewMethod
     }
 
-    const result = {
+    return {
       parameters,
       // TODO: 待考虑取消
       ...parameters,
@@ -129,6 +130,11 @@ export default {
        * @type {string}
        */
       icon: `token-${code}`,
+      /**
+       * 当前 Model 标识
+       * @type {boolean}
+       */
+      isToken: true,
 
       /** @type {Object} */
       get contract () {
@@ -240,7 +246,7 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
 
       /**
        * 量值
-       * - Input 绑定
+       * - input 自带限制
        * TODO: 最终类型未确定
        * TODO: 目前使用 handled
        * @type {Object}
@@ -287,77 +293,103 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
        */
       associatedTokenModel (_token) {
         const __root__ = this
-        // TODO: 采用哪个
-        // const { parameters } = _token
-        const _default_ = {
-          isNeedApprove: false,
-          isResetApprove: false
+        // TODO: 待优化
+        const parameters = {
+          decimals: __root__.decimals,
+          viewDecimal: __root__.viewDecimal,
+          viewMethod: __root__.decimals
         }
-        const _store_ = {
-          isNeedApprove: _default_.isNeedApprove,
-          isResetApprove: _default_.isResetApprove
+
+        let _tokenParameters = {}
+        // TODO: 待优化
+        if (_token) {
+          _tokenParameters = {
+            decimals: _token.decimals,
+            viewDecimal: _token.viewDecimal,
+            viewMethod: _token.viewMethod
+          }
         }
-        const approve = ModelValueEther.create()
 
         return {
-          // 与 key 相同
+          /**
+           * 与 key 相同
+           * @type {Object}
+           */
           address: ModelValueAddress.create().setValue(_token.address),
-          ...customAssociatedTokenModel(_token),
-
-          // 授权量
-          allowance: ModelValueEther.create({
-            async trigger () {
-              const { isInfiniteAllowance, infiniteMinAmount, amount } = __root__
-              const { ether } = this
-              const bnAllowanceEther = BN(ether)
-
-              // sync
-              const isNeedApprove = _store_.isNeedApprove = isInfiniteAllowance
-                // 小于无限授权量最小阈值
-                ? bnAllowanceEther.lt(infiniteMinAmount.ether)
-                // 授权量不足当前量
-                : bnAllowanceEther.lt(amount.ether)
-
-              // 需要授权，且当前授权量大于0
-              if (isNeedApprove && bnAllowanceEther.gt(0)) {
-                // 清零授权，防止攻击
-                approve.ether = 0
-                _store_.isResetApprove = true
-              }
-            }
-          }),
-
-          // 在当前父 token 中的余额
-          // TODO: 采用哪个
-          balance: ModelValueEther.create(),
+          ...customAssociatedTokenModel(_token, __root__),
 
           /**
-           * 需要授权
+           * 已授权的量
+           * - __root__.getAllowance -> associatedToken.allowance -> associatedToken.isNeedApprove -> associatedToken.isResetApprove
+           * @type {Object}
+           */
+          allowance: ModelValueEther.create({
+            ...parameters,
+            // 更新授权量的间隔
+            stateParams: { expireSec: 10 }
+          }),
+          /**
+           * 是否需要授权
+           * - true 需要授权时
            * @type {boolean}
            */
           get isNeedApprove () {
-            return _store_.isNeedApprove
-          },
+            const { isInfiniteAllowance, infiniteMinAmount, amount } = __root__
+            const { allowance } = this
+            const bnAllowanceEther = BN(allowance.ether)
+            let result = false
+            // allowance 是否已初始化
+            if (!allowance.state.initialized) return result
 
+            // 与已授权量比较
+            result = bnAllowanceEther.lt(
+              // 是否无限授权
+              isInfiniteAllowance
+                // 小于无限授权量最小阈值
+                ? infiniteMinAmount.ether
+                // 授权量不足当前量
+                : amount.ether
+            )
+
+            return result
+          },
           /**
            * 重置授权
-           * @type {Function}
-           */
-          resetApprove () {
-            
-          },
-
-          /**
-           * 重置授权
-           * - 防攻击
+           * - 调用 isNeedApprove
+           * - 同步需要授权的量
            * @type {boolean}
            */
           get isResetApprove () {
-            return _store_.isResetApprove
-          },
+            const { isInfiniteAllowance, maxAmount, amount } = __root__
+            const { isNeedApprove, allowance, approve } = this
+            const bnAllowanceEther = BN(allowance.ether)
+            // 需要授权，且当前授权量大于0
+            const result = isNeedApprove && bnAllowanceEther.gt(0)
 
-          // 申请授权量
-          approve,
+            // 同步 approve 需要授权的量
+            if (result) {
+              // 要修改成重置 0 完成后再自动无限授权，针对授权攻击
+              approve.ether = '0'
+            } else {
+              // 是否无限授权
+              approve.ether = isInfiniteAllowance
+                ? maxAmount.ether
+                : amount.ether
+            }
+
+            return result
+          },
+          /**
+           * 申请授权量
+           */
+          approve: ModelValueEther.create(parameters),
+
+          /**
+           * 在 __root__ 中的余额
+           * - _token
+           * @type {Object}
+           */
+          balance: ModelValueEther.create(_tokenParameters),
 
           state: ModelState.create(),
 
@@ -366,12 +398,7 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
            */
           // TODO: 待考虑，可能销毁再创建更完整
           reset () {
-            const { isNeedApprove, resetApprove } = _default_
             const { state } = this
-
-            this.isNeedApprove = isNeedApprove
-            this.resetApprove = resetApprove
-
             state.reset()
           }
         }
@@ -379,7 +406,7 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
       /**
        * 获取 associatedTokens 数据集中的值
        * - 不存在则使用 associatedTokenModel 创建
-       * @param {Object} _token
+       * @param {Object|string} _token
        * @return {!Object}
        */
       getAssociatedToken (_token) {
@@ -398,7 +425,8 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
       toContractAddresses: [],
 
       /**
-       * 是否无限授权数量
+       * 是否无限授权数
+       * - 当前 token
        * @type {boolean}
        */
       isInfiniteAllowance,
@@ -439,109 +467,54 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
         // 必须有授权到的目标地址、钱包数据可用
         if (!(toAddress && storeWallet.isValidated)) return result
 
-        const associatedToken = this.getAssociatedToken({ address: toAddress })
+        const { allowance } = this.getAssociatedToken({ address: toAddress })
 
-        // TODO: 考虑如何 multi
-        // sync
-        associatedToken.allowance.ether = result = await contract.methods[allowanceMethodName](storeWallet.address, toAddress).call()
-
-        return result
-      },
-
-      /**
-       * 是否需要授权
-       * - 自动关联钱包
-       * - true 需要授权时
-       * @param {string} toAddress
-       */
-      async isNeedApprove (toAddress) {
-        // TODO: 待优化
-        const { contract, amount, isValidAmount, isInfiniteAllowance, infiniteMinAmount, associatedTokens } = this
-        const bnAmountEther = BN(amount.ether)
-        let result = false
-
-        // 必须有授权到的目标地址、输入量有效、钱包数据可用
-        if (!(toAddress && isValidAmount && storeWallet.isValidated)) return result
-
-
-        // 流程中的主动更新
-        await this.getAllowance(toAddress)
-
-        // XXX: 由于内部处理，这里不应该返回
-
-        return result
-      },
-
-      /**
-       * 校验 Allowance
-       * - 自动关联钱包
-       * @param {string} toContractAddress
-       */
-      async ensureAllowance (toContractAddress) {
-        // TODO: 待优化
-        const { contract, precision, amount, isValidAmount, isInfiniteAllowance, maxAmount, infiniteMinAmount, associatedTokens } = this
-        // const bnAmountEther = BN(amount.handled).times(precision)
-        const bnAmountEther = BN(amount.ether)
-
-        if (await this.isNeedApprove(toContractAddress)) {
-          const bnAllowanceEther = associatedTokens[toContractAddress].allowance.ether
-
-          const { update, dismiss } = notify.notification({ message: '准备授权' })
-          this.approveNotifyDismiss = dismiss
-          // 将要授权的量
-          // TODO: 针对授权攻击
-          // TODO: 要修改成重置 0 完成后再自动无限授权
-          // const approveAmountEther = bnAllowanceEther.gt(0)
-          //   ? 0
-          //   : isInfiniteAllowance
-          //     ? maxAmount.ether
-          //     : bnAmountEther
-
-          if (bnAllowanceEther.gt(0)) {
-            update({
-              message: '重置授权量为 0',
-            })
-            associatedTokens[toContractAddress].approve.ether = 0
-            // update
-            associatedTokens[toContractAddress].isNeedApprove = true
-            associatedTokens[toContractAddress].resetApprove = true
-            await this.approve(toContractAddress)
-          } else {
-            update({
-              message: '授权',
-            })
-            const approveAmountEther = isInfiniteAllowance
-              ? maxAmount.ether
-              : bnAmountEther.toFixed(0, 1)
-  
-            associatedTokens[toContractAddress].approve.ether = approveAmountEther
-            // update
-            associatedTokens[toContractAddress].isNeedApprove = true
-  
-            await this.approve(toContractAddress)
-          }
+        // allowance 没有获取过、数据到期
+        if (!allowance.state.initialized
+          || allowance.state.isExpired) {
+          allowance.state.beforeUpdate()
+          // 更新
+          // TODO: 考虑如何 multi
+          allowance.ether = await contract.methods[allowanceMethodName](storeWallet.address, toAddress).call()
         }
-      },
-// ensureAllowance 部分代码要放到 approve 内，从而淘汰 ensureAllowance
 
-      approveNotifyDismiss: null,
+        result = allowance.ether
+
+        return result
+      },
 
       /**
-       * 授权量
+       * 触发授权
+       * - 自带授权量更新、是否需要授权的校验
        * @param {string} toContractAddress
        * @return {Promise}
        */
-      approve (toContractAddress) {
-        const { contract, precision, associatedTokens, error, state } = this
-        // TODO: 
-        const approveAmountEther = associatedTokens[toContractAddress].approve.ether
+      async approve (toContractAddress) {
+        const { contract, error, state } = this
 
-        // 钱包数据无效
+        // 必须钱包数据可用
         if (!storeWallet.isValidated) return false
+        // TODO: 考虑是否有必要
+        await this.getAllowance(toContractAddress)
+        // getAllowance 处理完数据后
+        const associatedToken = this.getAssociatedToken({ address: toContractAddress })
+console.log('associatedToken.isNeedApprove', !associatedToken.isNeedApprove)
+        // 是否需要授权
+        if (!associatedToken.isNeedApprove) return false
 
-        associatedTokens[toContractAddress].state.beforeUpdate()
 
-        // 限制当前提交待确认的交易只有一份
+        const isResetApprove = associatedToken.isResetApprove
+
+        const { update, dismiss } = notify.notification({
+          message: isResetApprove
+            ? '准备重置授权'
+            : '准备授权'
+        })
+
+        // TODO: 
+        const approveEther = associatedToken.approve.ether
+
+        associatedToken.state.beforeUpdate()
         state.beforeUpdate()
 
         // TODO: 考虑避免一个token 同时多次提交
@@ -551,84 +524,82 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
             owner = '',
             spender = '',
             // TODO: 
-            approveNotifyDismiss = null
           } = {}) => {
             let onceLock = false
 
             contract.events.Approval()
-            .on('data', function (data) {
-              /* data
-                {
-                  returnValues: {
-                    owner: '0x'
-                    spender: '0x'
-                    value: '0'
+              .on('data', function (data) {
+                /* data
+                  {
+                    returnValues: {
+                      owner: '0x'
+                      spender: '0x'
+                      value: '0'
+                    }
                   }
+                */
+                // TODO: 如何停掉监听
+                if (onceLock) return false
+
+
+                // 是否有符合的
+                // XXX: value 是 number
+                const filter = data.returnValues.value === approveEther
+                  // TODO: 地址大小写
+                  && data.returnValues.owner.toLowerCase() === storeWallet.address.toLowerCase()
+                  && data.returnValues.spender.toLowerCase() === toContractAddress.toLowerCase()
+
+                console.log('events.Approval', filter, data)
+                if (filter) {
+                  // TODO: ? 到期后 3秒重置
+                  window.setTimeout(() => onceLock = false, 3000)
+                  resolve(data)
+                  // TODO: double event
+                  onceLock = true
+
+                  // sync
+                  associatedToken.allowance.ether = approveEther
+              console.log(associatedToken.isResetApprove )
+                  associatedToken.state.afterUpdate()
                 }
-               */
-              // TODO: 如何停掉监听
-              if (onceLock) return false
-
-              console.log()
-
-              // 是否有符合的
-              // XXX: value 是 number
-              const filter = data.returnValues.value === value + ''
-                // TODO: 地址大小写
-                && data.returnValues.owner.toLowerCase() === owner.toLowerCase()
-                && data.returnValues.spender.toLowerCase() === spender.toLowerCase()
-
-              console.log('events.Approval', filter, data)
-              if (filter) {
-                approveNotifyDismiss()
-
-                // TODO: ? 到期后 3秒重置
-                window.setTimeout(() => onceLock = false, 3000)
-                resolve(data)
-                // TODO: double event
-                onceLock = true
-          console.log(spender, toContractAddress)
-                associatedTokens[spender].isNeedApprove = false
-                // TODO: 等授权完
-                associatedTokens[spender].state.afterUpdate()
-              }
-            })
-            .on('error', err => {
-              error.handler(err)
-              associatedTokens[spender].state.afterUpdate()
-
-              reject(err)
-              state.afterUpdate()
-            })
-          }
-            
-
-            contract.methods[approveMethodName](toContractAddress, approveAmountEther)
-              .send({
-                from: storeWallet.address,
-                // TODO:
-                // gasPrice: ,
-                // gas: ,
-              })
-              .once('transactionHash', hash => {
-                notify.handler(hash)
-                listenApproval({
-                  value: approveAmountEther,
-                  owner: storeWallet.address,
-                  spender: toContractAddress,
-                  approveNotifyDismiss: this.approveNotifyDismiss
-                })
               })
               .on('error', err => {
                 error.handler(err)
-              })
-              .catch(err => {
-                error.handler(err)
+
                 reject(err)
-                associatedTokens[toContractAddress].state.afterUpdate()
+                associatedToken.state.afterUpdate()
                 state.afterUpdate()
               })
-          })
+          }
+
+          contract.methods[approveMethodName](toContractAddress, approveEther)
+            .send({
+              from: storeWallet.address,
+              // TODO:
+              // gasPrice: ,
+              // gas: ,
+            })
+            .once('transactionHash', hash => {
+              dismiss() // 销毁
+              // TODO: 自定义该提示（支持 i18n）
+              notify.handler(hash) // 改为 hash
+
+              listenApproval({
+                value: approveEther,
+                owner: storeWallet.address,
+                spender: toContractAddress,
+              })
+            })
+            .on('error', error.handler)
+            .catch(err => {
+              dismiss() // 销毁
+              error.handler(err)
+              reject(err)
+
+              associatedToken.state.afterUpdate()
+              state.afterUpdate()
+            })
+        })
       },
 
       /**
@@ -642,6 +613,15 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
           return result
         }
       }),
+      /**
+       * 使用全部余额
+       * @type {Function}
+       */
+      useAllBalanceOf () {
+        const { amount, walletBalanceOf } = this
+
+        amount.input = walletBalanceOf.handledView
+      },
 
       /**
        * @param {string} address
@@ -654,26 +634,8 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
         return result
       },
 
-      state: ModelState.create(),
+      state: ModelState.create(stateParams),
       error: ModelValueError.create(),
     }
-console.log('lock', this.lock)
-    if (this.lock) {
-      this.bindTarget[result.address] = result
-    }
-    
-
-    return result
-  },
-  /**
-   * - 链式
-   * @type {!Object}
-   */
-  bind(target) {
-    this.lock = true
-    this.bindTarget = target
-
-    return this
-  },
-  lock: false
+  }
 }

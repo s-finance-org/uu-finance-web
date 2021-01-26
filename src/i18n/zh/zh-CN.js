@@ -86,22 +86,14 @@ export default {
       deposit: {
         tab: '存入获得 UU',
         selectAssetes: '选择存入资产类型',
-        mintAssetMode: {
-          multipleTab: '多资产存入',
-          singleTab: '单资产存入',
-          placeholder: '输入存入数量',
-        },
+        placeholder: '输入存入数量',
         mintBtn: '存款',
         previewReceiveLeast: '你将至少收到'
       },
       withdraw: {
         tab: '取出销毁 UU',
         selectAssetes: '选择取出资产类型',
-        mintAssetMode: {
-          multipleTab: '多资产取出',
-          singleTab: '单资产取出',
-          placeholder: '输入取出数量',
-        },
+        placeholder: '输入取出数量',
         mintBtn: '取款',
         previewNeedLeast: '你将至少需要'
       }

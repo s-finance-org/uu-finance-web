@@ -7,13 +7,9 @@ const MAX_VALUE = 255
 
 export default {
   /**
-   * @param {Object} opts
-   * @param {string|number} opts.value 预设值
    * @return {!Object}
    */
-  create ({
-    value = undefined,
-  } = {}) {
+  create () {
     const __default__ = {
       handled: 0,
       view: '-'
@@ -22,7 +18,7 @@ export default {
       handled: __default__.handled,
     }
 
-    const result = {
+    return {
       type: 'uint8',
 
       /**
@@ -33,7 +29,17 @@ export default {
         return this.handled
       },
       set value (val) {
+        this.setValue(val)
+      },
+      /**
+       * value 链式方法赋值
+       * @param {string} val
+       * @return {Object}
+       */
+      setValue (val) {
         this.handled = val
+
+        return this
       },
 
       /** @type {string|number} */
@@ -64,11 +70,5 @@ export default {
 
       state: ModelState.create()
     }
-
-    // 预设
-    value != undefined
-      && (result.value = value)
-
-    return result
   }
 }

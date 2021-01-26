@@ -15,7 +15,7 @@
         :value=item.code
       >
         <span class="d-flex align-items-center">
-          <component :is="`token-${item.code}`" class="me-2"></component>
+          <icon-lpt :code=currentToken.code size=16 class="me-2" />
           {{ item.symbol.view }}
         </span>
       </a-select-option>
@@ -24,7 +24,7 @@
       </template>
     </a-select>
     <span v-else class="d-flex align-items-center col-4 token-name">
-      <component :is=currentToken.icon class="me-2"></component>
+      <icon-lpt :code=currentToken.code size=16 class="me-2" />
       {{ currentToken.symbol.view }}
     </span>
     <a-tooltip :visible=showInputTip placement="topLeft">
@@ -40,24 +40,25 @@
         @change="changeTokenAmount"
       >
         <template #suffix>
-          <a-tooltip :title=$t(approve.tipI18n) placement="topRight">
+          <a-tooltip :title="$t(associatedToken.isResetApprove ? 'global.base.resetApproveTip' : 'global.base.approveTip')" placement="topRight">
             <button-busy
-              :busying=approve.busy
-              v-show=approve.need
+              :busying=associatedToken.state.busy
+              v-show=associatedToken.isNeedApprove
               @click=onApprove
               type="link"
               size="small">
-                {{ $t(approve.textI18n) }}
+                {{ $t(associatedToken.isResetApprove ? 'global.base.resetApprove' : 'global.base.approve') }}
               </button-busy>
           </a-tooltip>
         </template>
       </a-input>
+      associatedToken.isNeedApprove: {{ associatedToken.isNeedApprove }}
     </a-tooltip>
   </a-input-group>
   <small class="pt-1 d-flex" v-if=ensureBalance>
     {{ $t('global.base.maxBalanceOf') }}:
     <busy :busying="currentToken.walletBalanceOf.state.busy">
-      <span @click="useAllBalance" class="pointer px-2">{{ currentToken.walletBalanceOf.view }}</span>
+      <span @click="currentToken.useAllBalanceOf" class="pointer px-2">{{ currentToken.walletBalanceOf.view }}</span>
     </busy>
   </small>
 
@@ -84,9 +85,9 @@
     <span class="ps-5 d-flex" v-for="(item, key) of currentToken.associatedTokens"
       :key=key
       >
-      toContractAddress: {{ key }}<br/>
-      allowance: {{ item.allowance }} <br/>
-      approve: {{ item.approve }}<br/>
+      toContractAddress: {{ item.address.handled }}<br/>
+      allowance: {{ item.allowance.ether }} | {{ item.allowance.handled }} <br/>
+      approve: {{ item.approve.ether }} | {{ item.approve.handled }}<br/>
     </span>
   </small>
 </template>
@@ -94,6 +95,7 @@
 <script>
 import BN from 'bignumber.js'
 import ButtonBusy from '../components/button-busy'
+import IconLpt from '../components/icon-lpt'
 import { isArray } from '../utils'
 
 export default {
@@ -120,6 +122,7 @@ export default {
   },
   components: {
     ButtonBusy,
+    IconLpt
   },
   data () {
     const { codes } = this
@@ -128,7 +131,12 @@ export default {
       currentCode: isArray(codes)
         ? codes[0]
         : codes,
-      showInputTip: false
+      showInputTip: false,
+      associatedToken: {
+        isNeedApprove: false,
+        state: { busy: false },
+        isResetApprove: false
+      }
     }
   },
   methods: {
@@ -136,25 +144,26 @@ export default {
       const { value } = e.target
       const { useApprove, currentToken, approveToAddress } = this
 
-      // 限制输入
+      // sync
       currentToken.amount.input = value
-      // input自带限制
-      const result = currentToken.amount.input
       // 有效输入才影响
-      this.showInputTip = !!currentToken.amount.inputView
+      const isValidInput = this.showInputTip = !!currentToken.amount.inputView
 
       // 返回当前操作的 token 对象
       this.$emit('changeAmount', currentToken)
 
-      useApprove
-        && await currentToken.isNeedApprove(approveToAddress)
-    },
-    // 使用全部余额
-    useAllBalance () {
-      const { tokens } = this.$store
-      const { currentToken } = this
+      if (!(useApprove && approveToAddress)) return false
 
-      currentToken.amount.input = currentToken.walletBalanceOf.handledView
+      await currentToken.getAllowance(approveToAddress)
+      // sync
+      // TODO: 待优化，由input 触发
+      const { isNeedApprove, isResetApprove, state } = currentToken.getAssociatedToken({ address: approveToAddress })
+      // sync
+      this.associatedToken = {
+        isNeedApprove,
+        isResetApprove,
+        state
+      }
     },
     onInputBlur (e) {
       this.showInputTip = false
@@ -162,10 +171,11 @@ export default {
     onInputFocus (e) {
       this.showInputTip = !!this.currentToken.amount.inputView
     },
+    // 提交授权
     async onApprove () {
       const { approveToAddress } = this
 
-      await this.currentToken.ensureAllowance(approveToAddress)
+      await this.currentToken.approve(approveToAddress)
     }
   },
   computed: {
@@ -189,30 +199,9 @@ export default {
       const { currentCode } = this
 
       this.$emit('update:current', currentCode)
-
+// TODO: icon-lpt 部分要支持 lpt、token
       return tokens[currentCode]
     },
-    approve () {
-      const { useApprove, currentToken, approveToAddress } = this
-      let need = false
-      let reset = false
-      let busy = false
-
-      // TODO: 
-      // 使用授权功能、
-      if (useApprove && approveToAddress && currentToken.associatedTokens && currentToken.associatedTokens[approveToAddress]) {
-        need = currentToken.associatedTokens[approveToAddress].isNeedApprove
-        reset = currentToken.associatedTokens[approveToAddress].isResetApprove
-        busy = currentToken.associatedTokens[approveToAddress].state.busy
-      }
-
-      return {
-        need,
-        tipI18n: reset ? 'global.base.resetApproveTip' : 'global.base.approveTip',
-        textI18n: reset ? 'global.base.resetApprove' : 'global.base.approve',
-        busy
-      }
-    }
   }
 }
 </script>

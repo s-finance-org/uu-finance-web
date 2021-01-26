@@ -27,12 +27,11 @@ export default {
     async onStake () {
       const { tokens, pools } = this.$store
 
-      // await tokens.DAI.ensureAllowance(tokens.DAI_USDT.address)
-      await tokens.USDT.ensureAllowance(tokens.DAI_USDT.address)
+      // await tokens.DAI.approve(tokens.DAI_USDT.address)
+      // await tokens.USDT.approve(tokens.DAI_USDT.address)
 
       await pools.DAI_USDT.onStake([0, 1])
 
-      // DAI_USDT.ensureAllowance(1, )
     }
   },
   computed: {

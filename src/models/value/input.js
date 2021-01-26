@@ -163,7 +163,7 @@ export default {
        * 
        */
       maxInput: MAX_INPUT,
-
+      
       resetMaxInput () {
         this.maxInput = MAX_INPUT
       },
@@ -171,7 +171,7 @@ export default {
       /**
        * input 数据是否有效
        * - 先更新 input 再调用
-       * - TODO: 要淘汰
+       * - TODO: 支持空格的、不支持空格的2种
        * @type {boolean}
        */
       get isValidInput () {
@@ -183,9 +183,9 @@ export default {
 
         const bnInput = BN(input)
 
-        // 不为isNaN，且大于等于最小值、小于等于最大值
+        // 不为isNaN，且大于最小值、小于等于最大值
         result = !bnInput.isNaN()
-          && bnInput.gte(minInput)
+          && bnInput.gt(minInput)
           && bnInput.lte(maxInput)
 
         return result
@@ -218,6 +218,7 @@ export default {
       state: ModelState.create()
     }
 
+    // TODO: 使用 set 来完成
     // 预设
     value != null
       && (result.value = value)

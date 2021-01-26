@@ -35,26 +35,27 @@ const __root__ = reactive(ModelToken.create({
     ]
   },
   // TODO: 要追加而不是覆盖（有默认的）
-  customAssociatedTokenModel (_token) {
-    // TODO: 等待传值
-    // const { parameters } = _token
+  customAssociatedTokenModel (_token, __root__) {
+    // TODO: 这里不是 __root__
+    const parameters = _token.parameters || {}
+    const __root__parameters = __root__.parameters
 
     return {
       // 待领取奖励数
-      claimableReward: ModelValueEther.create(),
+      claimableReward: ModelValueEther.create(parameters),
       // 已领取奖励数
-      claimedReward: ModelValueEther.create(),
+      claimedReward: ModelValueEther.create(parameters),
       // 合计奖励数
-      totalReward: ModelValueEther.create(),
+      totalReward: ModelValueEther.create(parameters),
 
       // 铸造 UU 可获得的量（由不同 token address 区分）
-      mintGainAmount: ModelValueEther.create(),
+      mintGainAmount: ModelValueEther.create(__root__parameters),
       // 取回将销毁 UU 的量（由不同 token address 区分）
-      burnGainAmount: ModelValueEther.create(),
+      burnGainAmount: ModelValueEther.create(__root__parameters),
       // 挖矿奖励数量
-      miningPendingRewards: ModelValueEther.create(),
+      miningPendingRewards: ModelValueEther.create(parameters),
       // 待结算奖励数
-      settleableReward: ModelValueEther.create(),
+      settleableReward: ModelValueEther.create(parameters),
       // TODO: temp lpt 对应的奖励 token
       lptRewards: [],
     }
@@ -196,11 +197,15 @@ __root__.supportedRewardAddresses = []
 /**
  * TODO: 
  * lpt 铸造 UU
+ * - 自带授权
  * @param {Object} _token
  */
 __root__.mint = async function (_token) {
   const { contract, address, state } = this
   const walletAddress = storeWallet.address
+
+  // 校验授权（预防）
+  await _token.approve(address)
 
   // 限制当前提交待确认的交易只有一份
   state.beforeUpdate()
@@ -342,18 +347,19 @@ __root__.claimAllRewards = async () => {
       sendOpts.gas = await _method.estimateGas({
         from: walletAddress,
       })
-    } catch(err) {
+    } catch (err) {
       console.error(err)
     }
 
     return _method.send(sendOpts)
       .once('transactionHash', hash => {
-        dismiss()
-        notify.handler(hash)
+        dismiss() // 销毁
+        notify.handler(hash) // 改为 hash
         state.afterUpdate()
       })
-      .catch(err =>{
+      .catch(err => {
         console.log(err)
+        dismiss() // 销毁
 
         notify.updateError({
           update,
@@ -485,8 +491,10 @@ __root__.claimedReward = async function (_token) {
     tip: 0, // uint256 结算小费，与 vol 比例为 99:1
    */
   const { vol, tip, reward } = await contract.methods.settleable(address, _token.address, idx).call()
+  
+  const associatedToken = this.getAssociatedToken(_token)
   // TODO:
-  const lpt__ = this.associatedTokens[_token.address].lptRewards[idx] = reward
+  const lpt__ = associatedToken.lptRewards[idx] = reward
 
   // TODO: 这里的数据应该跟 pool 相关
   const result = this.getAssociatedToken({ address: reward })

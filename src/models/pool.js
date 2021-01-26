@@ -35,7 +35,7 @@ export default {
     }
     // const valueOpts = {
     //   // TODO: temp
-    //   decimals: ModelValueUint8.create({ value: 18 }),
+    //   decimals: ModelValueUint8.create().setValue(18),
     //   viewDecimal
     // }
 

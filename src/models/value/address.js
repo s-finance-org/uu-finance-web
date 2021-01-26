@@ -34,7 +34,7 @@ export default {
       /**
        * value 链式方法赋值
        * @param {string} val
-       * @type {Function}
+       * @return {Object}
        */
       setValue (val) {
         this.handled = val

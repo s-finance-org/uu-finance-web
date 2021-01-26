@@ -42,7 +42,7 @@ export const nativeNavigatorLanguage = nativeNavigator.language
 
 /**
  * 是否为数组类型
- * - true  array、Array.prototype
+ * - true array、Array.prototype
  * @param {*} val
  * @return {boolean}
  */
@@ -50,9 +50,9 @@ export const isArray = Array.isArray // IE9+，ES5.1
 
 /**
  * 是否为类对象
- * - true  对象、regexp、函数对象的其他对象，array、除宿主
+ * - true 对象、regexp、函数对象的其他对象，array、除宿主
  * - false function、null、undefined及其他基础数据类型 * @static
- * @param  {*} val
+ * @param {*} val
  * @return {boolean}
  */
 export const isObjectLike = val => !!val && typeof val === 'object'
@@ -60,8 +60,8 @@ export const isObjectLike = val => !!val && typeof val === 'object'
 /**
  * 遍历集合
  * - 对于 null、undefined 不做任何处理
- * @param  {Object|Array|undefined} obj
- * @param  {Function} callback  callback( val, idx/key, arr/obj )
+ * @param {Object|Array|undefined} obj
+ * @param {Function} callback callback( val, idx/key, arr/obj )
  */
 export const forEach = (obj, callback) => {
   if (obj == null) return false

@@ -25,9 +25,6 @@ export default {
       updatedAt: 0,
       handledCounter: 0
     }
-    const __store__ = {
-      updatedAt: __default__.updatedAt,
-    }
 
     return {
       /**

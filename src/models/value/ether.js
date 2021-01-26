@@ -13,6 +13,7 @@ export default {
    * @param {string=} opts.viewPrefix 显示内容的前缀
    * @param {string=} opts.viewSuffix 显示内容的后缀
    * @param {Function=} opts.trigger 触发器
+   * @param {Object} opts.stateParams 状态参数
    * @return {!Object}
    */
   create ({
@@ -21,7 +22,8 @@ export default {
     viewMethod = floor,
     viewPrefix = '',
     viewSuffix = '',
-    trigger = null
+    trigger = null,
+    stateParams = {}
   } = {}) {
     const __default__ = {
       address: '',
@@ -91,7 +93,7 @@ export default {
       /**
        * ether 链式方法赋值
        * @param {string} val
-       * @type {Function}
+       * @return {Object}
        */
       setEther (val) {
         this.ether = val
@@ -163,7 +165,7 @@ export default {
           : __default__.view
       },
 
-      state: ModelState.create()
+      state: ModelState.create(stateParams)
     }
 
     return result

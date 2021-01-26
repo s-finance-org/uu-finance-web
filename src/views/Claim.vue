@@ -110,48 +110,50 @@
             class="col-12 col-md-8 pe-md-4 order-md-12 mt-2"
           >
             <template #renderItem="{ item, index }">
-              <a-list-item :key="'item-' + index">
-                <a-list-item-meta>
-                  <template #title>
-                    <div class="d-flex align-items-center">
-                      <icon-token :code=item.lpt size="52" class="me-2" />
-                      <span class="fs-4 pt-1">
-                        {{ item.name }} {{ $t('global.base.miningPool') }}
-                      </span>
+              <a-spin spin :spinning="item.busy">
+                <a-list-item :key="'item-' + index">
+                  <a-list-item-meta>
+                    <template #title>
+                      <div class="d-flex align-items-center">
+                        <icon-lpt :code=item.lpt size="52" class="me-2" />
+                        <span class="fs-4 pt-1">
+                          {{ item.name }} {{ $t('global.base.miningPool') }}
+                        </span>
+                      </div>
+                    </template>
+                  </a-list-item-meta>
+                  <div
+                    v-for="(reward, idx) in item.rewards"
+                    :key="`reward-${reward.code}`"
+                  >
+                    <div class="d-flex justify-content-between align-items-end flex-wrap pt-2">
+                      <small>
+                        {{ $t('global.claim.settle.pendingSettleReward') }}
+                        <span class="d-block fs-5 pt-1">
+                          {{ reward.pendingSettleReward }} {{ reward.code }}
+                          <!-- <small class="ps-2 text-color-secondary">≈{{ reward.pendingSettleRewardConvertUSD }}</small> -->
+                        </span>
+                      </small>
+                      <button-busy
+                        type="primary"
+                        size="small"
+                        @click=reward.settleBtn.click(idx)
+                        :busying=reward.settleBtn.disabled
+                        :disabled=reward.settleBtn.busy
+                        className="col-12 col-sm-auto mt-2"
+                      >
+                        {{ $t('global.claim.settle.participateSettle') }}
+                      </button-busy>
                     </div>
-                  </template>
-                </a-list-item-meta>
-                <div
-                  v-for="(reward, idx) in item.rewards"
-                  :key="`reward-${reward.code}`"
-                >
-                  <div class="d-flex justify-content-between align-items-end flex-wrap">
-                    <small>
-                      {{ $t('global.claim.settle.pendingSettleReward') }}
-                      <span class="d-block fs-5 pt-1">
-                        {{ reward.pendingSettleReward }} {{ reward.code }}
-                        <!-- <small class="ps-2 text-color-secondary">≈{{ reward.pendingSettleRewardConvertUSD }}</small> -->
-                      </span>
-                    </small>
-                    <button-busy
-                      type="primary"
-                      size="small"
-                      @click=reward.settleBtn.click(idx)
-                      :busying=reward.settleBtn.disabled
-                      :disabled=reward.settleBtn.busy
-                      className="col-12 col-sm-auto mt-2"
-                    >
-                      {{ $t('global.claim.settle.participateSettle') }}
-                    </button-busy>
-                  </div>
-                  <div class="content px-3 pt-2 d-flex flex-wrap mt-2">
-                    <small class="col-12 col-sm-6 mb-2">{{ $t('global.claim.settle.settleRewardRate') }}: {{ reward.settleRewardRate }}</small>
-                    <small class="col-12 col-sm-6 mb-2">{{ $t('global.claim.settle.settleReward') }}: {{ reward.settleReward }} {{ reward.code }}</small>
-                    <!-- <small class="col-12 col-sm-6 mb-2">{{ reward.exchangeRate }}</small> -->
-                    <!-- <small class="col-12 col-sm-6 mb-2">{{ $t('global.base.estimatedTransactionFee') }}：x</small> -->
-                  </div>
-                  </div>
-              </a-list-item>
+                    <div class="content px-3 pt-2 d-flex flex-wrap mt-2">
+                      <small class="col-12 col-sm-6 mb-2">{{ $t('global.claim.settle.settleRewardRate') }}: {{ reward.settleRewardRate }}</small>
+                      <small class="col-12 col-sm-6 mb-2">{{ $t('global.claim.settle.settleReward') }}: {{ reward.settleReward }} {{ reward.code }}</small>
+                      <!-- <small class="col-12 col-sm-6 mb-2">{{ reward.exchangeRate }}</small> -->
+                      <!-- <small class="col-12 col-sm-6 mb-2">{{ $t('global.base.estimatedTransactionFee') }}：x</small> -->
+                    </div>
+                    </div>
+                </a-list-item>
+              </a-spin>
             </template>
           </a-list>
         </a-tab-pane>
@@ -168,16 +170,16 @@ import {
 } from '@/components/icons'
 import ButtonBusy from '../components/button-busy'
 
-import { ModelValueEther } from '../models'
-
 import IconToken from '../components/icon-token'
+import IconLpt from '../components/icon-lpt'
 
 export default {
   components: {
     iIntersect,
     iYellowinfo,
     ButtonBusy,
-    IconToken
+    IconToken,
+    IconLpt
   },
   data() {
     return {
@@ -207,8 +209,6 @@ export default {
         // TODO: 优化 tokenAddresses 的数据同步
         const _token = tokenAddresses[_address.handled]
 
-        if (!_token) return false
-
         const foo = tokens.UU.getAssociatedToken(_token)
         // TODO: 如果没有，则就是项目自带的 token 没有，需要看 claimableReward、claimedReward
 
@@ -227,7 +227,9 @@ export default {
             busy: false,
             click: () => tokens.UU.claimReward(_token)
           },
-          exchangeRate: '1 SFG = 0.5472 DAI'
+          exchangeRate: '1 SFG = 0.5472 DAI',
+          // TODO: ???
+          busy: _address.state.busy
         })
       })
 
@@ -278,7 +280,6 @@ export default {
         })
       })
 
-
       return {
         own: {
           claimAllBtn: {
@@ -286,7 +287,7 @@ export default {
             busy: tokens.UU.state.busy,
             click: () => tokens.UU.claimAllRewards()
           },
-          list: ownList
+          list: ownList,
         },
         claimTo: {
 
@@ -311,14 +312,6 @@ export default {
         }
         .ant-list-item-meta {
           margin-bottom: 0px;
-          .token-icon {
-            font-size: 52px;
-            width: 52px;
-            height: 52px;
-          }
-          .icon-group-tokens {
-            zoom: 1.625
-          }
         }
         .content {
           background: rgba(17, 20, 20, 0.03);

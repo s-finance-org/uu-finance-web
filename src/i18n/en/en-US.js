@@ -86,22 +86,14 @@ export default {
       deposit: {
         tab: 'Deposit to get UU',
         selectAssetes: 'Select the type of assets deposited',
-        mintAssetMode: {
-          multipleTab: 'Multi-asset deposit',
-          singleTab: 'Single asset deposit',
-          placeholder: 'Enter the deposit amount',
-        },
+        placeholder: 'Enter the deposit amount',
         mintBtn: 'Deposit',
         previewReceiveLeast: 'You will receive at least'
       },
       withdraw: {
         tab: 'Remove and destroy UU',
         selectAssetes: 'Select asset type to withdraw',
-        mintAssetMode: {
-          multipleTab: 'Multiple asset withdrawal',
-          singleTab: 'Single asset withdrawal',
-          placeholder: 'Enter the amount taken out',
-        },
+        placeholder: 'Enter the amount taken out',
         mintBtn: 'Withdrawal',
         previewNeedLeast: 'You will need at least'
       }

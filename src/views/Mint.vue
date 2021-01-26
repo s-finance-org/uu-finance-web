@@ -14,7 +14,7 @@
           class="d-flex flex-wrap">
           <div class="d-flex flex-column flex-wrap col-12 col-md-8 pe-md-4">
             <span class="h5 d-block py-1 pt-4">{{ $t(actionItem.selectAssetesI18n) }}</span>
-            <a-radio-group :defaultValue=structure.selectTokenTypeDefaultValue size="small" class="pb-3">
+            <a-radio-group :defaultValue=structure.selectTokenTypeDefaultValue size="small" class="pb-2">
               <a-radio-button
                 v-for="(item, idx) in structure.selectTokenTypes"
                 :key="'selectTokenType' + idx"
@@ -24,31 +24,16 @@
               </a-radio-button>
             </a-radio-group>
 
-            <a-tabs size="small" animated type="card" defaultActiveKey="single" v-model:activeKey="mintAssetMode">
-              <!-- <a-tab-pane key="multiple" :tab="$t(actionItem.mintAssetMode.multipleTabI18n)" class="pt-2">
-                <token-select-input
-                  v-for="tokenItem in structure.multipleAssetTokens"
-                  :key="'multipleAssetTokens-' + tokenItem"
-                  :label="$t('global.base.deposit')"
-                  :placeholder="$t(actionItem.mintAssetMode.placeholderI18n)"
-                  v-on:changeAmount=changeAmount
-                  :approveToAddress=structure.approveToAddress
-                  :codes=tokenItem
-                  :ensureBalance=actionItem.ensureBalance
-                  :useApprove=structure.useApprove />
-              </a-tab-pane> -->
-              <a-tab-pane key="single" :tab="$t(actionItem.mintAssetMode.singleTabI18n)" class="pt-2">
-                <token-select-input
-                  v-model:current="singleSelectCode"
-                  :label="$t('global.base.deposit')"
-                  :placeholder="$t(actionItem.mintAssetMode.placeholderI18n)"
-                  v-on:changeAmount=changeAmount
-                  :approveToAddress=structure.approveToAddress
-                  :codes=structure.singleAssetTokens
-                  :ensureBalance=actionItem.ensureBalance
-                  :useApprove=actionItem.useApprove />
-              </a-tab-pane>
-            </a-tabs>
+            <token-select-input
+              class="pt-2"
+              v-model:current="singleSelectCode"
+              :label="$t(actionItem.labelI18n)"
+              :placeholder="$t(actionItem.placeholderI18n)"
+              v-on:changeAmount=changeAmount
+              :approveToAddress=structure.approveToAddress
+              :codes=structure.singleAssetTokens
+              :ensureBalance=actionItem.ensureBalance
+              :useApprove=actionItem.useApprove />
           </div>
 
           <div class="line-frame-thin d-flex p-3 p-md-4 pb-2 pb-md-3 flex-column col-12 col-md-4">
@@ -149,7 +134,6 @@ export default {
   data() {
     return {
       singleSelectCode: '',
-      mintAssetMode: 'single',
       mintAction: 'deposit',
 
       // TEMP:
@@ -171,15 +155,13 @@ export default {
       const { tokens } = this.$store
       const singleToken = tokens[this.singleSelectCode]
 
-      await singleToken.ensureAllowance(tokens.UU.address)
-
       await tokens.UU.mint(singleToken)
     },
     async onBurn () {
       const { tokens } = this.$store
       const singleToken = tokens[this.singleSelectCode]
-
-      // await singleToken.ensureAllowance(tokens.UU.address)
+// XXX: 要测试
+      // await singleToken.approve(tokens.UU.address)
 
       await tokens.UU.burn(singleToken)
     },
@@ -224,11 +206,8 @@ export default {
           deposit: {
             tabI18n: 'global.mint.deposit.tab',
             selectAssetesI18n: 'global.mint.deposit.selectAssetes',
-            mintAssetMode: {
-              multipleTabI18n: 'global.mint.deposit.mintAssetMode.multipleTab',
-              singleTabI18n: 'global.mint.deposit.mintAssetMode.singleTab',
-              placeholderI18n: 'global.mint.deposit.mintAssetMode.placeholder',
-            },
+            labelI18n: 'global.base.deposit',
+            placeholderI18n: 'global.mint.deposit.placeholder',
             useApprove: true,
             mintBtnI18n: 'global.mint.deposit.mintBtn',
             mintBtnClick: this.onMint,
@@ -239,11 +218,8 @@ export default {
           withdraw: {
             tabI18n: 'global.mint.withdraw.tab',
             selectAssetesI18n: 'global.mint.withdraw.selectAssetes',
-            mintAssetMode: {
-              multipleTabI18n: 'global.mint.withdraw.mintAssetMode.multipleTab',
-              singleTabI18n: 'global.mint.withdraw.mintAssetMode.singleTab',
-              placeholderI18n: 'global.mint.withdraw.mintAssetMode.placeholder',
-            },
+            labelI18n: 'global.base.withdraw',
+            placeholderI18n: 'global.mint.withdraw.placeholder',
             useApprove: false,
             // TODO: 临时，应该更新参考值，获取最大可取回的 lpt 量
             ensureBalance: false,
@@ -255,8 +231,7 @@ export default {
           },
         },
 
-        // TODO: 
-        multipleAssetTokens: [ 'DAI_USDC'],
+        // TODO: 要由 UU 自动获取列出
         singleAssetTokens: ['DAI_USDC'],
 
         // 授权操作的目标地址
@@ -283,12 +258,10 @@ export default {
     // 交互
     ixd () {
       const { wallet, tokens } = this.$store
-      const { singleSelectCode, mintAssetMode, structure } = this
+      const { singleSelectCode, structure } = this
       // 量值
 
       let mintBtnDisabled = !wallet.isValidated
-            // TODO: 多币种模式下暂时关闭
-            || mintAssetMode === 'multiple'
             // singleSelectCode 初始为空，由 select 自动填充
             || singleSelectCode && !tokens[singleSelectCode].amount.isValidInput
             // TODO: 不能为空来提交
@@ -303,12 +276,13 @@ export default {
       if (this.mintAction === 'deposit') {
         // TODO: 
         if (singleToken) {
-          if (singleToken.associatedTokens && singleToken.associatedTokens[structure.approveToAddress]) {
-            let aaa  = singleToken.associatedTokens[structure.approveToAddress].isNeedApprove
-            if (aaa) {
-              mintBtnDisabled = true
-            }
-          }
+          const associatedToken = singleToken.getAssociatedToken(tokens.UU)
+
+          // 没授权、input 无效
+          mintBtnDisabled = associatedToken.isNeedApprove
+            || !singleToken.amount.isValidInput
+            // TODO: 
+            || singleToken.amount.input === ''
 
           // TODO: 
           const foo = tokens.UU.getAssociatedToken(singleToken)
@@ -343,11 +317,11 @@ export default {
     },
     reserves () {
       const { UU, DAI_USDC } = this.$store.tokens
-      const foo = UU.getAssociatedToken(DAI_USDC)
-      
+      const associatedToken = UU.getAssociatedToken(DAI_USDC)
+
       // TODO: 自动连接数据，并考虑数据同步更新的可能性
       return [
-        { code: DAI_USDC.symbol.view, balance: foo.balance.view, proportion: '100' }
+        { code: DAI_USDC.symbol.view, balance: associatedToken.balance.view, proportion: '100' }
       ]
     }
   }
