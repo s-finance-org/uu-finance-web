@@ -584,36 +584,51 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
                 })
               })
           }
-
-          contract.methods[approveMethodName](toContractAddress, approveEther)
-            .send({
-              from: storeWallet.address,
-              // TODO:
-              // gasPrice: ,
-              // gas: ,
-            })
-            .once('transactionHash', hash => {
-              // TODO: 自定义该提示（支持 i18n）
-              notify.handler(hash) // 改为 hash
-
-              listenApproval({
-                value: approveEther,
-                owner: storeWallet.address,
-                spender: toContractAddress,
+          
+          try {
+            contract.methods[approveMethodName](toContractAddress, approveEther)
+              .send({
+                from: storeWallet.address,
+                // TODO:
+                // gasPrice: ,
+                // gas: ,
               })
-            })
-            .on('error', error.handler)
-            .catch(err => {
-              dismiss() // 销毁
-              error.handler(err)
+              .once('transactionHash', hash => {
+                // TODO: 自定义该提示（支持 i18n）
+                notify.handler(hash) // 改为 hash
 
-              associatedToken.state.afterUpdate()
-              state.afterUpdate()
-
-              reject({
-                successful: false
+                listenApproval({
+                  value: approveEther,
+                  owner: storeWallet.address,
+                  spender: toContractAddress,
+                })
               })
+              .on('error', error.handler)
+              .catch(err => {
+                notify.updateError({
+                  update,
+                  code: err.code,
+                  message: err.message
+                })
+
+                associatedToken.state.afterUpdate()
+                state.afterUpdate()
+
+                reject({
+                  successful: false
+                })
+              })
+          } catch (err) {
+            console.error(err)
+
+            notify.updateError({
+              update,
+              code: err.code,
+              message: err.message
             })
+
+            state.afterUpdate()
+          }
         })
       },
 

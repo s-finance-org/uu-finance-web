@@ -95,7 +95,6 @@ import {
   iHomeWechat,
   iHomeCoverUU,
   iHomeUnion } from '../components/icons';
-import Icon from '@ant-design/icons-vue';
 import Busy from '../components/busy'
 
 export default {

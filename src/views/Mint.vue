@@ -6,7 +6,7 @@
         <span class="fs-6 pe-5 d-block">{{ $t('global.mint.subtitle') }}</span>
       </div>
 
-      <a-tabs animated type="card" defaultActiveKey=structure.mintActionsDefaultKey v-model:activeKey=tabMintAction>
+      <a-tabs animated type="card" defaultActiveKey="deposit" v-model:activeKey=tabMintAction>
         <a-tab-pane
           v-for="(actionItem, key) of structure.mintActions"
           :key=key
@@ -32,7 +32,7 @@
               v-on:changeAmount=changeAmount
               :approveToAddress=structure.approveToAddress
               :codes=structure.singleAssetTokens
-              :ensureBalance=actionItem.ensureBalance
+              :balanceOf=actionItem.balanceOf
               :useApprove=actionItem.useApprove />
           </div>
 
@@ -119,6 +119,7 @@
 import {
   iIntersect,
 } from '@/components/icons'
+import BN from 'bignumber.js'
 
 import TokenSelectInput from '../components/token-select-input'
 import ButtonBusy from '../components/button-busy'
@@ -171,19 +172,23 @@ export default {
 
       // TODO: multi
       if (mintAction === 'deposit') {
+        // TODO: 切换 code、数据缓存存在时，数据会没有及时更新，这里要做过度
                 // 超过上限
-        // TODO: Model 来支持
         // 更新余额到最大值
         // TODO: 如果关掉这功能，则应该恢复最大值
         tokenObj.amount.maxInput = tokenObj.walletBalanceOf.handled
 
         await UU.getLpt2UUVol(tokenObj)
       } else if (mintAction === 'withdraw') {
+        
         // TODO: 恢复最大值 (存入 超出范围，切回取出无问题，再切回存入还是超出的这种触发关系，)
-        tokenObj.amount.resetMaxInput()
+        // TODO: 在初始时，这里 UU 的余额正在 busy，所以 handled 为 0
+        // TODO: UU 余额 / lpt 单价 = 最大值
+        // TODO: multi
+        // TODO: lpt 要全部提出时，按照 上面的公式，与 getUU2LptVol 会有偏差
+        tokenObj.amount.maxInput = BN(UU.walletBalanceOf.ether).div(await UU.getLptPrice(tokenObj)).toString()
 
         await UU.getUU2LptVol(tokenObj)
-
       }
     }
   },
@@ -201,7 +206,6 @@ export default {
           // { value: '3', i18n: 'global.mint.selectTokenTypes.stablecoin' }
         ],
 
-        mintActionsDefaultKey: 'deposit',
         mintActions: {
           deposit: {
             tabI18n: 'global.mint.deposit.tab',
@@ -222,7 +226,7 @@ export default {
             placeholderI18n: 'global.mint.withdraw.placeholder',
             useApprove: false,
             // TODO: 临时，应该更新参考值，获取最大可取回的 lpt 量
-            ensureBalance: false,
+            balanceOf: false,
             mintBtnI18n: 'global.mint.withdraw.mintBtn',
             mintBtnClick: this.onBurn,
             preview: {

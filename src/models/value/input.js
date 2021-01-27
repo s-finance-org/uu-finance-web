@@ -69,6 +69,16 @@ export default {
 
         return result
       },
+      /**
+       * ether 值使用当前的 decimals 进行转换
+       * @param {string} val
+       * @return {string}
+       */
+      etherTo (val) {
+        const { precision } = this
+
+        return BN(val).div(precision).toString()
+      },
 
       /**
        * IO
@@ -89,11 +99,11 @@ export default {
         return __store__.ether
       },
       set ether (val) {
-        const { state, precision } = this
+        const { state } = this
         const result = __store__.ether = val || __default__.handled
 
         // sync
-        __store__.handled = BN(result).div(precision).toString()
+        __store__.handled = this.etherTo(result)
         state.afterUpdate()
       },
 

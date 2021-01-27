@@ -55,14 +55,14 @@
       </a-input>
     </a-tooltip>
   </a-input-group>
-  <small class="pt-1 d-flex" v-if=ensureBalance>
+  <small class="pt-1 d-flex" v-if=balanceOf>
     {{ $t('global.base.maxBalanceOf') }}:
     <busy :busying="currentToken.walletBalanceOf.state.busy">
       <span @click="currentToken.useAllBalanceOf" class="pointer px-2">{{ currentToken.walletBalanceOf.view }}</span>
     </busy>
   </small>
 
-  <small class="d-flex flex-column" style="overflow: hidden;">
+  <!-- <small class="d-flex flex-column" style="overflow: hidden;">
     <a @click=_onForcedResetApprove>_onForcedResetApprove</a>
     <span>是否输入错误: {{ !currentToken.amount.isValidInput }}</span>
     <span>name: {{ currentToken.name.view }}</span>
@@ -90,7 +90,7 @@
       allowance: {{ item.allowance.ether }} | {{ item.allowance.handled }} <br/>
       approve: {{ item.approve.ether }} | {{ item.approve.handled }}<br/>
     </span>
-  </small>
+  </small> -->
 </template>
 
 <script>
@@ -115,8 +115,9 @@ export default {
       type: Boolean,
       default: true
     },
-    // 是否校验余额
-    ensureBalance: {
+    // 显示余额
+    // TODO: 要支持一个数据对象，ModelValueWallet 类型的
+    balanceOf: {
       type: Boolean,
       default: true
     }
