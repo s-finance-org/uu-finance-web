@@ -643,15 +643,6 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
           return result
         }
       }),
-      /**
-       * 使用全部余额
-       * @type {Function}
-       */
-      useAllBalanceOf () {
-        const { amount, walletBalanceOf } = this
-
-        amount.input = walletBalanceOf.handledView
-      },
 
       /**
        * @param {string} address

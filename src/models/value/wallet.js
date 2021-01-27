@@ -18,7 +18,7 @@ export default {
    * @param {Function=} opts.viewMethod 显示内容的舍入方法
    * @param {string=} opts.viewPrefix 显示内容的前缀
    * @param {string=} opts.viewSuffix 显示内容的后缀
-   * @param {Promise=} opts.trigger 触发器
+   * @param {Function=} opts.trigger 触发器
    * @return {!Object}
    */
   create ({
@@ -27,7 +27,7 @@ export default {
     viewMethod = floor,
     viewPrefix = '',
     viewSuffix = '',
-    trigger = new Promise((resolve, reject) => {})
+    trigger = () => new Promise((resolve, reject) => {}),
   } = {}) {
     // 缺省值
     const __default__ = {
@@ -52,6 +52,8 @@ export default {
         return Math.pow(10, decimals.handled)
       },
 
+
+
       /**
        * 钱包地址
        * - 自动关联钱包数据
@@ -73,13 +75,14 @@ export default {
             // sync
             __store__.address = result
 
-            this.trigger(result)
-              .then(data => {
-console.log('[update] --------- wallet ether:')
-                // sync
-                this.ether = data
-                this.state.afterUpdate()
-              })
+            this.trigger &&
+              this.trigger(result)
+                .then(data => {
+                  console.log('[update] --------- wallet ether:')
+                  // sync
+                  this.ether = data
+                  this.state.afterUpdate()
+                })
           }
         } else {
           // 当钱包没连接、断开时
@@ -107,7 +110,17 @@ console.log('[update] --------- wallet ether:')
           : __default__.ether
       },
       set ether (val) {
+        this.setEther(val)
+      },
+      /**
+       * ether 链式方法赋值
+       * @param {string} val
+       * @return {Object}
+       */
+      setEther (val) {
         __store__.ether = val
+
+        return this
       },
 
       /**

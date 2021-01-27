@@ -4,7 +4,7 @@ import ModelValueEther from './value/ether'
 import ModelValueBytes32 from './value/bytes32'
 import ModelValueUint8 from './value/uint8'
 // import ModelValueString from './value/string'
-// import ModelValueWallet from './wallet/ether'
+import ModelValueWallet from './value/wallet'
 // import ModelCurrencyRates from './currency/rates'
 // import ModelPool from './pool'
 
@@ -21,7 +21,7 @@ export {
   ModelValueBytes32,
   ModelValueUint8,
 //   ModelValueString,
-//   ModelValueWallet,
+  ModelValueWallet,
 //   ModelCurrencyRates,
 //   ModelPool,
 

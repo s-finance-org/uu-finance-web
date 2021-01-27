@@ -27,7 +27,7 @@
       <icon-lpt :code=currentToken.code size=16 class="me-2" />
       {{ currentToken.symbol.view }}
     </span>
-    <a-tooltip :visible="currentToken.amount.isFocus && !!currentToken.amount.inputView" placement="topLeft">
+    <a-tooltip :visible="isFocus && !!currentToken.amount.inputView" placement="topLeft">
       <template #title>
         {{ currentToken.amount.inputView }}
       </template>
@@ -55,10 +55,10 @@
       </a-input>
     </a-tooltip>
   </a-input-group>
-  <small class="pt-1 d-flex" v-if=balanceOf>
+  <small class="pt-1 d-flex" v-if=showBalanceOf>
     {{ $t('global.base.maxBalanceOf') }}:
-    <busy :busying="currentToken.walletBalanceOf.state.busy">
-      <span @click="currentToken.useAllBalanceOf" class="pointer px-2">{{ currentToken.walletBalanceOf.view }}</span>
+    <busy :busying="maxBalanceOf.state.loading">
+      <span @click="useMaxBalanceOf" class="pointer px-2">{{ maxBalanceOf.view }}</span>
     </busy>
   </small>
 
@@ -99,6 +99,8 @@ import ButtonBusy from '../components/button-busy'
 import IconLpt from '../components/icon-lpt'
 import { isArray } from '../utils'
 
+import { ModelValueWallet } from '../models'
+
 export default {
   props: {
     codes: {
@@ -115,11 +117,21 @@ export default {
       type: Boolean,
       default: true
     },
-    // 显示余额
-    // TODO: 要支持一个数据对象，ModelValueWallet 类型的
-    balanceOf: {
+    /**
+     * 是否显示余额
+     */
+    showBalanceOf: {
       type: Boolean,
       default: true
+    },
+    /**
+     * 自定义余额
+     * - ModelValueWallet
+     * - 否则自动获取当前 token 的钱包余额
+     */
+    balanceOf: {
+      type: Object,
+      default: null
     }
   },
   components: {
@@ -128,10 +140,21 @@ export default {
   },
   data () {
     return {
-      showInputTip: false,
+      isFocus: false,
     }
   },
   methods: {
+    /**
+     * 使用最大余额
+     */
+    useMaxBalanceOf () {
+      const { currentToken, maxBalanceOf } = this
+
+      currentToken.amount.input = maxBalanceOf.handledView
+
+      // TODO: 点击后也应该触发 changeTokenAmount
+      this.$emit('changeAmount', currentToken)
+    },
     async changeTokenAmount(e) {
       const { value } = e.target
       const { useApprove, currentToken, approveToAddress } = this
@@ -150,7 +173,7 @@ export default {
       const { currentToken } = this
       const isFocus = e.type === 'focus'
 
-      currentToken.amount.isFocus = isFocus
+      this.isFocus = isFocus
     },
     // 提交授权
     async onApprove () {
@@ -214,6 +237,16 @@ export default {
       }
 
       return result
+    },
+    maxBalanceOf () {
+      const { currentToken, balanceOf } = this
+      // 使用自定义
+      const walletBalanceOf = balanceOf || currentToken.walletBalanceOf
+
+      // 调整 input 最大值
+      currentToken.amount.maxInput = walletBalanceOf.handled
+
+      return walletBalanceOf
     }
   }
 }

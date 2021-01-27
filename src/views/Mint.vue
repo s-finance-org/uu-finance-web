@@ -32,7 +32,7 @@
               v-on:changeAmount=changeAmount
               :approveToAddress=structure.approveToAddress
               :codes=structure.singleAssetTokens
-              :balanceOf=actionItem.balanceOf
+              :balanceOf=maxBalanceOf
               :useApprove=actionItem.useApprove />
           </div>
 
@@ -121,6 +121,8 @@ import {
 } from '@/components/icons'
 import BN from 'bignumber.js'
 
+import { ModelValueWallet } from '../models'
+
 import TokenSelectInput from '../components/token-select-input'
 import ButtonBusy from '../components/button-busy'
 import Busy from '../components/busy'
@@ -140,6 +142,8 @@ export default {
       // TEMP:
       value1: 'a',
       value: undefined,
+      // TODO: 
+      maxBalanceOf: null
     };
   },
   // TODO: temp
@@ -166,7 +170,7 @@ export default {
 
       await tokens.UU.burn(singleToken)
     },
-    async changeAmount (tokenObj) {
+    async changeAmount (_token) {
       const { UU } = this.$store.tokens
       const { mintAction } = this
 
@@ -174,21 +178,26 @@ export default {
       if (mintAction === 'deposit') {
         // TODO: 切换 code、数据缓存存在时，数据会没有及时更新，这里要做过度
                 // 超过上限
-        // 更新余额到最大值
-        // TODO: 如果关掉这功能，则应该恢复最大值
-        tokenObj.amount.maxInput = tokenObj.walletBalanceOf.handled
+        this.maxBalanceOf = null
 
-        await UU.getLpt2UUVol(tokenObj)
+        await UU.getLpt2UUVol(_token)
       } else if (mintAction === 'withdraw') {
-        
         // TODO: 恢复最大值 (存入 超出范围，切回取出无问题，再切回存入还是超出的这种触发关系，)
         // TODO: 在初始时，这里 UU 的余额正在 busy，所以 handled 为 0
         // TODO: UU 余额 / lpt 单价 = 最大值
         // TODO: multi
         // TODO: lpt 要全部提出时，按照 上面的公式，与 getUU2LptVol 会有偏差
-        tokenObj.amount.maxInput = BN(UU.walletBalanceOf.ether).div(await UU.getLptPrice(tokenObj)).toString()
+        this.maxBalanceOf = ModelValueWallet.create({
+            ..._token.parameters,
+            async trigger () {
+              // TODO: 1e18
+              return BN(UU.walletBalanceOf.ether).div(await UU.getLptPrice(_token)).times(1e18).toString()
+            }
+            // TODO: temp 临时写法，1e18
+          }).setEther(BN(UU.walletBalanceOf.ether).div(await UU.getLptPrice(_token)).times(1e18).toString())
 
-        await UU.getUU2LptVol(tokenObj)
+
+        await UU.getUU2LptVol(_token)
       }
     }
   },
@@ -225,8 +234,6 @@ export default {
             labelI18n: 'global.base.withdraw',
             placeholderI18n: 'global.mint.withdraw.placeholder',
             useApprove: false,
-            // TODO: 临时，应该更新参考值，获取最大可取回的 lpt 量
-            balanceOf: false,
             mintBtnI18n: 'global.mint.withdraw.mintBtn',
             mintBtnClick: this.onBurn,
             preview: {
