@@ -533,14 +533,16 @@ __root__.claimedReward = async function (_token) {
 __root__.settleReward = async function (lptAddress, idx) {
   const { contract, state } = this
   const walletAddress = storeWallet.address
-  
+  // TODO: ?
+  const associatedToken = this.getAssociatedToken({ address: lptAddress })
+
 
   // 限制当前提交待确认的交易只有一份
   state.beforeUpdate()
+  associatedToken.state.beforeUpdate()
 
   const { update, dismiss } = notify.notification({ message: `领取结算` })
 
-  try {
     const sendOpts = {
       from: walletAddress,
     }
@@ -558,6 +560,8 @@ __root__.settleReward = async function (lptAddress, idx) {
     return _method.send(sendOpts)
       .once('transactionHash', hash => {
         notify.handler(hash)
+
+        associatedToken.state.afterUpdate()
         state.afterUpdate()
       })
       .catch(err =>{
@@ -569,19 +573,9 @@ __root__.settleReward = async function (lptAddress, idx) {
           message: err.message
         })
 
+        associatedToken.state.afterUpdate()
         state.afterUpdate()
       })
-  } catch (err) {
-    console.error(err)
-
-    notify.updateError({
-      update,
-      code: err.code,
-      message: err.message
-    })
-
-    state.afterUpdate()
-  }
 }
 
 /**
