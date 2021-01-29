@@ -137,38 +137,13 @@ __root__.supportedRewardNum = ModelValueEther.create({
     const { handled } = this
     const { contract, address } = __root__
 
-    // TODO: 这里 handled 是字符串
-    // __root__.supportedRewardAddresses = Array(+handled)
-    //   .fill(ModelValueAddress.create({
-    //     async trigger () {
-    //       const { handled } = this
-    //       const { associatedTokens } = __root__
-
-    //       // XXX: 如果没有在 tokenAddresses 内的，则应该自动创建
-    //       // TODO: 考虑如何 multi
-    //       await __root__.claimableReward(tokenAddresses[handled])
-    //       await __root__.claimedReward(tokenAddresses[handled])
-    //     }
-    //   }))
-
-//     const series = __root__.supportedRewardAddresses.map((item, idx) => {
-// console.log('idx', idx)
-//       return {
-//         decodeType: item.type,
-//         call: [
-//           address,
-//           contract.methods.rewards(idx).encodeABI()
-//         ],
-//         target: item
-//       }
-//     })
     const series = []
 
     for (let i = 0; i < +handled; i++ ) {
       const _address = ModelValueAddress.create({
         async trigger () {
           const { handled } = this
-
+console.log('address', handled )
           // XXX: 如果没有在 tokenAddresses 内的，则应该自动创建
           // TODO: 考虑如何 multi
           await __root__.claimableReward(tokenAddresses[handled])
@@ -499,7 +474,7 @@ __root__.claimableReward = async function (_token) {
   // TODO: 应该自动批量处理
   const { contract } = this
   const result = this.getAssociatedToken(_token)
-
+console.log('claimableReward---', _token.address)
   // update
   result.claimableReward.state.beforeUpdate()
   result.claimableReward.ether = await contract.methods.claimable(storeWallet.address.handled, _token.address).call()
