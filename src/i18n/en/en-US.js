@@ -60,6 +60,15 @@ export default {
       apy: 'APY',
       miningPool: 'Mining pool'
     },
+    msg: {
+      resettingApprove: 'Resetting approve',
+      approving: 'Approving',
+      mintingUU: 'UU is minting',
+      burningUU: 'UU is burning',
+      collectingAllRewards: 'Collecting all rewards',
+      claimingSettlement: 'Claiming settlement',
+      collectingReward: 'Collecting {0} reward'
+    },
     home: {
       cover_t: 'Yielding United USD',
       cover_c: 'A kind of stable coin with both market circulation & yielding',
@@ -88,7 +97,7 @@ export default {
         selectAssetes: 'Select the type of assets deposited',
         placeholder: 'Enter the deposit amount',
         mintBtn: 'Deposit',
-        previewReceiveLeast: 'You will receive at least'
+        previewReceiveLeast: 'You will receive at least',
       },
       withdraw: {
         tab: 'Remove and destroy UU',

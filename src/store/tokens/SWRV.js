@@ -2,7 +2,6 @@ import { ModelToken } from '../../models'
 import { getDotenvAddress } from '../helpers/methods'
 
 export default ModelToken.create({
-  code: 'SNX',
-  address: getDotenvAddress('SNX_TOKEN'),
-  viewDecimal: 2
+  code: 'SWRV',
+  address: getDotenvAddress('SWRV_TOKEN')
 })

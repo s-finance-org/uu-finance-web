@@ -1,4 +1,5 @@
 import BN from 'bignumber.js'
+import Web3 from 'web3'
 
 import { ERC20 } from './helpers/abi'
 import {
@@ -23,7 +24,8 @@ import notify from '../store/notify'
 import { USD } from '../store/currencies'
 
 import { now, floor, isPlainObject } from '../utils'
-import { ModelValueAddress } from '.'
+import ModelValueAddress from './value/address'
+import { listenEvent } from '../store/helpers/methods'
 
 export default {
   /**
@@ -103,6 +105,14 @@ export default {
       decimals: ModelValueUint8.create().setValue(18),
       viewDecimal,
       viewMethod
+    }
+
+    // TODO: 要让 address Model
+    address = Web3.utils.toChecksumAddress(address)
+
+    // TODO: 不正确则不创建
+    if (address === '0x0000000000000000000000000000000000000000') {
+      return null
     }
 
     return {
@@ -391,6 +401,14 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
            */
           balance: ModelValueEther.create(_tokenParameters),
 
+
+
+          // TODO: 以下是针对 lpt 的
+          // 挖矿奖励数量
+          miningPendingRewards: ModelValueEther.create(_tokenParameters),
+          // 待结算奖励数
+          settleableReward: ModelValueEther.create(_tokenParameters),
+
           state: ModelState.create(),
 
           /**
@@ -482,7 +500,7 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
           // 更新
           // TODO: 考虑如何 multi
           // TODO: 可以考虑把该地址得信息都获得，并存起来
-          allowance.ether = await contract.methods[allowanceMethodName](storeWallet.address, toAddress).call()
+          allowance.ether = await contract.methods[allowanceMethodName](storeWallet.address.handled, toAddress).call()
         }
 
         result = allowance.ether
@@ -513,8 +531,8 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
         // TODO: 这里要能拿到 toContractAddress 的 code
         const { update, dismiss } = notify.notification({
           message: forcedReset || associatedToken.isResetApprove
-            ? '重置授权'
-            : '正在授权'
+            ? i18n.$i18n.global.t('global.msg.resettingApprove')
+            : i18n.$i18n.global.t('global.msg.approving')
         })
 
         const approveEther = forcedReset
@@ -526,82 +544,53 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
 
         // TODO: 考虑避免一个token 同时多次提交
         return new Promise((resolve, reject) => {
-          const listenApproval = ({
-            value = '',
-            owner = '',
-            spender = '',
-            // TODO: 
-          } = {}) => {
-            let onceLock = false
+          const walletAddress = storeWallet.address.handled
 
-            contract.events.Approval()
-              .on('data', function (data) {
-                /* data
-                  {
-                    returnValues: {
-                      owner: '0x'
-                      spender: '0x'
-                      value: '0'
-                    }
-                  }
-                */
-                // TODO: 如何停掉监听
-                if (onceLock) return false
-
-
-                // 是否有符合的
-                // XXX: value 是 number
-                const filter = data.returnValues.value === approveEther
-                  // TODO: 地址大小写
-                  && data.returnValues.owner.toLowerCase() === storeWallet.address.toLowerCase()
-                  && data.returnValues.spender.toLowerCase() === toContractAddress.toLowerCase()
-
-                console.log('events.Approval', filter, data)
-                if (filter) {
-                  // TODO: ? 到期后 3秒重置
-                  window.setTimeout(() => onceLock = false, 3000)
-
-                  // TODO: double event
-                  onceLock = true
-                  dismiss() // 销毁
-                  // sync
-                  associatedToken.allowance.ether = approveEther
-                  associatedToken.state.afterUpdate()
-
-                  resolve({
-                    successful: true
-                  })
-                }
-              })
-              .on('error', err => {
-                error.handler(err)
-
-                associatedToken.state.afterUpdate()
-                state.afterUpdate()
-
-                reject({
-                  successful: false
-                })
-              })
-          }
-          
           try {
             contract.methods[approveMethodName](toContractAddress, approveEther)
               .send({
-                from: storeWallet.address,
+                from: walletAddress,
                 // TODO:
                 // gasPrice: ,
                 // gas: ,
               })
-              .once('transactionHash', hash => {
+              .once('transactionHash', transactionHash => {
                 // TODO: 自定义该提示（支持 i18n）
-                notify.handler(hash) // 改为 hash
+                notify.handler(transactionHash)
 
-                listenApproval({
-                  value: approveEther,
-                  owner: storeWallet.address,
-                  spender: toContractAddress,
+                listenEvent({
+                  name: 'Approval',
+                  contract,
+                  transactionHash
+                }).then(data => {
+                  /* data
+                    {
+                      returnValues: {
+                        owner: '0x'
+                        spender: '0x'
+                        value: '0'
+                      }
+                    }
+                  */
+                  const { returnValues } = data
+                  const filter = returnValues.owner === walletAddress
+                    && returnValues.spender === toContractAddress
+                    && returnValues.value === approveEther
+
+                  if (!filter) return false
+
+                  dismiss() // 销毁
+                  associatedToken.allowance.ether = approveEther
+                  associatedToken.state.afterUpdate()
+                }).catch(err => {
+                  // TODO: 增加提示内容的变更
+                  dismiss() // 销毁
+                  associatedToken.allowance.ether = approveEther
+                  associatedToken.state.afterUpdate()
                 })
+                .finally(() => {
+                })
+
               })
               .on('error', error.handler)
               .catch(err => {

@@ -4,7 +4,7 @@ import { reactive } from 'vue'
 import abi from './abi'
 
 import { ModelToken, ModelValueEther, ModelValueAddress, ModelValueUint8 } from '../../../models'
-import { getDotenvAddress } from '../../helpers/methods'
+import { getDotenvAddress, listenEvent } from '../../helpers/methods'
 
 import tokenAddresses from '../token-addresses'
 
@@ -55,12 +55,14 @@ const __root__ = reactive(ModelToken.create({
       mintGainAmount: ModelValueEther.create(__root__parameters),
       // 取回将销毁 UU 的量（由不同 token address 区分）
       burnGainAmount: ModelValueEther.create(__root__parameters),
-      // 挖矿奖励数量
-      miningPendingRewards: ModelValueEther.create(parameters),
-      // 待结算奖励数
-      settleableReward: ModelValueEther.create(parameters),
+
+
+
+
+
       // TODO: temp lpt 对应的奖励 token
-      lptRewards: [],
+      rewardNum: 0,
+      rewardAddresses: [],
     }
   }
 }))
@@ -205,7 +207,7 @@ __root__.supportedRewardAddresses = []
  */
 __root__.mint = async function (_token) {
   const { contract, address, state } = this
-  const walletAddress = storeWallet.address
+  const walletAddress = storeWallet.address.handled
 
   // 校验授权（预防）
   await _token.approve(address)
@@ -213,7 +215,7 @@ __root__.mint = async function (_token) {
   // 限制当前提交待确认的交易只有一份
   state.beforeUpdate()
 
-  const { update, dismiss } = notify.notification({ message: '正准备拉起' })
+  const { update, dismiss } = notify.notification({ message: i18n.$i18n.global.t('global.msg.mintingUU') })
 
   try {
     // update mintGainAmount
@@ -354,12 +356,12 @@ __root__.getLptPrice = async function (_token) {
  */
 __root__.claimAllRewards = async () => {
   const { contract, state } = __root__
-  const walletAddress = storeWallet.address
+  const walletAddress = storeWallet.address.handled
 
   // 限制当前提交待确认的交易只有一份
   state.beforeUpdate()
 
-  const { update, dismiss } = notify.notification({ message: '提交领取全部奖励' })
+  const { update, dismiss } = notify.notification({ message: i18n.$i18n.global.t('global.msg.collectingAllRewards') })
 
   try {
     const sendOpts = {
@@ -414,15 +416,14 @@ __root__.claimAllRewards = async () => {
  */
 __root__.claimReward = async (_token) => {
   const { contract, state } = __root__
-  const walletAddress = storeWallet.address
+  const walletAddress = storeWallet.address.handled
 
   const associatedToken = __root__.getAssociatedToken(_token)
 
   // 限制当前提交待确认的交易只有一份
-  state.beforeUpdate()
   associatedToken.state.beforeUpdate()
 
-  const { update, dismiss } = notify.notification({ message: `领取${_token.code}奖励` })
+  const { update, dismiss } = notify.notification({ message: i18n.$i18n.global.t('global.msg.collectingReward', [_token.code]) })
 
   const sendOpts = {
     from: walletAddress,
@@ -439,14 +440,45 @@ __root__.claimReward = async (_token) => {
   }
 
   return _method.send(sendOpts)
-    .once('transactionHash', hash => {
-      notify.handler(hash)
-      // TODO: 应该监听block
-      associatedToken.state.afterUpdate()
-      state.afterUpdate()
-    })
-    .catch(err =>{
-      console.log(err)
+    .once('transactionHash', transactionHash => {
+      notify.handler(transactionHash)
+
+      listenEvent({
+        name: 'ClaimTo',
+        contract,
+        transactionHash
+      }).then(data => {
+        /* data
+          {
+            returnValues: {
+              agent: "0x"
+              reward: "0x"
+              tip: "0"
+              to: "0x"
+              vol: "1110"
+            }
+          }
+        */
+        const { returnValues } = data
+        const filter = returnValues.agent === walletAddress
+
+        if (!filter) return false
+
+        dismiss() // 销毁
+        associatedToken.state.afterUpdate()
+
+        // sync
+        // TODO: multi
+        __root__.claimableReward(_token)
+        __root__.claimedReward(_token)
+      }).catch(err => {
+        dismiss() // 销毁
+
+        associatedToken.state.afterUpdate()
+      })
+  
+    }).catch(err =>{
+console.error(err)
 
       notify.updateError({
         update,
@@ -455,7 +487,6 @@ __root__.claimReward = async (_token) => {
       })
 
       associatedToken.state.afterUpdate()
-      state.afterUpdate()
     })
 }
 
@@ -471,7 +502,7 @@ __root__.claimableReward = async function (_token) {
 
   // update
   result.claimableReward.state.beforeUpdate()
-  result.claimableReward.ether = await contract.methods.claimable(storeWallet.address, _token.address).call()
+  result.claimableReward.ether = await contract.methods.claimable(storeWallet.address.handled, _token.address).call()
 
   // TODO: 待考虑合并
   result.totalReward.ether = BN(result.claimableReward.ether).plus(result.claimedReward.ether).toFixed(0, 1)
@@ -489,7 +520,7 @@ __root__.claimedReward = async function (_token) {
 
   // update
   result.claimedReward.state.beforeUpdate()
-  result.claimedReward.ether = await contract.methods.claimed(storeWallet.address, _token.address).call()
+  result.claimedReward.ether = await contract.methods.claimed(storeWallet.address.handled, _token.address).call()
 
   result.totalReward.ether = BN(result.claimableReward.ether).plus(result.claimedReward.ether).toFixed(0, 1)
 }
@@ -497,31 +528,30 @@ __root__.claimedReward = async function (_token) {
 /**
   * 获取待结算奖励数
   * - 查询用户在某矿池中可以领取的奖励
-  * @param {Object} _token 奖励代币对象
+  * @param {Object} _lpt 奖励代币对象
   */
- __root__.settleableReward = async function (_token, idx) {
+ __root__.settleableReward = async function (_lpt, idx) {
   // TODO: 应该自动批量处理
-  const { contract, address } = this
-  
+  const { contract } = this
+
+  const associatedToken = this.getAssociatedToken(_lpt)
+
   /* data
     reward: _token.address, // address 该奖励的 token address，异常时返回 0x0000000000000000000000000000000000000000
     vol: 0, // uint256 挖矿奖励数量
     tip: 0, // uint256 结算小费，与 vol 比例为 99:1
    */
-  const { vol, tip, reward } = await contract.methods.settleable(address, _token.address, idx).call()
-  
-  const associatedToken = this.getAssociatedToken(_token)
+  const { vol, tip, reward } = await contract.methods.settleable(_lpt.address, idx).call()
+
   // TODO:
-  const lpt__ = associatedToken.lptRewards[idx] = reward
+  const lpt__ = associatedToken.rewardAddresses[idx] = ModelValueAddress.create().setValue(reward)
 
-  // TODO: 这里的数据应该跟 pool 相关
-  const result = this.getAssociatedToken({ address: reward })
-
-  console.log('reward', reward)
+  // 在 lpt 下的
+  // TODO: 这里得先确定 tokenAddresses 内有奖励 token
+  const result = _lpt.getAssociatedToken(tokenAddresses[reward])
 
   result.miningPendingRewards.ether = vol
   result.settleableReward.ether = tip
-
 }
 
 /**
@@ -530,18 +560,18 @@ __root__.claimedReward = async function (_token) {
  * @param {number} idx 在 supportedLptAddresses 内的索引
  */
 // TODO: 
-__root__.settleReward = async function (lptAddress, idx) {
+__root__.settleReward = async function (lptAddress, idx, _itemToken) {
   const { contract, state } = this
-  const walletAddress = storeWallet.address
+  const _lpt = tokenAddresses[lptAddress]
+  const walletAddress = storeWallet.address.handled
   // TODO: ?
-  const associatedToken = this.getAssociatedToken({ address: lptAddress })
+  const associatedToken = _lpt.getAssociatedToken(_itemToken)
 
 
   // 限制当前提交待确认的交易只有一份
-  state.beforeUpdate()
   associatedToken.state.beforeUpdate()
 
-  const { update, dismiss } = notify.notification({ message: `领取结算` })
+  const { update, dismiss } = notify.notification({ message: i18n.$i18n.global.t('global.msg.claimingSettlement') })
 
     const sendOpts = {
       from: walletAddress,
@@ -557,25 +587,52 @@ __root__.settleReward = async function (lptAddress, idx) {
       console.error(err)
     }
 
-    return _method.send(sendOpts)
-      .once('transactionHash', hash => {
-        notify.handler(hash)
+  return _method.send(sendOpts)
+    .once('transactionHash', transactionHash => {
+      notify.handler(transactionHash)
 
+      listenEvent({
+        name: 'Settle',
+        contract,
+        transactionHash
+      }).then(data => {
+        /* data
+          {
+            returnValues: {
+              agent: "0x"
+              gauge: "0x"
+              reward: "0x"
+              tip: "0"
+              vol: "0
+            }
+          }
+        */
+        const { returnValues } = data
+        const filter = returnValues.agent === walletAddress
+
+        if (!filter) return false
+
+        dismiss() // 销毁
         associatedToken.state.afterUpdate()
-        state.afterUpdate()
-      })
-      .catch(err =>{
-        console.log(err)
 
-        notify.updateError({
-          update,
-          code: err.code,
-          message: err.message
-        })
-
+        // sync
+        __root__.settleableReward(_lpt, idx)
+      }).catch(err => {
+        dismiss() // 销毁
         associatedToken.state.afterUpdate()
-        state.afterUpdate()
       })
+    })
+    .catch(err =>{
+console.error(err)
+
+      notify.updateError({
+        update,
+        code: err.code,
+        message: err.message
+      })
+
+      associatedToken.state.afterUpdate()
+    })
 }
 
 /**
@@ -600,12 +657,12 @@ __root__.lptBalance = async function (_token) {
   */
 __root__.burn = async function (_token) {
   const { contract, address, state } = this
-  const walletAddress = storeWallet.address
+  const walletAddress = storeWallet.address.handled
 
   // 限制当前提交待确认的交易只有一份
   state.beforeUpdate()
 
-  const { update, dismiss } = notify.notification({ message: '正准备拉起' })
+  const { update, dismiss } = notify.notification({ message: i18n.$i18n.global.t('global.msg.burningUU') })
 
   try {
     // update burnGainAmount

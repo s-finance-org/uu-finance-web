@@ -668,7 +668,7 @@ export default ModelPool.create({
 
       await contract.methods.add_liquidity()
         .send({
-          from: storeWallet.address,
+          from: storeWallet.address.handled,
           // gasPrice: this.gasPriceWei,
           // gas: contractGas.deposit[this.currentPool],
       }).once('transactionHash', hash => {

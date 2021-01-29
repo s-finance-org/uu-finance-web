@@ -1,8 +1,6 @@
 import { ModelSwap } from '../../models'
 import { getDotenvAddress } from '../helpers/methods'
 
-import storeWallet from '../wallet'
-
 const abi = [
   {
     'constant': true,
@@ -111,12 +109,10 @@ export default ModelSwap.create({
             returnData: Array, // returnData
           }
          */
-console.log('multicall calls', calls)
-        result = await this.contract.methods.aggregate(calls).call()
+        result = await contract.methods.aggregate(calls).call()
       } catch (err) {
         console.error('nulticall aggregate()', err)
       }
-console.log('multicall aggregate', result)
 
       return result
     },

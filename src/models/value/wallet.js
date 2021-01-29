@@ -61,7 +61,7 @@ export default {
        */
       get address () {
         // NOTE: 这里不 { state } = this 先调用，是 state 的变更会再次触发本流程
-        const result = storeWallet.address
+        const result = storeWallet.address.handled
 
 // TODO: 在获取第一次数据成功后，再次获取则不会 trigger()，如果用户交易完成（block），则对应值应该更新
         // 有效

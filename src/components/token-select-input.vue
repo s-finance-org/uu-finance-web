@@ -40,7 +40,7 @@
         @change="changeTokenAmount"
       >
         <template #suffix>
-          <a-tooltip :title="$t(associatedToken.isResetApprove ? 'global.base.resetApproveTip' : 'global.base.approveTip')" placement="topRight">
+          <!-- <a-tooltip trigger='hover' :title="$t(associatedToken.isResetApprove ? 'global.base.resetApproveTip' : 'global.base.approveTip')" placement="topRight"> -->
             <button-busy
               :busying=associatedToken.busy
               v-show=associatedToken.isNeedApprove
@@ -50,7 +50,7 @@
             >
               {{ $t(associatedToken.isResetApprove ? 'global.base.resetApprove' : 'global.base.approve') }}
             </button-busy>
-          </a-tooltip>
+          <!-- </a-tooltip> -->
         </template>
       </a-input>
     </a-tooltip>

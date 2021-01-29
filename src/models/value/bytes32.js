@@ -2,10 +2,13 @@ import storeWallet from '../../store/wallet'
 
 export default {
   create () {
+    const __default__ = {
+      
+    }
     const __store__ = {
       value: '',
       bytes: '0x0000000000000000000000000000000000000000000000000000000000000000',
-      cont: '-'
+      view: '-'
     }
 
     return {
@@ -41,12 +44,12 @@ export default {
       },
 
       /** @type {string} */
-      get cont () {
+      get view () {
         const { bytes, loading } = this
         let result = ''
 
         if (!loading) {
-          result = __store__.cont = storeWallet.web3.utils.toAscii(bytes)
+          result = __store__.view = storeWallet.web3.utils.toAscii(bytes)
         }
 
         return result

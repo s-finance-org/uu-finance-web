@@ -32,8 +32,8 @@
                     type="link"
                     size="small"
                     @click=ixd.own.claimAllBtn.click
-                    :busying=ixd.own.claimAllBtn.disabled
-                    :disabled=ixd.own.claimAllBtn.busy
+                    :busying=ixd.own.claimAllBtn.busy
+                    :disabled=ixd.own.claimAllBtn.disabled
                     className="col-12 col-sm-auto"
                   >
                     {{ $t('global.claim.own.allClaim') }}
@@ -67,8 +67,8 @@
                       type="primary"
                       size="small"
                       @click=item.receiveBtn.click
-                      :busying=item.receiveBtn.busy
-                      :disabled=item.receiveBtn.disabled
+                      :busying="item.receiveBtn.busy || ixd.own.claimAllBtn.busy"
+                      :disabled="item.receiveBtn.disabled || ixd.own.claimAllBtn.disabled"
                       className="col-12 col-sm-auto mt-2"
                     >
                       {{ $t('global.claim.own.receiveAward') }}
@@ -138,13 +138,13 @@
                   >
                     <div class="d-flex justify-content-between align-items-end flex-wrap pt-2">
                       <small>
-                        <busy :busying="reward.pendingSettleReward.state.loading">
+                        <!-- <busy :busying="reward.pendingSettleReward.state.loading"> -->
                           {{ $t('global.claim.settle.pendingSettleReward') }}
                           <span class="d-block fs-5 pt-1">
                             {{ reward.pendingSettleReward.view }} {{ reward.code }}
                             <!-- <small class="ps-2 text-color-secondary">≈{{ reward.pendingSettleRewardConvertUSD }}</small> -->
                           </span>
-                        </busy>
+                        <!-- </busy> -->
                       </small>
                       <button-busy
                         type="primary"
@@ -258,54 +258,48 @@ export default {
         })
       })
 
-      tokens.UU.supportedLptAddresses.forEach((_address, idx) => {
-        // TODO: 优化
-        const _token = tokenAddresses[_address.handled]
-// TODO:  这里的奖励应该是 lpt 挖矿出来的奖励 token
-        if (!_token) return false
-// XXX: 这里应该不对，如果挖矿有多个奖励呢？
-        const foo = tokens.UU.getAssociatedToken(_token)
+      tokens.UU.supportedLptAddresses.forEach(_lptAddress => {
+        const _lpt = tokenAddresses[_lptAddress.handled]
 
-        if (!(foo && _token)) return false
+        // TODO: 如果 tokenAddresses 找不到，则应该在 tokenAddresses 内自动创建，保证有
+        if (!_lpt) return false
 
-        // TODO:
-        settleListLoading = false
-
+        const lptAssociatedToken = tokens.UU.getAssociatedToken(_lpt)
         const rewards = []
-        // TODO: temp
-        if (_address.handled === '0xd9976960b50e0966626673480C70b1da07E5AC1b') {
 
-          foo.lptRewards.forEach(item => {
-            const _t = tokenAddresses[item]
+        lptAssociatedToken.rewardAddresses.forEach((_rewardAddress, idx) => {
+          // TODO: 如果 tokenAddresses 找不到，则应该在 tokenAddresses 内自动创建，保证有
+          const _reward = tokenAddresses[_rewardAddress.handled]
+          const rewardAssociatedToken = _lpt.getAssociatedToken({ address: _rewardAddress.handled })
 
-            const associatedToken = tokens.UU.getAssociatedToken(_t)
+          // TODO: 应该是旗下的所有 reward token 结构完整后才 false
+          settleListLoading = false
 
-            rewards.push({
-              // TODO: 应该是奖励的 token
-              code: _t.code,
-              // XXX: 这里应该不对，如果挖矿有多个奖励呢？
-              pendingSettleReward: associatedToken.miningPendingRewards,
-              pendingSettleRewardConvertUSD: '$ ?',
-              settleBtn: {
-                // TODO: 
-                disabled: false,
-                busy: associatedToken.state.busy,
-                idx,
-                click: (idx) => tokens.UU.settleReward(_address.handled, idx)
-              },
-              settleRewardRate: '1.00 %',
-              // XXX: 这里应该不对，如果挖矿有多个奖励呢？
-              settleReward: associatedToken.settleableReward,
-              exchangeRate: '1 SFG = 0.5472 DAI'
-            })
+          rewards.push({
+            code: _reward.code,
+            // XXX: 这里应该不对，如果挖矿有多个奖励呢？
+            pendingSettleReward: rewardAssociatedToken.miningPendingRewards,
+            pendingSettleRewardConvertUSD: '$ ?',
+            settleBtn: {
+              // TODO: 
+              disabled: false,
+              busy: rewardAssociatedToken.state.busy,
+              idx,
+              click: (idx) => tokens.UU.settleReward(_lpt.address, idx, _reward)
+            },
+            settleRewardRate: '1.00 %',
+            // XXX: 这里应该不对，如果挖矿有多个奖励呢？
+            settleReward: rewardAssociatedToken.settleableReward,
+            exchangeRate: '1 SFG = 0.5472 DAI'
           })
-        }
+        })
 
         settleList.push({
-          lpt: _token.code,
-          name: _token.name.view,
+          lpt: _lpt.code,
+          name: _lpt.name.view,
           rewards
         })
+
       })
 
       return {

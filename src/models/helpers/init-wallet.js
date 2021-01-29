@@ -6,6 +6,7 @@ import ModelInfura from './infura'
 import ModelState from '../base/state'
 import { DEFAULT_NETWORK_ID } from './constant'
 import { isMobile, forEach, addressShortener } from '../../utils'
+import ModelValueAddress from '../value/address'
 
 const CACHE_WALLET_NAME = '__Global_Wallet_Selected'
 
@@ -26,7 +27,6 @@ export default {
 
     const __store__ = {
       name: undefined,
-      address: '',
     }
 
     const wallet = reactive({
@@ -48,24 +48,16 @@ export default {
        * 用户钱包地址
        * @type {string|undefined}
        */
-      get address () {
-        return __store__.address
-      },
-      set address (val) {
-        const result = val || ''
-
-        // 不同时才会覆盖
-        if (__store__.address !== result) {
-          __store__.address = result
-          this.addressShortened = addressShortener(result)
-        }
-      },
+      address: ModelValueAddress.create(),
       /**
        * 缩短的用户钱包地址
-       * - 由 address 维护
        * @type {string}
        */
-      addressShortened: '',
+      get addressShortened () {
+        const { address } = this
+
+        return addressShortener(address.handled)
+      },
 
       /**
        * 当前网络 ID
@@ -101,8 +93,7 @@ export default {
 
         // 必须与配置的网络 ID 一样
         return networkId === NETWORK_ID
-          // TODO: 钱包地址格式校验
-          && !!address
+          && address.isValidated
           && isConnectWallet
       },
 
@@ -222,7 +213,7 @@ console.log('-----------')
 
         // update
         this.name = ''
-        this.address = ''
+        this.address.reset()
         this.walletWeb3 = null
 
         state.reset()
@@ -309,7 +300,7 @@ console.log('-----------')
           // 必须要有 isConnectWallet，否则断开后再切换账号，仍然会获取地址
           if (address && wallet.isConnectWallet) {
             // 唯一 address 赋值处
-            wallet.address = address
+            wallet.address.setValue(address)
           } else {
             // TODO: WHY?
             if (localStorage.getItem('-walletlink:https://www.walletlink.org:session:id') == null) {

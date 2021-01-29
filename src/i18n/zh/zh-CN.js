@@ -60,6 +60,15 @@ export default {
       apy: '年化收益率',
       miningPool: '流动性矿池'
     },
+    msg: {
+      resettingApprove: '正在重置授权',
+      approving: '正在授权',
+      mintingUU: '正在铸造 UU',
+      burningUU: '正在销毁 UU',
+      collectingAllRewards: '正在领取全部奖励',
+      claimingSettlement: '正在领取结算',
+      collectingReward: '正在领取 {0} 奖励'
+    },
     home: {
       cover_t: '有收益的稳定币',
       cover_c: '在流通使用同时还可以领取收益的稳定币',
@@ -88,7 +97,7 @@ export default {
         selectAssetes: '选择存入资产类型',
         placeholder: '输入存入数量',
         mintBtn: '存款',
-        previewReceiveLeast: '你将至少收到'
+        previewReceiveLeast: '你将至少收到',
       },
       withdraw: {
         tab: '取出销毁 UU',
