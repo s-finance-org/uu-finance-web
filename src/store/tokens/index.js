@@ -32,10 +32,11 @@ const tokens = reactive({
   SWRV,
 
   /* LP token */
-  DAI_USDC, // test
-  DAI_USDT, // test
   SFINANCE_USD5,
-  CURVE_3CRV
+  CURVE_3CRV,
+  // TODO: 不存在的 multi call 会卡
+  // DAI_USDC, // test
+  // DAI_USDT, // test
 })
 
 // FIXME: temp

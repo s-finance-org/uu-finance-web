@@ -76,7 +76,7 @@ export default {
             __store__.address = result
 
             this.trigger &&
-              this.trigger(result)
+              this.trigger()
                 .then(data => {
                   console.log('[update] --------- wallet ether:')
                   // sync

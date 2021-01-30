@@ -109,7 +109,9 @@ export default ModelSwap.create({
             returnData: Array, // returnData
           }
          */
+console.log('mulit calls', calls)
         result = await contract.methods.aggregate(calls).call()
+console.log('mulit result', result)
       } catch (err) {
         console.error('nulticall aggregate()', err)
       }

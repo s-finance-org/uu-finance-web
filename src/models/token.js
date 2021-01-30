@@ -33,6 +33,7 @@ export default {
    * @param {string} opts.code 内部 token code
    * @param {string} opts.address
    * @param {Array=} opts.abi
+   * @param {string=} opts.icon 缺省与 code 相同
    * @param {boolean=} opts.isLpt 是否为 lp token // TODO: 暂无作用
    * @param {Function=} opts.customSeries 自定义列队 multi call
    * @param {Object=} opts.customAssociatedTokenModel 追加 associatedToken 数据集的单元 Modal
@@ -58,6 +59,7 @@ export default {
     code = '',
     address = '',
     abi = ERC20,
+    icon = '',
     isLpt = false,
     customSeries = () => [],
     customAssociatedTokenModel = () => ({}),
@@ -107,11 +109,13 @@ export default {
       viewMethod
     }
 
+    // TODO: 要排除 0x000 和空字符串
     // TODO: 要让 address Model
     address = Web3.utils.toChecksumAddress(address)
 
     // TODO: 不正确则不创建
     if (address === '0x0000000000000000000000000000000000000000') {
+      // TODO: 要保留结构，不能 null
       return null
     }
 
@@ -139,7 +143,7 @@ export default {
        * 标识
        * @type {string}
        */
-      icon: `token-${code}`,
+      icon: icon || code,
       /**
        * 当前 Model 标识
        * @type {boolean}
@@ -155,14 +159,14 @@ export default {
 console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, __store__.isCcontractBase)
         if (storeWallet.isValidated) {
           if (!__store__.isContractWallet) {
-            console.log('------- 地址切换，且用钱包的 web3')
+            console.log('------- wallet web3')
             __store__.contract = new storeWallet.web3.eth.Contract(abi, address)
             __store__.isCcontractBase = false
             __store__.isContractWallet = true
           }
         } else {
           if (!__store__.isCcontractBase) {
-            console.log('------- 无地址, 用缺省 web3')
+            console.log('------- default web3')
             __store__.contract = new storeWallet.web3.eth.Contract(abi, address)
             // 可能会换钱包，因此重置
             __store__.isContractWallet = false
@@ -626,7 +630,8 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
        */
       walletBalanceOf: ModelValueWallet.create({
         ...parameters,
-        async trigger (address) {
+        async trigger () {
+          const { address } = this
           const result = await __store__.contract.methods[balanceOfMethodName](address).call()
 
           return result

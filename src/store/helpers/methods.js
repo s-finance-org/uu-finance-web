@@ -21,15 +21,18 @@ export const getDotenvAddress = (name = '') => {
 /**
  * 监听事件
  * @param {Object} opts
+ * @param {Object} opts.contract
  * @param {string=} opts.name 事件名
- * @param {Object=} opts.contract
  * @param {string=} opts.transactionHash 交易哈希
+ * TODO: 是否有更好的办法，需要考虑 once 的问题限制了
+ * @param {Function=} opts.success 成功时的方法（针对一个事件多次调用）
  * @return {Promise}
  */
 export const listenEvent = async ({
-  name = '',
-  contract = null,
-  transactionHash = ''
+  contract,
+  name = 'allEvents',
+  transactionHash = '',
+  success = () => {}
 } = {}) => {
   return new Promise((resolve, reject) => {
 
@@ -49,17 +52,22 @@ export const listenEvent = async ({
           raw.data - String: 该字段包含未索引的日志参数
           raw.topics - Array: 最多可保存4个32字节长的主题字符串数组。主题1-3 包含事件的索引参数
         */
+
+        const result = {
+          event: 'data',
+          returnValues: data.returnValues
+        }
+
         // transactionHash 存在则为过滤条件
         if (!(transactionHash
           ? transactionHash === data.transactionHash
+          // 不在范围内则跳过
           : true)) return false
 
+        success(result)
 console.log('listenEvent data', name, data)
 
-        resolve({
-          event: 'data',
-          returnValues: data.returnValues
-        })
+        resolve(result)
       // 当事件从区块链上移除时触发
       }).on('changed', data => {
         // TODO: 按照需求增加过滤

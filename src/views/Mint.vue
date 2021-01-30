@@ -148,9 +148,14 @@ export default {
   },
   // TODO: temp
   async mounted () {
-    const { UU, DAI_USDC } = this.$store.tokens
+    // const { UU, DAI_USDC } = this.$store.tokens
 
-    await UU.lptBalance(DAI_USDC)
+    // await UU.lptBalance(DAI_USDC)
+
+    const { UU, SFINANCE_USD5, CURVE_3CRV } = this.$store.tokens
+
+    UU.lptBalance(SFINANCE_USD5)
+    UU.lptBalance(CURVE_3CRV)
   },
   methods: {
     onChange (e) {
@@ -164,11 +169,17 @@ export default {
     },
     async onBurn () {
       const { tokens } = this.$store
+      const { UU } = this.$store.tokens
+
       const singleToken = tokens[this.singleSelectCode]
 // XXX: 要测试
       // await singleToken.approve(tokens.UU.address)
 
-      await tokens.UU.burn(singleToken)
+      const data = await tokens.UU.burn(singleToken)
+
+      await UU.walletBalanceOf.trigger()
+
+      await this.changeAmount(singleToken)
     },
     async changeAmount (_token) {
       const { UU } = this.$store.tokens
@@ -191,10 +202,10 @@ export default {
             ..._token.parameters,
             async trigger () {
               // TODO: 1e18
-              return BN(UU.walletBalanceOf.ether).div(await UU.getLptPrice(_token)).times(1e18).toString()
+              return BN(UU.walletBalanceOf.ether).div(await UU.getLptPrice(_token)).times(_token.precision).toString()
             }
-            // TODO: temp 临时写法，1e18
-          }).setEther(BN(UU.walletBalanceOf.ether).div(await UU.getLptPrice(_token)).times(1e18).toString())
+            // TODO: temp 临时写法
+          }).setEther(BN(UU.walletBalanceOf.ether).div(await UU.getLptPrice(_token)).times(_token.precision).toString())
 
 
         await UU.getUU2LptVol(_token)
@@ -243,7 +254,9 @@ export default {
         },
 
         // TODO: 要由 UU 自动获取列出
-        singleAssetTokens: ['DAI_USDC'],
+        // TODO: RINKEBY:
+        // singleAssetTokens: ['DAI_USDC', 'DAI_USDT'],
+        singleAssetTokens: ['SFINANCE_USD5', 'CURVE_3CRV'],
 
         // 授权操作的目标地址
         approveToAddress: UU.address
@@ -327,13 +340,38 @@ export default {
       }
     },
     reserves () {
-      const { UU, DAI_USDC } = this.$store.tokens
-      const associatedToken = UU.getAssociatedToken(DAI_USDC)
-
+      const { tokenAddresses, tokens } = this.$store
       // TODO: 自动连接数据，并考虑数据同步更新的可能性
-      return [
-        { code: DAI_USDC.symbol.view, balance: associatedToken.balance.view, proportion: '100' }
-      ]
+      let totalBalanceHandled = '0'
+
+      const result = tokens.UU.supportedLptAddresses.map(_address => {
+        if (!_address.handled) {
+          return {
+            code: '-',
+            balance: '-',
+            proportion: '-'
+          }
+        }
+        const _token = tokenAddresses[_address.handled]
+        const associatedToken = tokens.UU.getAssociatedToken(_token)
+        const balanceHandled = associatedToken.balance.handled
+        totalBalanceHandled = BN(totalBalanceHandled).plus(balanceHandled).toString()
+
+        return {
+          code: _token.symbol.view,
+          balance: associatedToken.balance.view,
+          // TODO: temp
+          balanceHandled,
+          proportion: '-'
+        }
+      })
+
+      return result.map(item => {
+        if (totalBalanceHandled > 0) {
+          item.proportion = BN(item.balanceHandled).div(totalBalanceHandled).times(100).toFixed(2)
+        }
+        return item
+      })
     }
   }
 }

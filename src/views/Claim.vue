@@ -125,7 +125,7 @@
                   <a-list-item-meta>
                     <template #title>
                       <div class="d-flex align-items-center">
-                        <icon-lpt :code=item.lpt size="52" class="me-2" />
+                        <icon-lpt :code=item.icon size="52" class="me-2" />
                         <span class="fs-4 pt-1">
                           {{ item.name }} {{ $t('global.base.miningPool') }}
                         </span>
@@ -241,6 +241,7 @@ export default {
 
         ownList.push({
           code: _token.code,
+          coin: _token.icon,
           apy: '?%',
           pendingReward: associatedToken.claimableReward,
           pendingRewardConvertUSD: '$ ?',
@@ -261,6 +262,9 @@ export default {
       tokens.UU.supportedLptAddresses.forEach(_lptAddress => {
         const _lpt = tokenAddresses[_lptAddress.handled]
 
+        // TODO: temp 临时限制， 3Crv 没有奖励
+        if (_lptAddress.handled !== '0xF992558f2736eFC034e744c5b2CC7D16694b70f1') return false
+
         // TODO: 如果 tokenAddresses 找不到，则应该在 tokenAddresses 内自动创建，保证有
         if (!_lpt) return false
 
@@ -268,7 +272,11 @@ export default {
         const rewards = []
 
         lptAssociatedToken.rewardAddresses.forEach((_rewardAddress, idx) => {
+          console.log('lptAssociatedToken.rewardAddresses     item',_rewardAddress.handled)
           // TODO: 如果 tokenAddresses 找不到，则应该在 tokenAddresses 内自动创建，保证有
+
+          // TODO: 要跳过
+          if (_rewardAddress.handled === '0x0000000000000000000000000000000000000000') return false
           const _reward = tokenAddresses[_rewardAddress.handled]
           const rewardAssociatedToken = _lpt.getAssociatedToken({ address: _rewardAddress.handled })
 
@@ -277,6 +285,7 @@ export default {
 
           rewards.push({
             code: _reward.code,
+            coin: _reward.icon,
             // XXX: 这里应该不对，如果挖矿有多个奖励呢？
             pendingSettleReward: rewardAssociatedToken.miningPendingRewards,
             pendingSettleRewardConvertUSD: '$ ?',
@@ -296,6 +305,7 @@ export default {
 
         settleList.push({
           lpt: _lpt.code,
+          icon: _lpt.icon,
           name: _lpt.name.view,
           rewards
         })

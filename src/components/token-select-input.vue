@@ -6,7 +6,7 @@
     >
     <a-select
       class="col-4 pe-0"
-      v-model:value="__base__.currentCode"
+      v-model:value="currentCode"
       v-if="__base__.isSelectMode"
     >
       <a-select-option
@@ -15,7 +15,8 @@
         :value=item.code
       >
         <span class="d-flex align-items-center">
-          <icon-lpt :code=currentToken.code size=16 class="me-2" />
+
+          <icon-lpt :code=item.icon size=16 class="me-2" />
           {{ item.symbol.view }}
         </span>
       </a-select-option>
@@ -24,7 +25,7 @@
       </template>
     </a-select>
     <span v-else class="d-flex align-items-center col-4 token-name">
-      <icon-lpt :code=currentToken.code size=16 class="me-2" />
+      <icon-lpt :code=currentToken.icon size=16 class="me-2" />
       {{ currentToken.symbol.view }}
     </span>
     <a-tooltip :visible="isFocus && !!currentToken.amount.inputView" placement="topLeft">
@@ -62,7 +63,7 @@
     </busy>
   </small>
 
-  <!-- <small class="d-flex flex-column" style="overflow: hidden;">
+  <small class="d-flex flex-column" style="overflow: hidden;">
     <a @click=_onForcedResetApprove>_onForcedResetApprove</a>
     <span>是否输入错误: {{ !currentToken.amount.isValidInput }}</span>
     <span>name: {{ currentToken.name.view }}</span>
@@ -90,7 +91,7 @@
       allowance: {{ item.allowance.ether }} | {{ item.allowance.handled }} <br/>
       approve: {{ item.approve.ether }} | {{ item.approve.handled }}<br/>
     </span>
-  </small> -->
+  </small>
 </template>
 
 <script>
@@ -99,7 +100,7 @@ import ButtonBusy from '../components/button-busy'
 import IconLpt from '../components/icon-lpt'
 import { isArray } from '../utils'
 
-import { ModelValueWallet } from '../models'
+import { ModelToken, ModelValueWallet } from '../models'
 
 export default {
   props: {
@@ -139,8 +140,17 @@ export default {
     IconLpt
   },
   data () {
+    const { codes } = this
+    // 是否为选择模式
+    const isSelectMode = isArray(codes)
+
     return {
       isFocus: false,
+      // TODO: 
+      currentCode: isSelectMode
+        // 默认选择第一项
+        ? codes[0]
+        : codes,
     }
   },
   methods: {
@@ -201,17 +211,13 @@ export default {
         isSelectMode,
         tokens: isSelectMode
           ? codes.map(code => tokens[code])
-          : tokens[codes],
-        currentCode: isSelectMode
-          // 默认选择第一项
-          ? codes[0]
-          : codes,
+          : tokens[codes]
       }
     },
     // 当前(选中)的 token
     currentToken () {
       const { tokens } = this.$store
-      const { currentCode } = this.__base__
+      const { currentCode } = this
 
       this.$emit('update:current', currentCode)
 // TODO: icon-lpt 部分要支持 lpt、token
