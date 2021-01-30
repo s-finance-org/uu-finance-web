@@ -162,9 +162,9 @@
                         {{ $t('global.claim.settle.settleRewardRate') }}: {{ reward.settleRewardRate }}
                       </small>
                       <small class="col-12 col-sm-6 mb-2">
-                        <busy :busying="reward.settleReward.state.loading">
+                        <!-- <busy :busying="reward.settleReward.state.loading"> -->
                           {{ $t('global.claim.settle.settleReward') }}: {{ reward.settleReward.view }} {{ reward.code }}
-                        </busy>
+                        <!-- </busy> -->
                       </small>
                       <!-- <small class="col-12 col-sm-6 mb-2">{{ reward.exchangeRate }}</small> -->
                       <!-- <small class="col-12 col-sm-6 mb-2">{{ $t('global.base.estimatedTransactionFee') }}：x</small> -->
@@ -262,9 +262,6 @@ export default {
       tokens.UU.supportedLptAddresses.forEach(_lptAddress => {
         const _lpt = tokenAddresses[_lptAddress.handled]
 
-        // TODO: temp 临时限制， 3Crv 没有奖励
-        if (_lptAddress.handled !== '0xF992558f2736eFC034e744c5b2CC7D16694b70f1') return false
-
         // TODO: 如果 tokenAddresses 找不到，则应该在 tokenAddresses 内自动创建，保证有
         if (!_lpt) return false
 
@@ -272,7 +269,6 @@ export default {
         const rewards = []
 
         lptAssociatedToken.rewardAddresses.forEach((_rewardAddress, idx) => {
-          console.log('lptAssociatedToken.rewardAddresses     item',_rewardAddress.handled)
           // TODO: 如果 tokenAddresses 找不到，则应该在 tokenAddresses 内自动创建，保证有
 
           // TODO: 要跳过
@@ -306,7 +302,7 @@ export default {
         settleList.push({
           lpt: _lpt.code,
           icon: _lpt.icon,
-          name: _lpt.name.view,
+          name: _lpt.poolName,
           rewards
         })
 

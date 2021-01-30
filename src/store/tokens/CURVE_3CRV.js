@@ -6,5 +6,7 @@ export default ModelToken.create({
   address: getDotenvAddress('CURVE_3CRV_TOKEN'),
   icon: 'CRV_DAI',
   isLpt: true,
+  poolName: 'Curve.fi 3pool',
+  acquisitionUrl: 'https://www.curve.fi/3pool/deposit',
   isInfiniteAllowance: true
 })

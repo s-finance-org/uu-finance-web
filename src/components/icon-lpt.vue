@@ -39,7 +39,7 @@ export default {
       const { size, code } = this
       // TODO: 规划好 2~6的规则，以及 52、16 时的内间距
       const tokenSize = +size * 0.6
-console.log('code', code)
+
       return code.split('_').map(tokenCode => ({ size: tokenSize, code: tokenCode }))
     }
   }

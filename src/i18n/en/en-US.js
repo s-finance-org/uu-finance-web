@@ -58,7 +58,8 @@ export default {
       reward: 'Reward',
       estimatedTransactionFee: 'Transaction Fee',
       apy: 'APY',
-      miningPool: 'Mining pool'
+      miningPool: 'Mining pool',
+      acquisitionUrl: 'Get {0}'
     },
     msg: {
       resettingApprove: 'Resetting approve',

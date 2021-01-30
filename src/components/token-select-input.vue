@@ -61,9 +61,12 @@
     <busy :busying="maxBalanceOf.state.loading">
       <span @click="useMaxBalanceOf" class="pointer px-2">{{ maxBalanceOf.view }}</span>
     </busy>
+    <span class="ps-2">
+      <a :href=currentToken.acquisitionUrl target="_blank">{{ $t('global.base.acquisitionUrl', [currentToken.symbol.view]) }}</a>
+    </span>
   </small>
 
-  <small class="d-flex flex-column" style="overflow: hidden;">
+  <!-- <small class="d-flex flex-column" style="overflow: hidden;">
     <a @click=_onForcedResetApprove>_onForcedResetApprove</a>
     <span>是否输入错误: {{ !currentToken.amount.isValidInput }}</span>
     <span>name: {{ currentToken.name.view }}</span>
@@ -91,7 +94,7 @@
       allowance: {{ item.allowance.ether }} | {{ item.allowance.handled }} <br/>
       approve: {{ item.approve.ether }} | {{ item.approve.handled }}<br/>
     </span>
-  </small>
+  </small> -->
 </template>
 
 <script>

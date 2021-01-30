@@ -58,7 +58,8 @@ export default {
       reward: '奖励',
       estimatedTransactionFee: '预计矿工费',
       apy: '年化收益率',
-      miningPool: '流动性矿池'
+      miningPool: '流动性池',
+      acquisitionUrl: '获取 {0}'
     },
     msg: {
       resettingApprove: '正在重置授权',

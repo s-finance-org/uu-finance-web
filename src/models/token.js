@@ -35,11 +35,12 @@ export default {
    * @param {Array=} opts.abi
    * @param {string=} opts.icon 缺省与 code 相同
    * @param {boolean=} opts.isLpt 是否为 lp token // TODO: 暂无作用
+   * @param {string=} opts.poolName TODO: 限 lpt
    * @param {Function=} opts.customSeries 自定义列队 multi call
    * @param {Object=} opts.customAssociatedTokenModel 追加 associatedToken 数据集的单元 Modal
    * 
    * 
-   * 
+   * @param {string=} opts.acquisitionUrl 获取该币种的 url
    * @param {number=} opts.viewDecimal 显示内容的显示精度
    * @param {Function=} opts.viewMethod 显示内容的舍入方法
    * @param {Object} opts.stateParams 状态参数
@@ -51,8 +52,6 @@ export default {
    * @param {string=} opts.symbolMethodName
    * @param {string=} opts.balanceOfMethodName
    * @param {string=} opts.totalSupplyMethodName
-   * @param {Object=} opts.values 严禁值key重名覆盖
-   * @param {Object=} opts.methods 严禁方法重名覆盖
    * @return {!Object}
    */
   create ({
@@ -61,9 +60,10 @@ export default {
     abi = ERC20,
     icon = '',
     isLpt = false,
+    poolName = '',
     customSeries = () => [],
     customAssociatedTokenModel = () => ({}),
-
+    acquisitionUrl = '',
     viewDecimal = 4,
     viewMethod = floor,
 
@@ -83,8 +83,6 @@ export default {
     totalSupplyMethodName = 'totalSupply',
     transferFromMethodName = 'transferFrom',
     transferMethodName = 'transfer',
-    methods = {},
-    values = {}
   } = {}) {
     const __default__ = {
       contract: null,
@@ -123,8 +121,6 @@ export default {
       parameters,
       // TODO: 待考虑取消
       ...parameters,
-      ...methods,
-      ...values,
 
       /**
        * Base
@@ -149,6 +145,12 @@ export default {
        * @type {boolean}
        */
       isToken: true,
+
+      /**
+       * 获取该币种的 url
+       * @type {string}
+       */
+      acquisitionUrl,
 
       /** @type {Object} */
       get contract () {
@@ -185,6 +187,7 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
        * @type {boolean}
        */
       isLpt,
+      poolName,
 
       get initiateSeries () {
         const {

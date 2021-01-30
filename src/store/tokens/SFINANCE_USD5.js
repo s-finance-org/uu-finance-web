@@ -6,5 +6,7 @@ export default ModelToken.create({
   address: getDotenvAddress('SFINANCE_USD5_TOKEN'),
   icon: 'SFG_USD5',
   isLpt: true,
+  poolName: 'S.finance 5pool',
+  acquisitionUrl: 'https://s.finance/liquidity/usd5',
   isInfiniteAllowance: true
 })
