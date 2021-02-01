@@ -146,6 +146,16 @@ export default {
         }
       },
       /**
+       * 重置 input 相关数据
+       * @type {Function}
+       */
+      resetInput () {
+        const { input } = __default__
+
+        this.input = input
+      },
+
+      /**
        * 输入正则限制
        * @type {RegExp}
        */

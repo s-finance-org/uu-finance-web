@@ -276,6 +276,8 @@ export default {
         const singleToken = tokens[singleSelectCode]
 
         this.mintAction = val
+        // 切换时重置 input 内容为空
+        singleToken.amount.resetInput()
 
         // sync
         // 切换存款、取款类型时，同步变成值时的事件
