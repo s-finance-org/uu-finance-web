@@ -159,7 +159,6 @@ export default {
 
         // TODO: 待优化
         // storeWallet.web3 在钱包失效、链接时已经变更了目标值
-console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, __store__.isCcontractBase)
         if (storeWallet.isValidated) {
           if (!__store__.isContractWallet) {
             console.log('------- wallet web3')
