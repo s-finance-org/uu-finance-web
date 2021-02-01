@@ -61,7 +61,10 @@ const __root__ = reactive(ModelToken.create({
 
       // TODO: temp lpt 对应的奖励 token
       rewardNum: 0,
-      rewardAddresses: [],
+      // 临时同步方法
+      rewardAddresses: reactive([
+        ModelValueAddress.create()
+      ]),
       // TODO: 目前只用在反计算的可销毁最大的
       // maxBurnBalanceOf: ModelValueWallet.create(parameters),
     }
@@ -89,11 +92,13 @@ __root__.supportedLptNum = ModelValueEther.create({
           // TODO: temp
           // TODO: 应该先知道 lpt 对应哪些奖励 token
           if (handled === process.env.VUE_APP_MAIN_SFINANCE_USD5_TOKEN ) {
+console.log('----------- handled', handled)
             await __root__.settleableReward(tokenAddresses[handled], 0)
             // await __root__.settleableReward(tokenAddresses[handled], 1) // 0x0000000000000000000000000000000000000000
             // await __root__.settleableReward(tokenAddresses[handled], 2)
           }
           if (handled === process.env.VUE_APP_MAIN_CURVE_3CRV_TOKEN ) {
+
             // TODO: 目前合约获取不到的临时方案
             const associatedToken = __root__.getAssociatedToken(tokenAddresses[handled])
 
@@ -586,7 +591,6 @@ __root__.claimedReward = async function (_token) {
   const { contract } = this
 
   const associatedToken = this.getAssociatedToken(_lpt)
-
   /* data
     reward: _token.address, // address 该奖励的 token address，异常时返回 0x0000000000000000000000000000000000000000
     vol: 0, // uint256 挖矿奖励数量
@@ -596,6 +600,7 @@ __root__.claimedReward = async function (_token) {
 
   // TODO:
   const lpt__ = associatedToken.rewardAddresses[idx] = ModelValueAddress.create().setValue(reward)
+  console.log('settleableReward--------', reward)
 
   // 在 lpt 下的
   // TODO: 这里得先确定 tokenAddresses 内有奖励 token

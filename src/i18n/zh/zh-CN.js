@@ -89,7 +89,7 @@ export default {
       subtitle: '你可以选择存入稳定币池流动性凭证、生息代币或直接存入稳定币获得 UU',
       liquidityPool: '流动性池',
       selectTokenTypes: {
-        lpt: '流动性凭证',
+        lpt: '流动性凭证(LPT)',
         interestToken: '生息代币',
         stablecoin: '稳定币'
       },

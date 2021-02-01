@@ -132,6 +132,7 @@
                       </div>
                     </template>
                   </a-list-item-meta>
+
                   <div
                     v-for="(reward, idx) in item.rewards"
                     :key="`reward-${reward.code}`"
@@ -272,10 +273,12 @@ export default {
           // TODO: 如果 tokenAddresses 找不到，则应该在 tokenAddresses 内自动创建，保证有
 
           // TODO: 要跳过
-          if (_rewardAddress.handled === '0x0000000000000000000000000000000000000000') return false
+          if (!_rewardAddress.handled || _rewardAddress.handled === '0x0000000000000000000000000000000000000000') return false
           const _reward = tokenAddresses[_rewardAddress.handled]
           const rewardAssociatedToken = _lpt.getAssociatedToken({ address: _rewardAddress.handled })
 
+
+if (!_reward) return false
           // TODO: 应该是旗下的所有 reward token 结构完整后才 false
           settleListLoading = false
 

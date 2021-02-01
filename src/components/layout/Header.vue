@@ -106,7 +106,7 @@ export default {
       return [
         { id: 'Home', to: '/', i18n: 'layer.header.nav.home' },
         { id: 'Mint', to: '/mint', i18n: 'layer.header.nav.mint' },
-        { id: 'Swap', to: '/swap', i18n: 'layer.header.nav.swap' },
+        // { id: 'Swap', to: '/swap', i18n: 'layer.header.nav.swap' },
         { id: 'Claim', to: '/claim', i18n: 'layer.header.nav.claim' },
       ]
     },
@@ -131,16 +131,16 @@ export default {
   backdrop-filter: blur(60px);
   // background-color: rgba(255, 255, 255, 0.6);
 }
-.logo-mark::before {
-  content: 'alpha';
-  position: absolute;
-  font-size: 12px;
-  background-color: #428e8e;
-  color: #fff;
-  padding: 4px;
-  line-height: 9px;
-  margin: -4px 0 0 27px;
-}
+// .logo-mark::before {
+//   content: 'alpha';
+//   position: absolute;
+//   font-size: 12px;
+//   background-color: #428e8e;
+//   color: #fff;
+//   padding: 4px;
+//   line-height: 9px;
+//   margin: -4px 0 0 27px;
+// }
 .ant-menu {
   background-color: transparent;
   .ant-menu-item {

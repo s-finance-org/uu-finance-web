@@ -89,7 +89,7 @@ export default {
       subtitle: 'You can choose to deposit a stablecoin pool liquidity certificate, interest-bearing tokens or directly deposit stablecoins to get UU',
       liquidityPool: 'Liquidity pool',
       selectTokenTypes: {
-        lpt: 'LPT Token',
+        lpt: 'LP Token',
         interestToken: 'Interest token',
         stablecoin: 'Stablecoin'
       },
