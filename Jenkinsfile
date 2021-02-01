@@ -36,11 +36,12 @@ pipeline {
                 // Prepare Build Environment
                 sh 'npm install'
                 // Build
-                sh "npm config set s-finance-web:build_version ${BUILD_VERSION}"
+                sh "npm config set uu-finance-web:build_version ${BUILD_VERSION}"
                 script {
                     if (env.GIT_BRANCH == 'master') {
                         sh 'npm run prod'
-                    } else {
+                    }
+                    else {
                         sh 'npm run build'
                     }
                 }
@@ -48,25 +49,24 @@ pipeline {
         }
         stage('Deploy') {
             environment {
-                CLOUD_FRONT_DIST_ID = ''
-                S3_BASE_URL = ''
-                S3_REGION = 'ap-northeast-1'
+                REGION = "cn-hongkong"
+                OSS_BUCKET = ""
+                CDN_PATH = ""
             }
             steps {
                 echo '---== Deploy Stage ==---'
                 script {
                     if (env.GIT_BRANCH == 'master') {
-                        CLOUD_FRONT_DIST_ID = 'E2ULA1R2XRHQZ2'
-                        S3_BASE_URL = 's3://uu.finance/prod'
+                        OSS_BUCKET = 'uu-finance'
+                        CDN_PATH = 'https://uu.finance/'
                     } else {
-                        CLOUD_FRONT_DIST_ID = 'E2ULA1R2XRHQZ2'
-                        S3_BASE_URL = 's3://uu.finance/test'
+                        OSS_BUCKET = 'test-uu-finance'
+                        CDN_PATH = 'https://test.uu.finance/'
                     }
                 }
-                withCredentials([usernamePassword(credentialsId: 'aws-deployer', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]){
-                    // Upload Build Files
-                    sh "aws s3 sync ${LOCAL_BUILD_DIR} ${S3_BASE_URL} --acl public-read --delete"
-                    sh "aws cloudfront create-invalidation --distribution-id ${CLOUD_FRONT_DIST_ID} --paths '/*'"
+                withCredentials([usernamePassword(credentialsId: 'aliyun-builder', usernameVariable: 'ACCESS_KEY_ID', passwordVariable: 'ACCESS_KEY_SECRET')]){
+                    sh "aliyun oss cp --region ${REGION} --access-key-id ${ACCESS_KEY_ID} --access-key-secret ${ACCESS_KEY_SECRET} -f -r oss://${OSS_BUCKET}/ ${LOCAL_BUILD_DIR}"
+                    sh "aliyun cdn RefreshObjectCaches --region ${REGION} --access-key-id ${ACCESS_KEY_ID} --access-key-secret ${ACCESS_KEY_SECRET}  --ObjectType Directory --ObjectPath ${CDN_PATH}"
                 }
             }
         }
