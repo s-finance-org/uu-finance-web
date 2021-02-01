@@ -23,9 +23,12 @@ export default {
         claim: '领取收益',
       },
       wallet: {
-        change: '变更钱包',
+        change: '切换',
         disconnect: '断开钱包',
         connect: '连接钱包',
+        copyAddress: '复制地址',
+        copiedAddress: '已复制',
+        viewOnEtherscan: '在区块浏览器中查看'
       }
     },
     community: {
@@ -58,8 +61,11 @@ export default {
       reward: '奖励',
       estimatedTransactionFee: '预计矿工费',
       apy: '年化收益率',
-      miningPool: '流动性池',
-      acquisitionUrl: '获取 {0}'
+      liquidityPool: '流动性池',
+      acquisitionUrl: '获取 {0}',
+      totalAPY: '合计 APY',
+      account: '账户',
+      connectedWallet: '已连接至 {0}'
     },
     msg: {
       resettingApprove: '正在重置授权',
@@ -78,7 +84,7 @@ export default {
       trait1_t: '稳定币发行自由',
       trait1_c: '无门槛参与创造，生成即可流通',
       trait2_t: '100% 抵押发行',
-      trait2_c: '每一发行的 UU 都由其它主流稳定币进行抵押',
+      trait2_c: '每一枚发行的 UU 都由其它主流稳定币进行抵押',
       trait3_t: '多重收益',
       trait3_c: '收益包括交易手续费、存款利率以及其它代币奖励',
       trait4_t: '安全透明',
@@ -132,10 +138,10 @@ export default {
       settle: {
         tab: '参与结算',
         pendingSettleReward: '待结算奖励',
-        settleRewardRate: '结算奖励率',
-        settleReward: '结算奖励',
+        settleRewardRate: '至少结算奖励率',
+        settleReward: '至少结算奖励',
         participateSettle: '参与结算',
-        sideTip: '任何人可以成为结算者，结算者可以获得待结算奖励的 1%。'
+        sideTip: '任何人可以成为结算者，结算者可以获得待结算奖励的 1%。如果与上次更新价格时间间隔超过30分钟，会触发价格更新导致gas消耗增大，此时参与结算会额外获得1%奖励。'
       }
     }
   },

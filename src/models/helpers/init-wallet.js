@@ -58,6 +58,15 @@ export default {
 
         return addressShortener(address.handled)
       },
+      /**
+       * 地址在区块浏览器中的 url
+       * @type {string}
+       */
+      get getEtherscanUrl () {
+        const { address } = this
+        // TODO: 要支持主网、测试网切换
+        return `https://etherscan.io/address/${address.handled}`
+      },
 
       /**
        * 当前网络 ID

@@ -7,9 +7,6 @@ export const TOKEN_MIN_AMOUNT_ETHER = '1'
 export const TOKEN_MAX_AMOUNT_ETHER = BN(2).pow(256).minus(1).toFixed(0, 1)
 
 /** @type {string} */
-export const MIN_INPUT = '0'
-
-/** @type {string} */
 // TODO: 最大值待定
 export const MAX_INPUT = BN(2).pow(128).minus(1).toFixed(0, 1)
 

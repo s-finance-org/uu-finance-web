@@ -56,12 +56,14 @@
       </a-input>
     </a-tooltip>
   </a-input-group>
-  <small class="pt-1 d-flex" v-if=showBalanceOf>
-    {{ $t('global.base.maxBalanceOf') }}:
-    <busy :busying="maxBalanceOf.state.loading">
-      <span @click="useMaxBalanceOf" class="pointer px-2">{{ maxBalanceOf.view }}</span>
-    </busy>
-    <span class="ps-2">
+  <small class="pt-1 d-flex">
+    <span v-if=showBalanceOf>
+      {{ $t('global.base.maxBalanceOf') }}:
+      <busy :busying="maxBalanceOf.state.loading">
+        <span @click="useMaxBalanceOf" class="pointer pe-2 ps-1">{{ maxBalanceOf.view }}</span>
+      </busy>
+    </span>
+    <span class="ps-2" v-if=acquisitionUrl>
       <a :href=currentToken.acquisitionUrl target="_blank">{{ $t('global.base.acquisitionUrl', [currentToken.symbol.view]) }}</a>
     </span>
   </small>
@@ -116,6 +118,8 @@ export default {
     changeAmount: Function,
     // 授权到的目标地址
     approveToAddress: String,
+    // TODO: 考虑变成 slot 来定义
+    acquisitionUrl: Boolean,
     // 是否使用授权功能（
     useApprove: {
       type: Boolean,

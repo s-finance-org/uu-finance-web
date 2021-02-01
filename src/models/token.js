@@ -106,6 +106,7 @@ export default {
       viewDecimal,
       viewMethod
     }
+    const minAmount = ModelValueEther.create(parameters).setEther(TOKEN_MIN_AMOUNT_ETHER)
 
     // TODO: 要排除 0x000 和空字符串
     // TODO: 要让 address Model
@@ -247,7 +248,7 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
        * 最小量
        * @type {Object}
        */
-      minAmount: ModelValueEther.create(parameters).setEther(TOKEN_MIN_AMOUNT_ETHER),
+      minAmount,
       /**
        * 最大量
        * - 等同无限授权量
@@ -268,10 +269,14 @@ console.log('-----------', storeWallet.isValidated, __store__.isContractWallet, 
        * TODO: 目前使用 handled
        * @type {Object}
        */
-      amount: ModelValueInput.create(parameters),
+      amount: ModelValueInput.create({
+        ...parameters,
+        minInput: minAmount
+      }),
 
       /**
        * 量值是否有效
+       * TODO: 没用到，应该由 amount 自身带入
        * @type {boolean}
        */
       get isValidAmount () {

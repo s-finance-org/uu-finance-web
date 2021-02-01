@@ -26,6 +26,9 @@ export default {
         change: 'Change',
         disconnect: 'Disconnect',
         connect: 'Connect wallet',
+        copyAddress: 'Copy Address',
+        copiedAddress: 'Copied',
+        viewOnEtherscan: 'View on Etherscan'
       }
     },
     community: {
@@ -47,7 +50,7 @@ export default {
   },
   global: {
     base: {
-      reserves: 'Currency Reserves',
+      reserves: 'Distribution of assets',
       deposit: 'Deposit',
       withdraw: 'Withdraw',
       maxBalanceOf: 'Max',
@@ -56,10 +59,13 @@ export default {
       resetApprove: 'Reset Approve',
       resetApproveTip: 'Please reset Approve',
       reward: 'Reward',
-      estimatedTransactionFee: 'Transaction Fee',
+      estimatedTransactionFee: 'Estimated gas fee',
       apy: 'APY',
-      miningPool: 'Mining pool',
-      acquisitionUrl: 'Get {0}'
+      liquidityPool: 'Liquidity pool',
+      acquisitionUrl: 'Get {0}',
+      totalAPY: 'Total APY',
+      account: 'Account',
+      connectedWallet: 'Connected with {0}'
     },
     msg: {
       resettingApprove: 'Resetting approve',
@@ -85,41 +91,41 @@ export default {
       trait4_c: 'UU is totally community-oriented, with full safety and transparency of block-chain technology.',
     },
     mint: {
-      title: 'Deposit stable currency assets and get UU',
-      subtitle: 'You can choose to deposit a stablecoin pool liquidity certificate, interest-bearing tokens or directly deposit stablecoins to get UU',
+      title: 'Deposit stable coins to get UU',
+      subtitle: 'Deposit LP Token of stablecoin pool, interest-bringing token or stable coins  to get UU',
       liquidityPool: 'Liquidity pool',
       selectTokenTypes: {
         lpt: 'LP Token',
-        interestToken: 'Interest token',
-        stablecoin: 'Stablecoin'
+        interestToken: 'Interest-bringing token',
+        stablecoin: 'Stable coins'
       },
       deposit: {
         tab: 'Deposit to get UU',
-        selectAssetes: 'Select the type of assets deposited',
+        selectAssetes: 'Choose type of assets to deposit',
         placeholder: 'Enter the deposit amount',
         mintBtn: 'Deposit',
         previewReceiveLeast: 'You will receive at least',
       },
       withdraw: {
-        tab: 'Remove and destroy UU',
-        selectAssetes: 'Select asset type to withdraw',
+        tab: 'Withdraw and burn UU',
+        selectAssetes: 'Choose the type of assets to withdraw',
         placeholder: 'Enter the amount taken out',
         mintBtn: 'Withdrawal',
         previewNeedLeast: 'You will need at least'
       }
     },
     claim: {
-      title: 'Hold UU, get multiple benefits',
-      subtitle: 'Handling fees and interest-earning income are automatically issued to the wallet, and token rewards need to be collected',
+      title: 'Hold UU for more benefit',
+      subtitle: 'Fee and interest will be automatically distributed to your wallet. While the token reward need to be claimed by yourselves.',
       own: {
         tab: 'My reward',
         totalApy: 'Total APY',
-        allClaim: 'All claim',
-        pendingReward: 'Reward pending',
-        paidReward: 'Reward received',
+        allClaim: 'Claim all',
+        pendingReward: 'Pending reward',
+        paidReward: 'Received reward',
         totalReward: 'Total Reward',
-        receiveAward: 'Receive award',
-        sideTip: 'You can choose to receive only one reward at a time or receive it all at once. The settler needs to settle before receiving the reward. If you have not received the token reward for more than 7 days, you may be collected by someone else. The entrusted person can get 10% of the entrusted entitlement, and the remaining part will be automatically issued to your wallet. '
+        receiveAward: 'Claim reward',
+        sideTip: 'You can choose to receive only one reward at a time or all at once, settlement by agent will be required before you claim the reward. If you have token reward that has not been claimed for more than 7 days, it may be claimed by someone else. The agent could get 10% of the reward and the rest is automatically distributed to your wallet.'
       },
       claimTo: {
         tab: 'Help Ta take the lead',
@@ -131,11 +137,11 @@ export default {
       },
       settle: {
         tab: 'Participate in settle',
-        pendingSettleReward: 'Pending Settle Reward',
-        settleRewardRate: 'Settle Reward Rate',
-        settleReward: 'Settle Reward',
+        pendingSettleReward: 'Unsettled reward',
+        settleRewardRate: 'At least rate',
+        settleReward: 'At least settle reward',
         participateSettle: 'Participate in settle',
-        sideTip: 'Anyone can become a settler, and the settler can get 1% of the reward to be settled. '
+        sideTip: 'Anyone can become a settler, and the settler can get 1% of the reward to be settled. If the time interval from the last price update exceeds 30 minutes, the price update will be triggered and the gas consumption will increase. At this time, participating in the settlement will receive an additional 1% reward.'
       }
     }
   }

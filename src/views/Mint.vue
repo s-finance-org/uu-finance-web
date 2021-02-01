@@ -33,15 +33,16 @@
               :approveToAddress=structure.approveToAddress
               :codes=structure.singleAssetTokens
               :balanceOf=maxBalanceOf
+              :acquisitionUrl=actionItem.acquisitionUrl
               :useApprove=actionItem.useApprove />
           </div>
 
-          <div class="line-frame-thin d-flex p-3 p-md-4 pb-2 pb-md-3 flex-column col-12 col-md-4">
-            <span class="d-flex flex-wrap text-nowrap pb-2">
+          <div class="line-frame-thin d-flex p-3 p-md-4 pb-2 pb-md-3 mt-3 mt-md-0 flex-column col-12 col-md-4">
+            <span class="d-flex flex-wrap text-nowrap pb-2 pb-md-3">
               {{ $t('global.mint.liquidityPool') }}
               <span class="h4 col text-end ps-3">UU</span>
             </span>
-            <span class="d-flex flex-wrap text-nowrap pb-2 text-color-primary">
+            <span class="d-flex flex-wrap text-nowrap pb-2 pb-md-3 text-color-primary">
               {{ $t(actionItem.preview.leastI18n) }}
               <span class="h4 col text-end ps-3">
                 <busy :busying="ixd.preview.leastBusy">
@@ -233,6 +234,7 @@ export default {
             labelI18n: 'global.base.deposit',
             placeholderI18n: 'global.mint.deposit.placeholder',
             useApprove: true,
+            acquisitionUrl: true,
             mintBtnI18n: 'global.mint.deposit.mintBtn',
             mintBtnClick: this.onMint,
             preview: {
@@ -245,6 +247,7 @@ export default {
             labelI18n: 'global.base.withdraw',
             placeholderI18n: 'global.mint.withdraw.placeholder',
             useApprove: false,
+            acquisitionUrl: false,
             mintBtnI18n: 'global.mint.withdraw.mintBtn',
             mintBtnClick: this.onBurn,
             preview: {

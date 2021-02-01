@@ -7,7 +7,7 @@
       <a-menu
         v-model:selectedKeys="currentViewName"
         mode="horizontal"
-        class="d-flex col-auto d-none d-lg-flex">
+        class="d-flex col-auto d-none d-lg-flex navSide">
         <a-menu-item v-for="item in navs"
           :key="item.id"
           >
@@ -16,7 +16,7 @@
       </a-menu>
 
       <div class="ms-auto">
-        <a-dropdown v-if=wallet.isValidated placement="bottomRight">
+        <!-- <a-dropdown v-if=wallet.isValidated placement="bottomRight">
           <a-button class="d-flex align-items-center" size="small" :title="wallet.address">
             <span class="point point-primary me-2"></span>
             {{ wallet.addressShortened }}
@@ -28,10 +28,49 @@
               <a-menu-item key="reset">{{ $t('layer.header.wallet.disconnect') }}</a-menu-item>
             </a-menu>
           </template>
-        </a-dropdown>
-        <a-button v-else @click="onWalletMenuClick({key: 'change'})" class="d-flex align-items-center" size="small">
-          {{ $t('layer.header.wallet.connect') }}
+        </a-dropdown> -->
+        <a-button @click="onWalletMenuClick" class="d-flex align-items-center pe-3" size="small">
+          <template v-if=wallet.isValidated>
+            <span class="point point-primary me-2"></span>
+            {{ wallet.addressShortened }}
+          </template>
+          <template v-else>
+            <span class="h4 icon-wallet pe-2"></span>
+            {{ $t('layer.header.wallet.connect') }}
+          </template>
         </a-button>
+
+        <a-modal
+          v-model:visible="walletAccountInfoVisible"
+          :title="$t('global.base.account')"
+          centered
+          class="walletAccountInfo"
+          okText=''
+          maskClosable
+          cancelText=''
+          :footer="null"
+        >
+          <template #closeIcon>
+            <span class="icon-cancel"></span>
+          </template>
+          <span class="d-flex justify-content-between align-items-center">
+            <small>{{ $t('global.base.connectedWallet', [wallet.name] ) }}</small>
+            <a-button @click="onWalletMenuClick" size="small" type="link">{{ $t('layer.header.wallet.change') }}</a-button>
+          </span>
+          <span class="fs-4">{{ wallet.addressShortened }}</span>
+          <small class="d-flex align-items-center pt-2">
+            <a href="javascript:void(0);" :data-clipboard-text=wallet.address.handled class="copyAddress d-flex align-items-center">
+              <span class="h4 icon-copy me-1"></span>
+              {{ $t(copied
+                ? 'layer.header.wallet.copiedAddress'
+                : 'layer.header.wallet.copyAddress') }}
+            </a>
+            <a :href=wallet.getEtherscanUrl target="_blank" class="d-flex align-items-center">
+              <span class="h4 icon-maximize me-1 ms-3"></span>
+              {{ $t('layer.header.wallet.viewOnEtherscan') }}
+            </a>
+          </small>
+        </a-modal>
       </div>
 
       <a-button class="ms-4 d-lg-none py-1" @click="showDrawer" size="small">
@@ -43,12 +82,12 @@
 
   <a-drawer
     placement="right"
-    v-model:visible="visible"
+    v-model:visible="menuVisible"
   >
     <a-menu
       v-model:selectedKeys="currentViewName"
       mode="vertical-right"
-      class="mt-4">
+      class="mt-4 navSide">
       <a-menu-item v-for="item in navs"
         :key="item.id"
         >
@@ -60,6 +99,7 @@
 
 <script>
 import { iLogo } from '../../components/icons'
+import ClipboardJS from 'clipboard'
 
 export default {
   components: {
@@ -67,12 +107,16 @@ export default {
   },
   data() {
     return {
-      visible: false,
+      menuVisible: false,
+      walletAccountInfoVisible: false,
+      copied: false,
     };
   },
   mounted () {
     window.addEventListener('scroll', this.handleScroll, true) // 监听滚动事件
     this.handleScroll()
+
+    this.copyAddress()
   },
   beforeUnmount () {
     window.removeEventListener('scroll', this.scrollToTop, true)
@@ -87,18 +131,44 @@ export default {
       }
     },
     showDrawer() {
-      this.visible = true;
+      this.menuVisible = true;
+    },
+    copyAddress () {
+      const { wallet } = this.$store
+      // TODO:
+      let clipboard = new ClipboardJS('.copyAddress');
+
+      clipboard.on('success', e => {
+        this.copied = true
+        setTimeout(() => {
+          this.copied = false
+        } ,750)
+      });
+
+      // clipboard.on('error', function(e) {
+      //     console.log(e);
+      // });
     },
     onWalletMenuClick (val) {
       const { wallet } = this.$store
+      const walletAccountInfoVisible = this.walletAccountInfoVisible
 
-      const KEYS = {
-        change: () => { wallet.changeWallet() },
-        reset: () => { wallet.resetWallet() },
+      if (wallet.isValidated) {
+        walletAccountInfoVisible
+          && wallet.changeWallet()
+
+        this.walletAccountInfoVisible = !walletAccountInfoVisible
+      } else {
+        wallet.changeWallet()
       }
 
-      KEYS[val.key]
-        && KEYS[val.key]()
+      // const KEYS = {
+      //   change: () => { wallet.changeWallet() },
+      //   reset: () => { wallet.resetWallet() },
+      // }
+
+      // KEYS[val.key]
+      //   && KEYS[val.key]()
     }
   },
   computed: {
@@ -124,7 +194,7 @@ export default {
 }
 </script>
 
-<style lang="less" scoped>
+<style lang="less">
 .ant-layout-header {
   position: fixed;
   z-index: 10;
@@ -141,31 +211,61 @@ export default {
 //   line-height: 9px;
 //   margin: -4px 0 0 27px;
 // }
-.ant-menu {
-  background-color: transparent;
-  .ant-menu-item {
-    width: auto;
+
+.navSide {
+  &.ant-menu {
+    background-color: transparent;
+    &:not(.ant-menu-horizontal) .ant-menu-item-selected {
+      background-color: transparent;
+    }
+    .ant-menu-item {
+      width: auto;
+    }
   }
-}
-.ant-menu-horizontal {
-  border-bottom: 0px;
-  .ant-menu-item, .ant-menu-item:hover {
+  &.ant-menu-horizontal {
     border-bottom: 0px;
+    .ant-menu-item, .ant-menu-item:hover {
+      border-bottom: 0px;
+    }
   }
-}
-.ant-menu-vertical-right {
-  border: 0;
-}
-.ant-menu:not(.ant-menu-horizontal) .ant-menu-item-selected {
-  background-color: transparent;
-}
-.ant-menu-inline {
-  border-right: 0px;
-  .ant-menu-item {
+  &.ant-menu-vertical-right {
+    border: 0;
+  }
+  .ant-menu-inline {
     border-right: 0px;
+    .ant-menu-item {
+      border-right: 0px;
+    }
   }
 }
+
 .header-holder, .ant-layout-header{
   height: 120px;
+}
+
+.walletAccountInfo {
+  .ant-modal-content {
+    border-radius: 8px !important;
+    padding-bottom: 20px;
+    .ant-modal-header {
+      padding: 20px 24px;
+      border-radius: 8px 8px 0 0;
+      border-bottom: 0;
+      .ant-modal-title {
+        font-size: 16px;
+        line-height: 24px;
+        font-weight: normal;
+        color: rgba(17, 20, 20, 0.9);
+      }
+    }
+    .ant-modal-body {
+      padding: 8px 8px 8px 16px;
+      border: 1px solid rgba(17, 20, 20, 0.1);
+      border-radius: 4px;
+      margin: 0 24px;
+      display: flex;
+      flex-direction: column;
+    }
+  }
 }
 </style>

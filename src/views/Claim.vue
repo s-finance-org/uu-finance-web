@@ -127,7 +127,7 @@
                       <div class="d-flex align-items-center">
                         <icon-lpt :code=item.icon size="52" class="me-2" />
                         <span class="fs-4 pt-1">
-                          {{ item.name }} {{ $t('global.base.miningPool') }}
+                          {{ item.name }} {{ $t('global.base.liquidityPool') }}
                         </span>
                       </div>
                     </template>
@@ -295,7 +295,7 @@ if (!_reward) return false
               idx,
               click: (idx) => tokens.UU.settleReward(_lpt.address, idx, _reward)
             },
-            settleRewardRate: '1.00 %',
+            settleRewardRate: '1.00%',
             // XXX: 这里应该不对，如果挖矿有多个奖励呢？
             settleReward: rewardAssociatedToken.settleableReward,
             exchangeRate: '1 SFG = 0.5472 DAI'
@@ -336,6 +336,9 @@ if (!_reward) return false
 
 <style lang="less" scoped>
 .ant-list-split {
+  .ant-list-header {
+    border-bottom: 0;
+  }
   .ant-spin-container {
     .ant-list-items {
       .ant-list-item {

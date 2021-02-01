@@ -3,8 +3,9 @@ import BN from 'bignumber.js'
 import { formatNumber, isNaN, floor } from '../../utils'
 import ModelState from '../base/state'
 import ModelValueUint8 from './uint8'
+import ModelValueEther from './ether'
 
-import { MIN_INPUT, MAX_INPUT } from '../helpers/constant'
+import { MAX_INPUT } from '../helpers/constant'
 
 import { trim } from '../../utils'
 
@@ -16,6 +17,7 @@ export default {
    * @param {string=} opts.value 预设值
    * @param {string=} opts.handled 预设值
    * @param {string=} opts.input 预设值
+   * @param {Object=} opts.minInput 最小输入量
    * @param {number=} opts.viewDecimal 显示内容的显示精度
    * @param {Function=} opts.viewMethod 显示内容的舍入方法
    * @param {string=} opts.viewPrefix 显示内容的前缀
@@ -27,6 +29,7 @@ export default {
     value = undefined,
     handled = undefined,
     input = undefined,
+    minInput = null,
     viewDecimal = 6,
     viewMethod = floor,
     viewPrefix = '',
@@ -171,9 +174,10 @@ export default {
 
       /**
        * 最小输入值
-       * @type {string}
+       * @type {Object}
        */
-      minInput: MIN_INPUT,
+      // TODO: 这里的数据同步更新（精度），可能还有问题
+      minInput: minInput || ModelValueEther.create({ decimals }),
       /**
        * 最大输入值
        * @type {string}
@@ -203,7 +207,7 @@ export default {
 
         // 不为isNaN，且大于最小值、小于等于最大值
         result = !bnInput.isNaN()
-          && bnInput.gt(minInput)
+          && bnInput.gt(minInput.handled)
           && bnInput.lte(maxInput)
 
         return result
