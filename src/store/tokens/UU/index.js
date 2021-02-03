@@ -91,20 +91,9 @@ __root__.supportedLptNum = ModelValueEther.create({
           // XXX: 目前无法得知 lpt 对应多少奖励币种
           // TODO: temp
           // TODO: 应该先知道 lpt 对应哪些奖励 token
-          if (handled === process.env.VUE_APP_MAIN_SFINANCE_USD5_TOKEN ) {
-console.log('----------- handled', handled)
+         
             await __root__.settleableReward(tokenAddresses[handled], 0)
-            // await __root__.settleableReward(tokenAddresses[handled], 1) // 0x0000000000000000000000000000000000000000
-            // await __root__.settleableReward(tokenAddresses[handled], 2)
-          }
-          if (handled === process.env.VUE_APP_MAIN_CURVE_3CRV_TOKEN ) {
-
-            // TODO: 目前合约获取不到的临时方案
-            const associatedToken = __root__.getAssociatedToken(tokenAddresses[handled])
-
-            const lpt__ = associatedToken.rewardAddresses[0] = ModelValueAddress.create().setValue(process.env.VUE_APP_MAIN_CRV_TOKEN)
-
-          }
+          
           // XXX: 如果没有在 tokenAddresses 内的，则应该自动创建
           // TODO: 考虑如何 multi
           // await __root__.settleableReward(tokenAddresses[handled], i)
