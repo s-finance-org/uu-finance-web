@@ -117,7 +117,7 @@ export default (ModelToken.create({
           })
         }
 
-        await swaps.multicall.batcher(series)
+        await swaps.multicall.series(series)
       }
     })
     .init(function () {
@@ -168,7 +168,7 @@ __root__.supportedRewardNum = ModelValueEther.create({
       })
     }
 
-    await swaps.multicall.batcher(series)
+    await swaps.multicall.series(series)
   }
 })
 .init(function () {
