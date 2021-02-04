@@ -1,31 +1,19 @@
-import Notify from "bnc-notify"
+import Notify from 'bnc-notify'
 
 import i18n from '../../i18n'
-import { DEFAULT_NETWORK_ID } from './constant'
-
-/**
- * @type {!Object}
- */
-const NETWORK_IDS = {
-  1: 'Main', // Main Network
-  3: 'Ropsten', // Ropsten Test Network
-  4: 'Rinkeby', // Rinkeby Test Network
-  5: 'Goerli', // Goerli Test Network
-  42: 'Kovan', // Kovan Test Network
-  100: 'xDai', // xDai POA Network
-}
+import { NETWORK_ID } from './constant'
 
 export default {
   /**
    * @param {Object} opts
-   * @param {number|string} opts.networkId 当前配置的网络 ID
-   * @param {string=} opts.dappId
+   * @param {string} opts.dappId
+   * @param {number|string=} opts.networkId 当前配置的网络 ID，默认从 .env 中获取
    * @return {!Object}
    */
   create ({
-    networkId = DEFAULT_NETWORK_ID,
-    dappId = ''
-  }) {
+    dappId,
+    networkId = NETWORK_ID
+  } = {}) {
     networkId = +networkId
 
     // TODO: notify 要支持 i18n 自动变更和自定义 https://docs.blocknative.com/notify#i-18-n
@@ -88,25 +76,22 @@ export default {
         code = '',
         autoDismiss = 4500
       } = {}) {
+        
         const type = 'error'
         // i18n 内无对应信息，则使用 message
         // TODO: 要支持 i18n
-        // message = i18n.$i18n.global.t(`error.${code}`) || message
+        message = i18n.$i18n.global.t(`error.${code}`) || message
 
-        if (update) {
-          update({
-            type,
-            message,
-            autoDismiss
-          })
-        } else {
-          // 无则创建
-          this.notification({
-            type,
-            message,
-            autoDismiss
-          })
+        const opts = {
+          type,
+          message,
+          autoDismiss
         }
+
+        update
+          ? update(opts)
+          // 无则创建
+          : this.notification(opts)
       }
     }
   }

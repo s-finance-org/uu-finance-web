@@ -7,7 +7,13 @@
 </template>
 
 <script>
+// import { AConfigProvider, ALayout } from 'ant-design-vue'
+
 export default {
+  components: {
+    // AConfigProvider,
+    // ALayout
+  },
   computed: {
     i18n () {
       const { i18n } = this.$store

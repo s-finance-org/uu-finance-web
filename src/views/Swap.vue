@@ -12,14 +12,12 @@ isValidated: {{ wallet.isValidated }}<br/>
 <br/>
   address: {{ tokens.DAI.address }}<br/>
   name: {{ tokens.DAI.name }}<br/>
-  <a-spin spin :spinning="tokens.DAI.walletBalanceOf.state.busy">
   walletBalanceOf:
   <!-- | {{ tokens.DAI.walletBalanceOf.ether }} -->
   <!-- | {{ tokens.DAI.walletBalanceOf.handled }} -->
   | {{ tokens.DAI.walletBalanceOf.view }}
   <br/>
   <br/>
-  </a-spin>
   <!-- DAI: {{ tokens.DAI }} -->
 </template>
 

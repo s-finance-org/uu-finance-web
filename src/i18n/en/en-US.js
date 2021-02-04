@@ -9,7 +9,7 @@ export default {
   }),
   ant: ant_enUS,
   error: {
-    '4001': 'MetaMask Tx Signature: User denied transaction signature.'
+    4001: 'MetaMask Tx Signature: User denied transaction signature.'
   },
   message: {
     valueOutValidRange: 'Value is out of valid range',
@@ -125,7 +125,7 @@ export default {
         paidReward: 'Received reward',
         totalReward: 'Total Reward',
         receiveAward: 'Claim reward',
-        sideTip: 'You can choose to receive only one reward at a time or all at once, settlement by agent will be required before you claim the reward. If you have token reward that has not been claimed for more than 7 days, it may be claimed by someone else. The agent could get 10% of the reward and the rest is automatically distributed to your wallet.'
+        sideTip: 'You can choose to receive only one reward at a time or all at once, settlement by agent will be required before you claim the reward.'
       },
       claimTo: {
         tab: 'Help Ta take the lead',
@@ -133,7 +133,7 @@ export default {
         rewardRate: 'Reward rate on behalf of you',
         behalfRewards: 'Representation Rewards',
         behalfReceiveRewards: 'Representation Reward',
-        sideTip: 'You can choose to receive only one reward at a time or receive it all at once. The settler needs to settle before receiving the reward. If you have not received the token reward for more than 7 days, you may be collected by someone else. The entrusted person can get 10% of the entrusted entitlement, and the remaining part will be automatically issued to your wallet. '
+        sideTip: ''
       },
       settle: {
         tab: 'Participate in settle',

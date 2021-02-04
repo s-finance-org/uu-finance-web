@@ -23,7 +23,16 @@
 </template>
 
 <script>
+// import { AButton, ALayoutFooter, ADropdown, AMenu, AMenuItem } from 'ant-design-vue'
+
 export default {
+  components: {
+    // AButton,
+    // ALayoutFooter,
+    // ADropdown,
+    // AMenu,
+    // AMenuItem
+  },
   methods: {
     changedI18n({ key }) {
       this.$i18n.locale = key

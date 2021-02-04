@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { message } from 'ant-design-vue'
+import globalMessage from '../utils/global/message'
 
 import Home from '@/views/Home'
 import Test from '@/views/Test'
@@ -69,7 +69,7 @@ router.beforeEach((to, from, next) => {
   } else {
     // 404
     next({ path: '/' })
-    message.error(`404 NOT FOUND`)
+    globalMessage.error(`404 NOT FOUND`)
   }
 })
 

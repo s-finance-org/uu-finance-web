@@ -4,22 +4,27 @@ import { reactive } from 'vue'
 
 import ModelInfura from './infura'
 import ModelState from '../base/state'
-import { DEFAULT_NETWORK_ID } from './constant'
+import { NETWORK_ID } from './constant'
 import { isMobile, forEach, addressShortener } from '../../utils'
 import ModelValueAddress from '../value/address'
 
 const CACHE_WALLET_NAME = '__Global_Wallet_Selected'
 
+const ETHERSCAN_DOMAINS = {
+  1: 'etherscan.io',
+  4: 'rinkeby.etherscan.io'
+}
+
 export default {
   /**
    * @param {Object} opts
-   * @param {number|string} opts.networkId 当前配置的网络 ID
-   * @param {string=} opts.infuraKey
+   * @param {string} opts.infuraKey
+   * @param {number|string=} opts.networkId 当前配置的网络 ID，默认从 .env 中获取
    * @return {!Object}
    */
   create ({
-    networkId = DEFAULT_NETWORK_ID,
-    infuraKey = '',
+    infuraKey,
+    networkId = NETWORK_ID
   } = {}) {
     // 创建时的网络 ID，当后面网络切换时的参照而设定为常量
     const NETWORK_ID = +networkId
@@ -63,9 +68,9 @@ export default {
        * @type {string}
        */
       get getEtherscanUrl () {
-        const { address } = this
-        // TODO: 要支持主网、测试网切换
-        return `https://etherscan.io/address/${address.handled}`
+        const { address, networkId } = this
+
+        return `https://${ETHERSCAN_DOMAINS[networkId]}/address/${address.handled}`
       },
 
       /**
@@ -78,12 +83,12 @@ export default {
        * @param {number} networkId
        */
       async checkNetwork (networkId) {
-        const { isConnectWallet } = this
+        const { isConnectedWallet } = this
 
         this.networkId = networkId
 
         // 已连上钱包时才可以 walletCheck()，否则需要 walletSelect()，而如果 walletSelect() 则会连续出现2次弹框
-        if (this.isConnectWallet) {
+        if (isConnectedWallet) {
           // 官方说明需要先调用 walletSelect，但这里 walletSelect 后 body 会被 hidden
           // await onboard.walletSelect(name)
           // 当网络不匹配时，onboard 会要求变更网络
@@ -98,12 +103,12 @@ export default {
        * @type {boolean}
        */
       get isValidated () {
-        const { networkId, address, isConnectWallet } = this
+        const { networkId, address, isConnectedWallet } = this
 
         // 必须与配置的网络 ID 一样
         return networkId === NETWORK_ID
           && address.isValidated
-          && isConnectWallet
+          && isConnectedWallet
       },
 
       /**
@@ -111,7 +116,7 @@ export default {
        * @type {!Object}
        */
       get web3 () {
-        return this.isConnectWallet && this.walletWeb3
+        return this.isConnectedWallet && this.walletWeb3
           // 没链接到钱包
           || this.infuraWeb3
       },
@@ -148,7 +153,7 @@ export default {
             || trust.envFactor && trust.envWalletName
             || imToken.envFactor && imToken.envWalletName
             || coinbase.envFactor && coinbase.envWalletName)
-        } catch(err) {
+        } catch (err) {
           console.error(err)
         }
       },
@@ -164,11 +169,11 @@ export default {
        * 变更钱包
        * @param {string=} walletName 指定钱包
        */
-      async changeWallet (walletName = undefined) {
+      async changeWallet (walletName = '') {
         const { state } = this
 
         state.beforeUpdate()
-console.log('-----------')
+
         try {
           // 变更钱包完成后，再钱包是否已准备好
           await onboard.walletSelect(walletName)
@@ -176,8 +181,7 @@ console.log('-----------')
 
           // 由 onboard.wallet 的监听触发，而不用在这里
           // this.updateWallet()
-        }
-        catch(err) {
+        } catch (err) {
           console.error(err)
         }
       },
@@ -200,16 +204,16 @@ console.log('-----------')
           // 使用钱包的
           // wallet.address 有效后会使用钱包赋值的 this.web3，因此先处理 this.web3
           this.walletWeb3 = new Web3(wallet.provider)
-          this.isConnectWallet = true
+          this.isConnectedWallet = true
 
           state.afterUpdate()
         }
       },
       /**
-       * 是否与钱包连上
+       * 是否已连上钱包
        * @type {boolean}
        */
-      isConnectWallet: false,
+      isConnectedWallet: false,
 
       /**
        * 重置当前钱包
@@ -218,7 +222,7 @@ console.log('-----------')
         const { state } = this
 
         // 已经断开则不再重置
-        if (!this.isConnectWallet) return false
+        if (!this.isConnectedWallet) return false
 
         // update
         this.name = ''
@@ -226,7 +230,7 @@ console.log('-----------')
         this.walletWeb3 = null
 
         state.reset()
-        this.isConnectWallet = false
+        this.isConnectedWallet = false
 
         // 重置 Onboard 钱包状态并断开
         onboard.walletReset()
@@ -237,10 +241,28 @@ console.log('-----------')
       state: ModelState.create()
     })
 
-    const currentProvider = wallet.windowWeb3 ? wallet.windowWeb3.currentProvider : {}
+    const currentProvider = wallet.web3.currentProvider
+    // TODO:?
+    // const ModelOriginWalletUnit = {
+    //   /**
+    //    * @param {Object} opts
+    //    * @param {*} param0
+    //    * @return {!Object}
+    //    */
+    //   create ({
+    //     name = '',
+    //     preferred = false,
+    //     envFactor = true
+    //   } = {}) {
+    //     return {
+    //       onboard: { walletName: name, preferred },
+    //       // TODO:
+    //       envFactor: true
+    //     }
+    //   }
+    // }
 
     const originWallets = {
-      // MetaMask
       metamask: {
         onboard: { walletName: "metamask", preferred: true },
         // TODO:
@@ -283,16 +305,21 @@ console.log('-----------')
       },
       meetone: {
         onboard: { walletName: "meetone" },
-        envFactor: currentProvider.wallet === "MEETONE"
+        envFactor: currentProvider.wallet === 'MEETONE'
       }
     }
+
+     // 是否在某个钱包的 App env
+    //  TODO:
+    //  let isWalletAppEnv = false
 
     const wallets = []
 
     forEach(originWallets, wallet => {
       // 移动端钱包 App 环境限定，或无环境条件
-      (!isMobile || wallet.envFactor)
-        && wallets.push(wallet.onboard)
+      if (!isMobile || wallet.envFactor) {
+        wallets.push(wallet.onboard)
+      }
     })
 
     const onboard = Onboard({
@@ -306,8 +333,8 @@ console.log('-----------')
           await wallet.checkNetwork(networkId)
         },
         address (address) {
-          // 必须要有 isConnectWallet，否则断开后再切换账号，仍然会获取地址
-          if (address && wallet.isConnectWallet) {
+          // 必须要有 isConnectedWallet，否则断开后再切换账号，仍然会获取地址
+          if (address && wallet.isConnectedWallet) {
             // 唯一 address 赋值处
             wallet.address.setValue(address)
           } else {

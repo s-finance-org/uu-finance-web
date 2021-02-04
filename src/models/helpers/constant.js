@@ -22,3 +22,28 @@ export const TOKEN_INFINITE_MIN_AMOUNT_ETHER = BN(TOKEN_MAX_AMOUNT_ETHER).div(2)
  * @type {number}
  */
 export const DEFAULT_NETWORK_ID = 1
+
+/**
+ * .env 指定的网络 id
+ * @type {number}
+ */
+export const NETWORK_ID = process.env.VUE_APP_NETWORK_ID || DEFAULT_NETWORK_ID
+
+/**
+ * 对应网络配置
+ * @type {!Object}
+ */
+export const NETWORK_NAMES = {
+  1: 'Main', // Main Network
+  3: 'Ropsten', // Ropsten Test Network
+  4: 'Rinkeby', // Rinkeby Test Network
+  5: 'Goerli', // Goerli Test Network
+  42: 'Kovan', // Kovan Test Network
+  100: 'xDai' // xDai POA Network
+}
+
+/**
+ * 缺省空地址
+ * @type {string}
+ */
+export const DEFAULT_ADDRESS = '0x0000000000000000000000000000000000000000'

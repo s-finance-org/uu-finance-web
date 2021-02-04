@@ -25,7 +25,6 @@
             </a-radio-group>
 
             <token-select-input
-              class="pt-2"
               v-model:current="singleSelectCode"
               :label="$t(actionItem.labelI18n)"
               :placeholder="$t(actionItem.placeholderI18n)"
@@ -33,8 +32,13 @@
               :approveToAddress=structure.approveToAddress
               :codes=structure.singleAssetTokens
               :balanceOf=maxBalanceOf
-              :acquisitionUrl=actionItem.acquisitionUrl
-              :useApprove=actionItem.useApprove />
+              :useApprove=actionItem.useApprove>
+              <template #extra>
+                <small class="ps-2" v-if=actionItem.hasExtra>
+                  <a :href=ixd.singleToken.acquisitionUrl target="_blank">{{ $t('global.base.acquisitionUrl', [ixd.singleToken.symbol.view]) }}</a>
+                </small>
+              </template>
+            </token-select-input>
           </div>
 
           <div class="line-frame-thin d-flex p-3 p-md-4 pb-2 pb-md-3 mt-3 mt-md-0 flex-column col-12 col-md-4">
@@ -60,7 +64,8 @@
             <span></span>
             <button-busy
               :busying=ixd.mintBtn.busy
-              className="col-12 col-md-auto order-12 order-md-1"
+              block
+              class="col-12 col-md-auto order-12 order-md-1"
               :disabled=ixd.mintBtn.disabled
               type="primary"
               @click=actionItem.mintBtnClick
@@ -117,6 +122,7 @@
 </template>
 
 <script>
+// import { ATabs, ATabPane, ARadioGroup, ARadioButton, AInput } from 'ant-design-vue'
 import {
   iIntersect,
 } from '@/components/icons'
@@ -130,6 +136,11 @@ import Busy from '../components/busy'
 
 export default {
   components: {
+    // ATabs,
+    // ATabPane,
+    // ARadioGroup,
+    // ARadioButton,
+    // AInput,
     iIntersect,
     TokenSelectInput,
     ButtonBusy,
@@ -234,7 +245,7 @@ export default {
             labelI18n: 'global.base.deposit',
             placeholderI18n: 'global.mint.deposit.placeholder',
             useApprove: true,
-            acquisitionUrl: true,
+            hasExtra: true,
             mintBtnI18n: 'global.mint.deposit.mintBtn',
             mintBtnClick: this.onMint,
             preview: {
@@ -247,7 +258,7 @@ export default {
             labelI18n: 'global.base.withdraw',
             placeholderI18n: 'global.mint.withdraw.placeholder',
             useApprove: false,
-            acquisitionUrl: false,
+            hasExtra: false,
             mintBtnI18n: 'global.mint.withdraw.mintBtn',
             mintBtnClick: this.onBurn,
             preview: {
@@ -331,6 +342,7 @@ export default {
       }
 
       return {
+        singleToken,
         mintBtn: {
           // TODO: 操作的币种
           disabled: mintBtnDisabled,

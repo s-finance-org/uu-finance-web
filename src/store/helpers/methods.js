@@ -1,19 +1,23 @@
-const NETWORK_NAMES = {
-  1: 'MAIN',
-  4: 'RINKEBY'
-}
-const NETWORK_ID = process.env.VUE_APP_NETWORK_ID
+import { NETWORK_ID, DEFAULT_NETWORK_ID, NETWORK_NAMES, DEFAULT_ADDRESS } from '../../models/helpers/constant'
+import globalMessage from '../../utils/global/message'
 
 /**
- * VUE_APP_MAIN_ + name
+ * 从 .env 中获取地址
+ * - VUE_APP_MAIN_ + 大写 name
  * @param {string} name
  * @return {string}
  */
-export const getDotenvAddress = (name = '') => {
-  const result = process.env[`VUE_APP_${NETWORK_NAMES[NETWORK_ID]}_${name}`]
+export const getDotenvAddress = name => {
+  // 不存在则用缺省，并改为大写
+  const networkName = (NETWORK_NAMES[NETWORK_ID] || NETWORK_NAMES[DEFAULT_NETWORK_ID]).toLocaleUpperCase()
+  const key = `VUE_APP_${networkName}_${name}`
+  let result = DEFAULT_ADDRESS
 
-  !result
-    && console.error('Not find result value')
+  try {
+    result = process.env[key]
+  } catch (e) {
+    globalMessage.error(`No ${key} address found in .env`)
+  }
 
   return result
 }

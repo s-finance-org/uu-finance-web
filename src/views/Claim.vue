@@ -5,7 +5,6 @@
         <h2 class="fs-2 mb-1">{{ $t('global.claim.title') }}</h2>
         <span class="fs-6 pe-5 d-block">{{ $t('global.claim.subtitle') }}</span>
       </div>
-
       <a-tabs animated type="card" defaultActiveKey=structure.claimActionsDefaultKey v-model:activeKey=tabClaimAction>
         <a-tab-pane key="own" :tab="$t('global.claim.own.tab')" class="d-flex flex-wrap">
           <!-- TODO: 重复的 -->
@@ -17,7 +16,7 @@
             <iIntersect class="d-none d-md-block text-align-justify" />
           </div>
 
-          <busy :busying="ixd.own.listLoading" className="col-12 col-md-8 pe-md-4 order-md-12">
+          <busy :busying="ixd.own.listLoading" class="col-12 col-md-8 pe-md-4 order-md-12">
             <a-list
               item-layout="vertical"
               :pagination="pagination"
@@ -31,10 +30,11 @@
                   <button-busy
                     type="link"
                     size="small"
+                    block
                     @click=ixd.own.claimAllBtn.click
                     :busying=ixd.own.claimAllBtn.busy
                     :disabled=ixd.own.claimAllBtn.disabled
-                    className="col-12 col-sm-auto"
+                    class="col-12 col-sm-auto"
                   >
                     {{ $t('global.claim.own.allClaim') }}
                   </button-busy>
@@ -42,17 +42,13 @@
               </template>
               <template #renderItem="{ item, index }">
                 <a-list-item :key="'item-' + index">
-                  <a-list-item-meta>
-                    <template #title>
-                      <div class="d-flex align-items-center">
-                        <icon-token :code=item.code size="52" class="me-3" />
-                        <span class="fs-4">
-                          {{ item.code }} {{ $t('global.base.reward') }}
-                          <!-- <small class="d-block pt-1">{{ item.code }} {{ $t('global.base.apy') }}: {{ item.apy }}</small> -->
-                        </span>
-                      </div>
-                    </template>
-                  </a-list-item-meta>
+                  <div class="d-flex align-items-center pb-3">
+                    <icon-token :code=item.code size="52" class="me-3" />
+                    <span class="fs-4">
+                      {{ item.code }} {{ $t('global.base.reward') }}
+                      <!-- <small class="d-block pt-1">{{ item.code }} {{ $t('global.base.apy') }}: {{ item.apy }}</small> -->
+                    </span>
+                  </div>
                   <div class="d-flex justify-content-between align-items-end flex-wrap">
                     <small>
                       {{ $t('global.claim.own.pendingReward') }}
@@ -66,10 +62,11 @@
                     <button-busy
                       type="primary"
                       size="small"
+                      block
                       @click=item.receiveBtn.click
                       :busying="item.receiveBtn.busy || ixd.own.claimAllBtn.busy"
                       :disabled="item.receiveBtn.disabled || ixd.own.claimAllBtn.disabled"
-                      className="col-12 col-sm-auto mt-2"
+                      class="col-12 col-sm-auto mt-2"
                     >
                       {{ $t('global.claim.own.receiveAward') }}
                     </button-busy>
@@ -114,7 +111,7 @@
             <iIntersect class="d-none d-md-block text-align-justify" />
           </div>
 
-          <busy :busying="ixd.settle.listLoading" className="col-12 col-md-8 pe-md-4 order-md-12 mt-2">
+          <busy :busying="ixd.settle.listLoading" class="col-12 col-md-8 pe-md-4 order-md-12 mt-2">
             <a-list
               item-layout="vertical"
               :pagination="pagination"
@@ -122,17 +119,12 @@
             >
               <template #renderItem="{ item, index }">
                 <a-list-item :key="'item-' + index">
-                  <a-list-item-meta>
-                    <template #title>
-                      <div class="d-flex align-items-center">
-                        <icon-lpt :code=item.icon size="52" class="me-2" />
-                        <span class="fs-4 pt-1">
-                          {{ item.name }} {{ $t('global.base.liquidityPool') }}
-                        </span>
-                      </div>
-                    </template>
-                  </a-list-item-meta>
-
+                  <div class="d-flex align-items-center pb-2">
+                    <icon-lpt :code=item.icon size="52" class="me-2" />
+                    <span class="fs-4 pt-1">
+                      {{ item.name }} {{ $t('global.base.liquidityPool') }}
+                    </span>
+                  </div>
                   <div
                     v-for="(reward, idx) in item.rewards"
                     :key="`reward-${reward.code}`"
@@ -150,10 +142,11 @@
                       <button-busy
                         type="primary"
                         size="small"
+                        block
                         @click=reward.settleBtn.click(idx)
                         :busying=reward.settleBtn.busy
                         :disabled=reward.settleBtn.disabled
-                        className="col-12 col-sm-auto mt-2"
+                        class="col-12 col-sm-auto mt-2"
                       >
                         {{ $t('global.claim.settle.participateSettle') }}
                       </button-busy>
@@ -182,7 +175,7 @@
 </template>
 
 <script>
-import BN from 'bignumber.js'
+// import { ALayoutContent, ATabs, ATabPane, AList, AListItem } from 'ant-design-vue'
 import {
   iIntersect,
   iYellowinfo
@@ -195,6 +188,11 @@ import Busy from '../components/busy'
 
 export default {
   components: {
+    // ALayoutContent,
+    // ATabs,
+    // ATabPane,
+    // AList,
+    // AListItem,
     iIntersect,
     iYellowinfo,
     ButtonBusy,
@@ -213,6 +211,11 @@ export default {
         hideOnSinglePage: true,
         // showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} items`
       },
+    }
+  },
+  methods: {
+    aaaaa () {
+      console.log(1111111)
     }
   },
   computed: {
@@ -251,7 +254,10 @@ export default {
           receiveBtn: {
             disabled: false,
             busy: associatedToken.state.busy,
-            click: () => tokens.UU.claimReward(_token)
+            click: () => {
+        console.log('----------')
+              tokens.UU.claimReward(_token)
+            }
           },
           exchangeRate: '1 SFG = 0.5472 DAI',
           // TODO: ???

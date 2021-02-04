@@ -8,7 +8,7 @@ export default {
   props: {
     code: String,
     size: {
-      type: String,
+      type: [String, Number],
       default: '32'
     }
   },

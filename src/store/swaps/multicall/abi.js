@@ -1,7 +1,4 @@
-import { ModelSwap } from '../../models'
-import { getDotenvAddress } from '../helpers/methods'
-
-const abi = [
+export default [
   {
     'constant': true,
     'inputs': [],
@@ -87,57 +84,3 @@ const abi = [
     'type': 'function'
   }
 ]
-
-export default ModelSwap.create({
-  address: getDotenvAddress('MULTICALL_SWAP'),
-  abi,
-  methods: {
-    /**
-     * @param {Array} calls tuple[]
-     * @return {Array}
-     */
-    async aggregate (calls) {
-      const { contract } = this
-
-      let result = null
-      try {
-        /* res
-          {
-            0: number, // blockNumber
-            1: Array, // returnData
-            blockNumber: number, // blockNumber
-            returnData: Array, // returnData
-          }
-         */
-console.log('mulit calls', calls)
-        result = await contract.methods.aggregate(calls).call()
-console.log('mulit result', result)
-      } catch (err) {
-        console.error('nulticall aggregate()', err)
-      }
-
-      return result
-    },
-
-    /**
-     * @param {Array} targetQueues [{ decodeType: '', call: [], [target: Object,] [result: null] }, ...]
-     * @return {Array}
-     */
-    async batcher (targetQueues) {
-      const { web3 } = this
-      const result = await this.aggregate(targetQueues.map(item => item.call))
-
-      // aggregate 比如要有返回值，否则没有 forEach 意义
-      result
-        && targetQueues.forEach((item, idx) => {
-          item.result = web3.eth.abi.decodeParameter(item.decodeType, result.returnData[idx])
-
-          if (item.target) {
-            item.target.value = item.result
-          }
-        })
-
-      return targetQueues
-    }
-  }
-})

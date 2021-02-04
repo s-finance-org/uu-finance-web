@@ -16,7 +16,8 @@ export default {
       view: '-'
     }
     const __store__ = {
-      handled: __default__.handled
+      handled: __default__.handled,
+      isValidated: false
     }
 
     return {
@@ -45,7 +46,7 @@ export default {
 
       /**
        * 处理地址
-       * - 会转为校验和地址
+       * - 转为校验和地址
        * @type {string}
        */
       get handled () {
@@ -53,15 +54,11 @@ export default {
       },
       set handled (val) {
         const { state } = this
-        const isValidated = Web3.utils.isAddress(val)
 
-        __store__.handled = isValidated
-          ? Web3.utils.toChecksumAddress(val)
-          : val
+        if (!Web3.utils.isAddress(val)) return false
+
+        __store__.handled = Web3.utils.toChecksumAddress(val)
         this.trigger && this.trigger()
-        // sync
-        this.isValidated = isValidated
-
         state.afterUpdate()
       },
 
@@ -69,7 +66,11 @@ export default {
        * 是否为有效的以太坊地址
        * @type {boolean}
        */
-      isValidated: false,
+      get isValidated () {
+        const { handled } = this
+
+        return Web3.utils.isAddress(handled)
+      },
 
       /**
        * 触发器

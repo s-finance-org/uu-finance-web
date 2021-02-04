@@ -12,8 +12,13 @@
 </template>
 
 <script>
+// import { ALayoutContent } from 'ant-design-vue'
+
 export default {
-  data() {
+  components: {
+    // ALayoutContent
+  },
+  data () {
     return {
     };
   },

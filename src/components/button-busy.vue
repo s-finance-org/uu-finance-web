@@ -1,14 +1,10 @@
 <template>
-  <busy
-    :busying=busying
-    :className=className
-    >
+  <busy :busying=busying>
     <a-button
       :disabled=disabled
       :type=type
-      block
+      :block=block
       :size=size
-      @click=onClick
       >
       <slot></slot>
     </a-button>
@@ -16,28 +12,21 @@
 </template>
 
 <script>
+// import { AButton } from 'ant-design-vue'
 import Busy from './busy'
 
 export default {
   name: 'button-busy',
   props: {
     busying: Boolean,
-    className: [Object, Array],
     disabled: Boolean,
     type: String,
-    size: String
+    size: String,
+    block: Boolean
   },
   components: {
+    // AButton,
     Busy
-  },
-  data() {
-    return {
-    };
-  },
-  methods: {
-    onClick() {
-      this.$emit('click')
-    }
   }
 };
 </script>

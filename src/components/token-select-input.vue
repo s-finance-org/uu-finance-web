@@ -1,72 +1,72 @@
 <template>
-  <div class="h5 pb-1">{{ label }}</div>
-  <a-input-group
-    compact
-    :class="{ 'danger': !currentToken.amount.isValidInput }"
-    >
-    <a-select
-      class="col-4 pe-0"
-      v-model:value="currentCode"
-      v-if="__base__.isSelectMode"
-    >
-      <a-select-option
-        v-for="item in __base__.tokens"
-        :key="`${item.code}`"
-        :value=item.code
+  <div>
+    <div class="h5 pb-1">{{ label }}</div>
+    <a-input-group
+      compact
+      :class="{ 'danger': !currentToken.amount.isValidInput }"
       >
-        <span class="d-flex align-items-center">
+      <a-select
+        class="col-6 col-sm-4 pe-0"
+        v-model:value="currentCode"
+        v-if="__base__.isSelectMode"
+      >
+        <a-select-option
+          v-for="item in __base__.tokens"
+          :key="`${item.code}`"
+          :value=item.code
+        >
+          <span class="d-flex align-items-center">
 
-          <icon-lpt :code=item.icon size=16 class="me-2" />
-          {{ item.symbol.view }}
-        </span>
-      </a-select-option>
-      <template #suffixIcon>
-        <span class="h4 icon-select text-color-heading"></span>
-      </template>
-    </a-select>
-    <span v-else class="d-flex align-items-center col-4 token-name">
-      <icon-lpt :code=currentToken.icon size=16 class="me-2" />
-      {{ currentToken.symbol.view }}
-    </span>
-    <a-tooltip :visible="isFocus && !!currentToken.amount.inputView" placement="topLeft">
-      <template #title>
-        {{ currentToken.amount.inputView }}
-      </template>
-      <a-input
-        @focus=onInputFocus
-        @blur=onInputFocus
-        :value="currentToken.amount.input"
-        class="pe-0"
-        :placeholder=placeholder
-        @change="changeTokenAmount"
-      >
-        <template #suffix>
-          <!-- <a-tooltip trigger='hover' :title="$t(associatedToken.isResetApprove ? 'global.base.resetApproveTip' : 'global.base.approveTip')" placement="topRight"> -->
-            <button-busy
-              :busying=associatedToken.busy
-              v-show=associatedToken.isNeedApprove
-              @click=onApprove
-              type="link"
-              size="small"
-            >
-              {{ $t(associatedToken.isResetApprove ? 'global.base.resetApprove' : 'global.base.approve') }}
-            </button-busy>
-          <!-- </a-tooltip> -->
+            <icon-lpt :code=item.icon size=16 class="me-2" />
+            {{ item.symbol.view }}
+          </span>
+        </a-select-option>
+        <template #suffixIcon>
+          <span class="h4 icon-select text-color-heading"></span>
         </template>
-      </a-input>
-    </a-tooltip>
-  </a-input-group>
-  <small class="pt-1 d-flex">
-    <span v-if=showBalanceOf>
-      {{ $t('global.base.maxBalanceOf') }}:
-      <busy :busying="maxBalanceOf.state.loading">
-        <span @click="useMaxBalanceOf" class="pointer pe-2 ps-1">{{ maxBalanceOf.view }}</span>
-      </busy>
+      </a-select>
+      <span v-else class="d-flex align-items-center col-4 token-name">
+        <icon-lpt :code=currentToken.icon size=16 class="me-2" />
+        {{ currentToken.symbol.view }}
+      </span>
+      <a-tooltip :visible="isFocus && !!currentToken.amount.inputView" placement="topLeft">
+        <template #title>
+          {{ currentToken.amount.inputView }}
+        </template>
+        <a-input
+          @focus=onInputFocus
+          @blur=onInputFocus
+          :value="currentToken.amount.input"
+          class="pe-0"
+          :placeholder=placeholder
+          @change="changeTokenAmount"
+        >
+          <template #suffix>
+            <a-tooltip trigger='hover' :title="$t(associatedToken.isResetApprove ? 'global.base.resetApproveTip' : 'global.base.approveTip')" placement="topRight">
+              <button-busy
+                :busying=associatedToken.busy
+                v-show=associatedToken.isNeedApprove
+                @click=onApprove
+                type="link"
+                size="small"
+              >
+                {{ $t(associatedToken.isResetApprove ? 'global.base.resetApprove' : 'global.base.approve') }}
+              </button-busy>
+            </a-tooltip>
+          </template>
+        </a-input>
+      </a-tooltip>
+    </a-input-group>
+    <span class="pt-1 d-flex">
+      <small v-if=showBalanceOf class="d-flex">
+        {{ $t('global.base.maxBalanceOf') }}:
+        <busy :busying="maxBalanceOf.state.loading" class="pointer px-2">
+          <span @click="useMaxBalanceOf">{{ maxBalanceOf.view }}</span>
+        </busy>
+      </small>
+      <slot name="extra"></slot>
     </span>
-    <span class="ps-2" v-if=acquisitionUrl>
-      <a :href=currentToken.acquisitionUrl target="_blank">{{ $t('global.base.acquisitionUrl', [currentToken.symbol.view]) }}</a>
-    </span>
-  </small>
+  </div>
 
   <!-- <small class="d-flex flex-column" style="overflow: hidden;">
     <a @click=_onForcedResetApprove>_onForcedResetApprove</a>
@@ -100,7 +100,9 @@
 </template>
 
 <script>
-import BN from 'bignumber.js'
+// import { AInputGroup, ASelect, ASelectOption, ATooltip, AInput, ACheckbox } from 'ant-design-vue'
+
+import Busy from '../components/busy'
 import ButtonBusy from '../components/button-busy'
 import IconLpt from '../components/icon-lpt'
 import { isArray } from '../utils'
@@ -118,8 +120,6 @@ export default {
     changeAmount: Function,
     // 授权到的目标地址
     approveToAddress: String,
-    // TODO: 考虑变成 slot 来定义
-    acquisitionUrl: Boolean,
     // 是否使用授权功能（
     useApprove: {
       type: Boolean,
@@ -143,6 +143,13 @@ export default {
     }
   },
   components: {
+    // AInputGroup,
+    // ASelect,
+    // ASelectOption,
+    // ATooltip,
+    // AInput,
+    // ACheckbox,
+    Busy,
     ButtonBusy,
     IconLpt
   },

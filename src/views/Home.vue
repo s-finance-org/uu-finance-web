@@ -10,8 +10,8 @@
               <iHomeUnion class="me-2" />{{ $t('global.home.cover_circulation') }}
             </span>
             <span class="fs-5 py-1 d-flex mb-2">
-              <busy :busying="!tokens.UU.totalSupply.state.updated">
-                $ {{ tokens.UU.totalSupply.view }}
+              <busy :busying="!tokens.UU.totalNetValue.state.updated">
+                $ {{ tokens.UU.totalNetValue.view }}
               </busy>
             </span>
             <a-button type="primary">
@@ -82,6 +82,7 @@
 </template>
 
 <script>
+// import { LayoutContent, Button, Popover } from 'ant-design-vue'
 import {
   iHomeTrait1,
   iHomeTrait2,
@@ -99,6 +100,9 @@ import Busy from '../components/busy'
 
 export default {
   components: {
+    // ALayoutContent: LayoutContent,
+    // AButton: Button,
+    // APopover: Popover,
     iHomeTrait1,
     iHomeTrait2,
     iHomeTrait3,

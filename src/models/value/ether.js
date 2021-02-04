@@ -1,4 +1,5 @@
 import BN from 'bignumber.js'
+import { reactive } from 'vue'
 
 import { formatNumber, floor } from '../../utils'
 import ModelState from '../base/state'
@@ -40,8 +41,24 @@ export default {
       handled: __default__.handled
     }
 
-    const result = {
+    return reactive({
+      /**
+       * 链式方法初始事件
+       * - this 指为根
+       * @param {Function} callback(this)
+       * @return {!Object} this
+       */
+      init (callback) {
+        callback.apply(this, [this])
+
+        return this
+      },
+
       // TODO: 添加 min、max uint256 的范围
+      /**
+       * Value type
+       * @type {string}
+       */
       type: 'uint256',
 
       /** @type {Object} */
@@ -112,7 +129,8 @@ export default {
       set handled (val) {
         const { state, precision } = this
         // 避免空字符串赋值
-        __store__.handled = BN(val || __default__.handled).toString()
+        // TODO: 检查
+        const result = __store__.handled = BN(val || __default__.handled).toString()
 
         // sync
         __store__.ether = BN(result).times(precision).toFixed(0, 1)
@@ -166,8 +184,6 @@ export default {
       },
 
       state: ModelState.create(stateParams)
-    }
-
-    return result
+    })
   }
 }

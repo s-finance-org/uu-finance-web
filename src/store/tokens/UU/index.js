@@ -5,7 +5,6 @@ import abi from './abi'
 
 import { ModelToken, ModelValueEther, ModelValueAddress, ModelValueUint8 } from '../../../models'
 import { getDotenvAddress, listenEvent } from '../../helpers/methods'
-
 import tokenAddresses from '../token-addresses'
 
 import swaps from '../../swaps'
@@ -13,27 +12,11 @@ import storeWallet from '../../wallet'
 import notify from '../../notify'
 import i18n from '../../../i18n'
 
-// TODO: 最好能自带，要让内部每一层都可以调用 __root__
-const __root__ = reactive(ModelToken.create({
+export default (ModelToken.create({
   code: 'UU',
   address: getDotenvAddress('UU_TOKEN'),
   abi,
   isInfiniteAllowance: true,
-  customSeries () {
-    const {
-      address,
-      contract,
-      supportedLptNum,
-      supportedRewardNum,
-    } = this
-
-    return [
-      // 支持的 lpt 数量
-      { decodeType: supportedLptNum.type, call: [address, contract.methods.lptN().encodeABI()], target: supportedLptNum },
-      // 支持的奖励 token 数量
-      { decodeType: supportedRewardNum.type, call: [address, contract.methods.rewardN().encodeABI()], target: supportedRewardNum },
-    ]
-  },
   // TODO: 要追加而不是覆盖（有默认的）
   customAssociatedTokenModel (_token, __root__) {
     // TODO: 这里不是 __root__
@@ -69,75 +52,94 @@ const __root__ = reactive(ModelToken.create({
       // maxBurnBalanceOf: ModelValueWallet.create(parameters),
     }
   }
-}))
+}).extend(function (__root__) {
+  const { address, contract } = __root__
 
-/**
- * 支持的 lpt 数量
- * - supportedLptNum -> supportedLptAddresses
- * @type {Object}
- */
-__root__.supportedLptNum = ModelValueEther.create({
-  async trigger () {
-    const { handled } = this
-    const { contract, address } = __root__
+  /**
+   * 总净值
+   * - DAI 计价
+   * @type {Object}
+   */
+  __root__.totalNetValue = ModelValueEther
+    .create(__root__.parameters)
+    .init(function (__this__) {
+      swaps.multicall.series([
+        { call: [address, contract.methods.totalNetValue().encodeABI()], target: __this__ }
+      ])
+    })
 
-    // TODO: 
-    const series = []
+  
 
-    for (let i =0; i < +handled; i++ ) {
-      const _address = ModelValueAddress.create({
-        async trigger () {
-          const { handled } = this
-          // XXX: 目前无法得知 lpt 对应多少奖励币种
-          // TODO: temp
-          // TODO: 应该先知道 lpt 对应哪些奖励 token
-          if (handled === process.env.VUE_APP_MAIN_SFINANCE_USD5_TOKEN ) {
-console.log('----------- handled', handled)
-            await __root__.settleableReward(tokenAddresses[handled], 0)
-            // await __root__.settleableReward(tokenAddresses[handled], 1) // 0x0000000000000000000000000000000000000000
-            // await __root__.settleableReward(tokenAddresses[handled], 2)
-          }
-          if (handled === process.env.VUE_APP_MAIN_CURVE_3CRV_TOKEN ) {
 
-            // TODO: 目前合约获取不到的临时方案
-            const associatedToken = __root__.getAssociatedToken(tokenAddresses[handled])
 
-            const lpt__ = associatedToken.rewardAddresses[0] = ModelValueAddress.create().setValue(process.env.VUE_APP_MAIN_CRV_TOKEN)
 
-          }
-          // XXX: 如果没有在 tokenAddresses 内的，则应该自动创建
-          // TODO: 考虑如何 multi
-          // await __root__.settleableReward(tokenAddresses[handled], i)
+
+
+  /**
+   * 支持的 lpt 地址
+   * @type {Array}
+   */
+  // TODO: 遍历 lpts()
+  __root__.supportedLptAddresses = []
+
+  /**
+   * 支持的 lpt 数量
+   * - supportedLptNum -> supportedLptAddresses
+   * @type {Object}
+   */
+  __root__.supportedLptNum = ModelValueEther
+    .create({
+      async trigger () {
+        const { handled } = this
+        const { contract, address } = __root__
+
+        // TODO: 
+        const series = []
+
+        for (let i =0; i < +handled; i++ ) {
+          const _address = ModelValueAddress.create({
+            async trigger () {
+              const { handled } = this
+              // XXX: 目前无法得知 lpt 对应多少奖励币种
+              // TODO: temp
+              // TODO: 应该先知道 lpt 对应哪些奖励 token
+            //  TODO: 目前两个池子都只有一个奖励
+                await __root__.settleableReward(tokenAddresses[handled], 0)
+                // await __root__.settleableReward(tokenAddresses[handled], 1) // 0x0000000000000000000000000000000000000000
+                // await __root__.settleableReward(tokenAddresses[handled], 2)
+              
+              // XXX: 如果没有在 tokenAddresses 内的，则应该自动创建
+              // TODO: 考虑如何 multi
+              // await __root__.settleableReward(tokenAddresses[handled], i)
+            }
+          })
+          __root__.supportedLptAddresses[i] = _address
+
+          series.push({
+            call: [
+              address,
+              contract.methods.lpts(i).encodeABI()
+            ],
+            target: __root__.supportedLptAddresses[i]
+          })
         }
-      })
-      __root__.supportedLptAddresses[i] = _address
 
-      series.push({
-        decodeType: __root__.supportedLptAddresses[i].type,
-        call: [
-          address,
-          contract.methods.lpts(i).encodeABI()
-        ],
-        target: __root__.supportedLptAddresses[i]
-      })
-    }
+        await swaps.multicall.batcher(series)
+      }
+    })
+    .init(function () {
+      swaps.multicall.series([
+        { call: [address, contract.methods.lptN().encodeABI()], target: this }
+      ])
+    })
 
-    await swaps.multicall.batcher(series)
-  }
-})
-
-/**
- * 支持的 lpt 地址
- * @type {Array}
- */
-// TODO: 遍历 lpts()
-__root__.supportedLptAddresses = []
-
-/**
- * 
- */
-// TODO: 
-__root__.burnMinVol = ModelValueEther.create()
+  /**
+   * 支持的奖励 token 地址
+   */
+  // TODO: rewards()
+  // TODO: temp
+  // TODO: 过渡品
+  __root__.supportedRewardAddresses = []
 
 /**
  * 支持的奖励 token 数量
@@ -155,7 +157,7 @@ __root__.supportedRewardNum = ModelValueEther.create({
       const _address = ModelValueAddress.create({
         async trigger () {
           const { handled } = this
-console.log('address', handled )
+
           // XXX: 如果没有在 tokenAddresses 内的，则应该自动创建
           // TODO: 考虑如何 multi
           await __root__.claimableReward(tokenAddresses[handled])
@@ -165,7 +167,6 @@ console.log('address', handled )
       __root__.supportedRewardAddresses[i] = _address
 
       series.push({
-        decodeType: __root__.supportedRewardAddresses[i].type,
         call: [
           address,
           contract.methods.rewards(i).encodeABI()
@@ -177,14 +178,13 @@ console.log('address', handled )
     await swaps.multicall.batcher(series)
   }
 })
+.init(function () {
+  swaps.multicall.series([
+    { call: [address, contract.methods.rewardN().encodeABI()], target: this }
+  ])
+})
 
-/**
- * 支持的奖励 token 地址
- */
-// TODO: rewards()
-// TODO: temp
-// TODO: 过渡品
-__root__.supportedRewardAddresses = []
+
 
 /**
  * TODO: 
@@ -192,7 +192,7 @@ __root__.supportedRewardAddresses = []
  * - 自带授权
  * @param {Object} _token
  */
-__root__.mint = async function (_token) {
+__root__.mint = async _token => {
   const { contract, address, state } = this
   const walletAddress = storeWallet.address.handled
 
@@ -473,7 +473,7 @@ __root__.claimReward = async (_token) => {
   const walletAddress = storeWallet.address.handled
 
   const associatedToken = __root__.getAssociatedToken(_token)
-
+  console.log('11111')
   // 限制当前提交待确认的交易只有一份
   associatedToken.state.beforeUpdate()
 
@@ -493,57 +493,56 @@ __root__.claimReward = async (_token) => {
     console.error(err)
   }
 
-  return _method.send(sendOpts)
-    .once('transactionHash', transactionHash => {
-      notify.handler(transactionHash)
+    return _method.send(sendOpts)
+      .once('transactionHash', transactionHash => {
+        notify.handler(transactionHash)
 
-      listenEvent({
-        name: 'ClaimTo',
-        contract,
-        transactionHash
-      }).then(data => {
-        /* data
-          {
-            returnValues: {
-              agent: "0x"
-              reward: "0x"
-              tip: "0"
-              to: "0x"
-              vol: "1110"
+        listenEvent({
+          name: 'ClaimTo',
+          contract,
+          transactionHash
+        }).then(data => {
+          /* data
+            {
+              returnValues: {
+                agent: "0x"
+                reward: "0x"
+                tip: "0"
+                to: "0x"
+                vol: "1110"
+              }
             }
-          }
-        */
-        const { returnValues } = data
-        const filter = returnValues.agent === walletAddress
+          */
+          const { returnValues } = data
+          const filter = returnValues.agent === walletAddress
 
-        if (!filter) return false
+          if (!filter) return false
 
-        dismiss() // 销毁
-        associatedToken.state.afterUpdate()
+          dismiss() // 销毁
+          associatedToken.state.afterUpdate()
 
-        // sync
-        // TODO: multi
-        // TODO: 考虑从 reward 定位，但 vol 针对的是什么量还未知，看文档
-        __root__.claimableReward(_token)
-        __root__.claimedReward(_token)
+          // sync
+          // TODO: multi
+          // TODO: 考虑从 reward 定位，但 vol 针对的是什么量还未知，看文档
+          __root__.claimableReward(_token)
+          __root__.claimedReward(_token)
+        }).catch(err => {
+          dismiss() // 销毁
+
+          associatedToken.state.afterUpdate()
+        })
+    
       }).catch(err => {
         dismiss() // 销毁
 
+        notify.updateError({
+          update,
+          code: err.code,
+          message: err.message
+        })
+
         associatedToken.state.afterUpdate()
       })
-  
-    }).catch(err =>{
-      console.error(err)
-      dismiss() // 销毁
-
-      notify.updateError({
-        update,
-        code: err.code,
-        message: err.message
-      })
-
-      associatedToken.state.afterUpdate()
-    })
 }
 
 /**
@@ -600,7 +599,6 @@ __root__.claimedReward = async function (_token) {
 
   // TODO:
   const lpt__ = associatedToken.rewardAddresses[idx] = ModelValueAddress.create().setValue(reward)
-  console.log('settleableReward--------', reward)
 
   // 在 lpt 下的
   // TODO: 这里得先确定 tokenAddresses 内有奖励 token
@@ -794,5 +792,5 @@ __root__.burn = async function (_token) {
   })
   
 }
-
-export default __root__
+  
+}))

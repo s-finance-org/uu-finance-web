@@ -1,3 +1,4 @@
+import { reactive } from 'vue'
 import BN from 'bignumber.js'
 import Web3 from 'web3'
 
@@ -18,12 +19,13 @@ import ModelValueError from './base/error'
 import ModelState from './base/state'
 
 import storeWallet from '../store/wallet'
+
 import i18n from '../i18n'
 import notify from '../store/notify'
 
 import { USD } from '../store/currencies'
 
-import { now, floor, isPlainObject } from '../utils'
+import { floor } from '../utils'
 import ModelValueAddress from './value/address'
 import { listenEvent } from '../store/helpers/methods'
 
@@ -36,7 +38,6 @@ export default {
    * @param {string=} opts.icon 缺省与 code 相同
    * @param {boolean=} opts.isLpt 是否为 lp token // TODO: 暂无作用
    * @param {string=} opts.poolName TODO: 限 lpt
-   * @param {Function=} opts.customSeries 自定义列队 multi call
    * @param {Object=} opts.customAssociatedTokenModel 追加 associatedToken 数据集的单元 Modal
    * 
    * 
@@ -61,7 +62,6 @@ export default {
     icon = '',
     isLpt = false,
     poolName = '',
-    customSeries = () => [],
     customAssociatedTokenModel = () => ({}),
     acquisitionUrl = '',
     viewDecimal = 4,
@@ -118,7 +118,19 @@ export default {
       return null
     }
 
-    return {
+    return reactive({
+      /**
+       * 链式方法扩展
+       * - this 指为根
+       * @param {Function} callback(this)
+       * @return {!Object}
+       */
+      extend (callback) {
+        callback.apply(this, [this])
+
+        return this
+      },
+
       parameters,
       // TODO: 待考虑取消
       ...parameters,
@@ -175,7 +187,6 @@ export default {
             __store__.isCcontractBase = true
           }
         }
-
         return __store__.contract
       },
 
@@ -195,24 +206,14 @@ export default {
         } = parameters
         const { address, contract, name, symbol, totalSupply } = this
 
-        const baseSeries = [
-          { decodeType: decimals.type, call: [address, contract.methods[decimalsMethodName]().encodeABI()], target: decimals },
-          { decodeType: name.type, call: [address, contract.methods[nameMethodName]().encodeABI()], target: name },
-          { decodeType: symbol.type, call: [address, contract.methods[symbolMethodName]().encodeABI()], target: symbol },
-          { decodeType: totalSupply.type, call: [address, contract.methods[totalSupplyMethodName]().encodeABI()], target: totalSupply }
-        ]
-
         // FIXME: 待完善
         return [
-          ...baseSeries,
-          // 自定义的
-          ...this.customSeries()
+          { call: [address, contract.methods[decimalsMethodName]().encodeABI()], target: decimals },
+          { call: [address, contract.methods[nameMethodName]().encodeABI()], target: name },
+          { call: [address, contract.methods[symbolMethodName]().encodeABI()], target: symbol },
+          { call: [address, contract.methods[totalSupplyMethodName]().encodeABI()], target: totalSupply }
         ]
       },
-      /**
-       * 自定义丢列
-       */
-      customSeries,
 
       price: ModelValueEther.create(parameters),
       // XXX: this.getPriceMethod 为合约方法，getPrice为自定义方法，取其一
@@ -619,8 +620,6 @@ export default {
                 })
               })
           } catch (err) {
-            console.error(err)
-
             notify.updateError({
               update,
               code: err.code,
@@ -629,6 +628,10 @@ export default {
 
             state.afterUpdate()
           }
+        }).catch(err => {
+          // TODO: 
+  console.error(err)
+          state.afterUpdate()
         })
       },
 
@@ -658,6 +661,6 @@ export default {
 
       state: ModelState.create(stateParams),
       error: ModelValueError.create(),
-    }
+    })
   }
 }

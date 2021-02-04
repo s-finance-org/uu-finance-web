@@ -2,7 +2,7 @@
   <span class="icon-lpt" :style=style>
     <icon-token
       v-for="token in tokens"
-      :key="'icon-lpt-' + token.icon"
+      :key="'icon-lpt-' + token.code"
       :code=token.code
       :size=token.size />
   </span>
@@ -37,7 +37,7 @@ export default {
     },
     tokens () {
       const { size, code } = this
-      // TODO: 规划好 2~6的规则，以及 52、16 时的内间距
+      // TODO: 规划好
       const tokenSize = +size * 0.6
 
       return code.split('_').map(tokenCode => ({ size: tokenSize, code: tokenCode }))

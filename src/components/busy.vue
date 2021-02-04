@@ -1,19 +1,22 @@
 <template>
-  <a-spin :indicator="indicator" :spinning="busying" :wrapperClassName="className" >
-    <slot></slot>
-  </a-spin>
+  <span>
+    <a-spin :indicator="indicator" :spinning="busying">
+      <slot></slot>
+    </a-spin>
+  </span>
 </template>
 
 <script>
+// import { ASpin } from 'ant-design-vue'
 import { LoadingOutlined } from '@ant-design/icons-vue';
 
 export default {
   name: 'busy',
   props: {
     busying: Boolean,
-    className: [Object, Array, String],
   },
   components: {
+    // ASpin,
     LoadingOutlined,
   },
   data() {

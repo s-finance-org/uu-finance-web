@@ -9,7 +9,7 @@ export default {
   }),
   ant: ant_zhCN,
   error: {
-    '4001': 'MetaMask：用户拒绝了交易。'
+    4001: 'MetaMask：已拒绝当前交易。'
   },
   message: {
     valueOutValidRange: '值不在有效范围内',
@@ -125,7 +125,7 @@ export default {
         paidReward: '已领取奖励',
         totalReward: '合计奖励',
         receiveAward: '领取奖励',
-        sideTip: '你可以选择每次只领取一种奖励也或者一次性全部领取，领取奖励之前需要有结算者先进行结算。如果你有代币奖励超过 7 天未领取将可能被他人代领。代领人可以获得代领奖励的 10%，剩余部分自动发放至你的钱包。'
+        sideTip: '你可以选择每次只领取一种奖励也或者一次性全部领取，领取奖励之前需要有结算者先进行结算。'
       },
       claimTo: {
         tab: '帮 Ta 代领',
@@ -133,7 +133,7 @@ export default {
         rewardRate: '代领奖励率',
         behalfRewards: '代领奖励',
         behalfReceiveRewards: '代领奖励',
-        sideTip: '你可以选择每次只领取一种奖励也或者一次性全部领取，领取奖励之前需要有结算者先进行结算。如果你有代币奖励超过 7 天未领取将可能被他人代领。代领人可以获得代领奖励的 10%，剩余部分自动发放至你的钱包。'
+        sideTip: ''
       },
       settle: {
         tab: '参与结算',
