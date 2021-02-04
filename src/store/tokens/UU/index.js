@@ -68,13 +68,6 @@ export default (ModelToken.create({
       ])
     })
 
-  
-
-
-
-
-
-
   /**
    * 支持的 lpt 地址
    * @type {Array}
