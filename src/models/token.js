@@ -193,6 +193,7 @@ export default {
       /** @type {string} */
       totalSupply: ModelValueEther.create(parameters),
 
+      // TODO: 以下针对 lpt
       /**
        * 是否为 LP token
        * @type {boolean}

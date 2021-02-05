@@ -17,7 +17,7 @@ export default {
       handled: __default__.handled
     }
 
-    const result = {
+    return {
       type: 'string',
 
       /**
@@ -31,33 +31,7 @@ export default {
         this.handled = val
       },
 
-      /** @type {string} */
-      get handled () {
-        return __store__.handled
-      },
-      set handled (val) {
-        const { state } = this
-
-        __store__.handled = val + ''
-        state.afterUpdate()
-      },
-
-      /** @type {string} */
-      get view () {
-        const { handled, state } = this
-
-        return state.updated
-          ? handled
-          : __default__.view
-      },
-
       state: ModelState.create()
     }
-
-    // 预设
-    value != undefined
-      && (result.value = value)
-
-    return result
   }
 }

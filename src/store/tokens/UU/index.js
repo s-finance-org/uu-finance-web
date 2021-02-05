@@ -53,6 +53,7 @@ export default (ModelToken.create({
     }
   }
 }).extend(function (__root__) {
+  // 只用于 init()
   const { address, contract } = __root__
 
   /**
@@ -62,11 +63,15 @@ export default (ModelToken.create({
    */
   __root__.totalNetValue = ModelValueEther
     .create(__root__.parameters)
-    .init(function (__this__) {
+    .init(function () {
       swaps.multicall.series([
-        { call: [address, contract.methods.totalNetValue().encodeABI()], target: __this__ }
+        { call: [address, contract.methods.totalNetValue().encodeABI()], target: this }
       ])
     })
+
+
+
+
 
   /**
    * 支持的 lpt 地址
@@ -104,6 +109,7 @@ export default (ModelToken.create({
               // XXX: 如果没有在 tokenAddresses 内的，则应该自动创建
               // TODO: 考虑如何 multi
               // await __root__.settleableReward(tokenAddresses[handled], i)
+                __root__.lptBalance(tokenAddresses[handled])
             }
           })
           __root__.supportedLptAddresses[i] = _address
@@ -117,7 +123,7 @@ export default (ModelToken.create({
           })
         }
 
-        await swaps.multicall.series(series)
+        swaps.multicall.series(series)
       }
     })
     .init(function () {
@@ -134,173 +140,154 @@ export default (ModelToken.create({
   // TODO: 过渡品
   __root__.supportedRewardAddresses = []
 
-/**
- * 支持的奖励 token 数量
- * - supportedRewardNum -> supportedRewardAddresses
- * @type {Object}
- */
-__root__.supportedRewardNum = ModelValueEther.create({
-  async trigger () {
-    const { handled } = this
-    const { contract, address } = __root__
+  /**
+   * 支持的奖励 token 数量
+   * - supportedRewardNum -> supportedRewardAddresses
+   * @type {Object}
+   */
+  __root__.supportedRewardNum = ModelValueEther
+    .create({
+      async trigger () {
+        const { handled } = this
+        const { contract, address } = __root__
 
-    const series = []
+        const series = []
 
-    for (let i = 0; i < +handled; i++ ) {
-      const _address = ModelValueAddress.create({
-        async trigger () {
-          const { handled } = this
+        for (let i = 0; i < +handled; i++ ) {
+          const _address = ModelValueAddress.create({
+            async trigger () {
+              const { handled } = this
 
-          // XXX: 如果没有在 tokenAddresses 内的，则应该自动创建
-          // TODO: 考虑如何 multi
-          await __root__.claimableReward(tokenAddresses[handled])
-          await __root__.claimedReward(tokenAddresses[handled])
+              // XXX: 如果没有在 tokenAddresses 内的，则应该自动创建
+              // TODO: 考虑如何 multi
+              await __root__.claimableReward(tokenAddresses[handled])
+              await __root__.claimedReward(tokenAddresses[handled])
+            }
+          })
+          __root__.supportedRewardAddresses[i] = _address
+
+          series.push({
+            call: [
+              address,
+              contract.methods.rewards(i).encodeABI()
+            ],
+            target: __root__.supportedRewardAddresses[i]
+          })
         }
-      })
-      __root__.supportedRewardAddresses[i] = _address
 
-      series.push({
-        call: [
-          address,
-          contract.methods.rewards(i).encodeABI()
-        ],
-        target: __root__.supportedRewardAddresses[i]
-      })
+        await swaps.multicall.series(series)
+      }
+    })
+    .init(function () {
+      swaps.multicall.series([
+        { call: [address, contract.methods.rewardN().encodeABI()], target: this }
+      ])
+    })
+
+
+
+  /**
+   * TODO: 
+   * lpt 铸造 UU
+   * - 自带授权
+   * @param {Object} _token
+   */
+  this.mint = async _token => {
+    const { contract, address, state } = this
+    const walletAddress = storeWallet.address.handled
+
+    // 校验授权（预防）
+    await _token.approve(address)
+
+    // 限制当前提交待确认的交易只有一份
+    state.beforeUpdate()
+
+    const { update, dismiss } = notify.notification({ message: i18n.$i18n.global.t('global.msg.mintingUU') })
+    // TODO: 是否有必要
+    // update mintGainAmount
+    await this.getLpt2UUVol(_token)
+
+    const sendOpts = {
+      from: walletAddress,
     }
 
-    await swaps.multicall.series(series)
-  }
-})
-.init(function () {
-  swaps.multicall.series([
-    { call: [address, contract.methods.rewardN().encodeABI()], target: this }
-  ])
-})
+    const _method = await contract.methods.mint(
+      _token.address,
+      _token.amount.ether,
+      this.getAssociatedToken(_token).mintGainAmount.ether
+    )
 
-
-
-/**
- * TODO: 
- * lpt 铸造 UU
- * - 自带授权
- * @param {Object} _token
- */
-__root__.mint = async _token => {
-  const { contract, address, state } = this
-  const walletAddress = storeWallet.address.handled
-
-  // 校验授权（预防）
-  await _token.approve(address)
-
-  // 限制当前提交待确认的交易只有一份
-  state.beforeUpdate()
-
-  const { update, dismiss } = notify.notification({ message: i18n.$i18n.global.t('global.msg.mintingUU') })
-  // TODO: 是否有必要
-  // update mintGainAmount
-  await this.getLpt2UUVol(_token)
-
-  const sendOpts = {
-    from: walletAddress,
-  }
-
-  const _method = await contract.methods.mint(
-    _token.address,
-    _token.amount.ether,
-    this.getAssociatedToken(_token).mintGainAmount.ether
-  )
-
-  try {
-    sendOpts.gas = await _method.estimateGas({
-      from: walletAddress,
-    })
-  } catch(err) {
-    console.error(err)
-  }
-
-  return _method.send(sendOpts)
-    .once('transactionHash', transactionHash => {
-      notify.handler(transactionHash)
-
-      // TODO: 这里还有个 UpdatePrice event
-      listenEvent({
-        name: 'Transfer',
-        contract,
-        transactionHash
-      }).then(data => {
-        /* data
-          {
-            returnValues: {
-              from: "0x"
-              to: "0x"
-              value: "0"
-            }
-          }
-        */
-        const { returnValues } = data
-        const filter = returnValues.to === walletAddress
-
-        if (!filter) return false
-
-        dismiss() // 销毁
-        state.afterUpdate()
-
-        // sync
-        _token.walletBalanceOf.trigger()
-      }).catch(err => {
-        dismiss() // 销毁
-        state.afterUpdate()
+    try {
+      sendOpts.gas = await _method.estimateGas({
+        from: walletAddress,
       })
-    })
-    .catch(err =>{
+    } catch (err) {
       console.error(err)
-      dismiss()
+    }
 
-      notify.updateError({
-        update,
-        code: err.code,
-        message: err.message
+    return _method.send(sendOpts)
+      .once('transactionHash', transactionHash => {
+        notify.handler(transactionHash)
+
+        // TODO: 这里还有个 UpdatePrice event
+        listenEvent({
+          name: 'Transfer',
+          contract,
+          transactionHash
+        }).then(data => {
+          /* data
+            {
+              returnValues: {
+                from: "0x"
+                to: "0x"
+                value: "0"
+              }
+            }
+          */
+          const { returnValues } = data
+          const filter = returnValues.to === walletAddress
+
+          if (!filter) return false
+
+          dismiss() // 销毁
+          state.afterUpdate()
+
+          // sync
+          _token.walletBalanceOf.trigger()
+        }).catch(err => {
+          dismiss() // 销毁
+          state.afterUpdate()
+        })
       })
+      .catch(err =>{
+        console.error(err)
+        dismiss()
 
-      state.afterUpdate()
-    })
-}
+        notify.updateError({
+          update,
+          code: err.code,
+          message: err.message
+        })
 
-/**
- * 铸造 UU 可获得的 lpt 量
- * @param {Object} _token
- * @return {Promise}
- */
-__root__.getLpt2UUVol = async function (_token) {
-  const { contract } = this
-  const result = __root__.getAssociatedToken(_token)
+        state.afterUpdate()
+      })
+  }
 
-  // update
-  // TODO: multi
-  result.mintGainAmount.state.beforeUpdate()
-  result.mintGainAmount.ether = await contract.methods.lpt2uu(_token.address, _token.amount.ether).call()
+  /**
+   * lpt 可铸造的 UU 量
+   * @param {Object} _token
+   */
+  __root__.getLpt2UUVol = async function (_token) {
+    const { contract } = this
+    const result = __root__.getAssociatedToken(_token)
 
-  // TODO: 在 multi 未使用之前暂不使用
-  // const lptBalance = await contract.methods.lptBalance(_token.address).call()
-
-  // // TODO: why?
-  // if(minVolEther == lptBalance) {
-  //   minVolEther = await contract.methods.lpt2uu(_token.address, minVolEther).call()
-  // }
-
-  // TODO: 参考
-  // _updatePrice();
-  //   amt = lpt2uu(lpt, vol);
-  //   require(amt >= minMint, 'Slippage screwed you');
-  //   lpt.safeTransferFrom(_msgSender(), address(this), vol);
-  //   address gauge = address(getConfig(_gaugeOfLPT_, lpt));
-  //   if(gauge != address(0)) {
-  //       lpt.safeApprove(gauge, vol);
-  //       Gauge(gauge).deposit(vol);
-  //   }
-  //   _mint(_msgSender(), amt);
-  //   _adjustPriceFactor();
-}
+    // update
+    result.mintGainAmount.state.beforeUpdate()
+    // 当短时间内持续查询，会出现异步造成的数据排序混乱（2次请求先获得2再1）
+    swaps.multicall.series([
+      { call: [address, contract.methods.lpt2uu(_token.address, _token.amount.ether).encodeABI()], target: result.mintGainAmount }
+    ])
+  }
 
 /**
  * 取回 lpt 将销毁 UU 的量
@@ -682,20 +669,22 @@ console.error(err)
     })
 }
 
-/**
-  * lpt 在 UU 中的余额
-  * - 更新 associatedTokens[].balance
-  * @param {Object} _token
-  */
-__root__.lptBalance = async function (_token) {
-  // TODO: 应该自动批量处理
-  const { contract } = this
-  const result = this.getAssociatedToken(_token)
+  /**
+    * lpt 在 UU 中的余额
+    * - 更新 associatedTokens[].balance
+    * @param {Object} _token
+    */
+  __root__.lptBalance = async function (_token) {
+    const { address, contract } = this
+    const result = this.getAssociatedToken(_token)
 
-  // update
-  result.balance.state.beforeUpdate()
-  result.balance.ether = await contract.methods.lptBalance(_token.address).call()
-}
+    // update
+    result.balance.state.beforeUpdate()
+
+    swaps.multicall.series([
+      { call: [address, contract.methods.lptBalance(_token.address).encodeABI()], target: result.balance }
+    ])
+  }
 
 /**
   * lpt 销毁 UU

@@ -85,10 +85,6 @@ console.log('series')
            this.batcher(__a)
         }, 1000)
       }
-
-      
-
-      
     },
     isReady: false,
 

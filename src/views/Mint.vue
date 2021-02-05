@@ -164,10 +164,10 @@ export default {
 
     // await UU.lptBalance(DAI_USDC)
 
-    const { UU, SFINANCE_USD5, CURVE_3CRV } = this.$store.tokens
+    // const { UU, SFINANCE_USD5, CURVE_3CRV } = this.$store.tokens
 
-    UU.lptBalance(SFINANCE_USD5)
-    UU.lptBalance(CURVE_3CRV)
+    // UU.lptBalance(SFINANCE_USD5)
+    // UU.lptBalance(CURVE_3CRV)
   },
   methods: {
     onChange (e) {
