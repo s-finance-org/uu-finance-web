@@ -87,7 +87,17 @@ export default {
         return this.ether
       },
       set value (val) {
-        this.setEther(val)
+        this.setValue(val)
+      },
+      /**
+       * value 链式方法赋值
+       * @param {string} val
+       * @return {Object}
+       */
+      setValue (val) {
+        this.ether = val
+
+        return this
       },
 
       /**
@@ -106,16 +116,6 @@ export default {
         // TODO: 必须是方法
         this.trigger && this.trigger()
         state.afterUpdate()
-      },
-      /**
-       * ether 链式方法赋值
-       * @param {string} val
-       * @return {Object}
-       */
-      setEther (val) {
-        this.ether = val
-
-        return this
       },
 
       /**

@@ -20,11 +20,13 @@ export default {
    * @param {Object} opts
    * @param {string} opts.infuraKey
    * @param {number|string=} opts.networkId 当前配置的网络 ID，默认从 .env 中获取
+   * @param {Array=} opts.supportedWallets 支持的钱包
    * @return {!Object}
    */
   create ({
     infuraKey,
-    networkId = NETWORK_ID
+    networkId = NETWORK_ID,
+    supportedWallets = []
   } = {}) {
     // 创建时的网络 ID，当后面网络切换时的参照而设定为常量
     const NETWORK_ID = +networkId
@@ -83,12 +85,12 @@ export default {
        * @param {number} networkId
        */
       async checkNetwork (networkId) {
-        const { isConnectedWallet } = this
+        const { isConnected } = this
 
         this.networkId = networkId
 
         // 已连上钱包时才可以 walletCheck()，否则需要 walletSelect()，而如果 walletSelect() 则会连续出现2次弹框
-        if (isConnectedWallet) {
+        if (isConnected) {
           // 官方说明需要先调用 walletSelect，但这里 walletSelect 后 body 会被 hidden
           // await onboard.walletSelect(name)
           // 当网络不匹配时，onboard 会要求变更网络
@@ -103,12 +105,12 @@ export default {
        * @type {boolean}
        */
       get isValidated () {
-        const { networkId, address, isConnectedWallet } = this
+        const { networkId, address, isConnected } = this
 
         // 必须与配置的网络 ID 一样
         return networkId === NETWORK_ID
           && address.isValidated
-          && isConnectedWallet
+          && isConnected
       },
 
       /**
@@ -116,7 +118,7 @@ export default {
        * @type {!Object}
        */
       get web3 () {
-        return this.isConnectedWallet && this.walletWeb3
+        return this.isConnected && this.walletWeb3
           // 没链接到钱包
           || this.infuraWeb3
       },
@@ -204,7 +206,7 @@ export default {
           // 使用钱包的
           // wallet.address 有效后会使用钱包赋值的 this.web3，因此先处理 this.web3
           this.walletWeb3 = new Web3(wallet.provider)
-          this.isConnectedWallet = true
+          this.isConnected = true
 
           state.afterUpdate()
         }
@@ -213,7 +215,7 @@ export default {
        * 是否已连上钱包
        * @type {boolean}
        */
-      isConnectedWallet: false,
+      isConnected: false,
 
       /**
        * 重置当前钱包
@@ -222,7 +224,7 @@ export default {
         const { state } = this
 
         // 已经断开则不再重置
-        if (!this.isConnectedWallet) return false
+        if (!this.isConnected) return false
 
         // update
         this.name = ''
@@ -230,7 +232,7 @@ export default {
         this.walletWeb3 = null
 
         state.reset()
-        this.isConnectedWallet = false
+        this.isConnected = false
 
         // 重置 Onboard 钱包状态并断开
         onboard.walletReset()
@@ -242,6 +244,7 @@ export default {
     })
 
     const currentProvider = wallet.web3.currentProvider
+
     // TODO:?
     // const ModelOriginWalletUnit = {
     //   /**
@@ -261,6 +264,8 @@ export default {
     //     }
     //   }
     // }
+
+    // TODO: 支持自定义钱包，并在 App 内自动关联
 
     const originWallets = {
       metamask: {
@@ -291,7 +296,8 @@ export default {
       // imToken
       imToken: {
         onboard: { walletName: "imToken", rpcUrl: infura.RPC_URL },
-        envFactor: currentProvider.isImToken,
+        // NOTE: https://docs.token.im/dapp-sdk/#imtoken
+        envFactor: !!window.imToken || window.ethereum.isImToken,
         envWalletName: 'imToken'
       },
       coinbase: {
@@ -315,7 +321,11 @@ export default {
 
     const wallets = []
 
-    forEach(originWallets, wallet => {
+    forEach(supportedWallets, name => {
+      const wallet = originWallets[name]
+
+      if (!wallet) return false
+
       // 移动端钱包 App 环境限定，或无环境条件
       if (!isMobile || wallet.envFactor) {
         wallets.push(wallet.onboard)
@@ -333,8 +343,8 @@ export default {
           await wallet.checkNetwork(networkId)
         },
         address (address) {
-          // 必须要有 isConnectedWallet，否则断开后再切换账号，仍然会获取地址
-          if (address && wallet.isConnectedWallet) {
+          // 必须要有 isConnected，否则断开后再切换账号，仍然会获取地址
+          if (address && wallet.isConnected) {
             // 唯一 address 赋值处
             wallet.address.setValue(address)
           } else {

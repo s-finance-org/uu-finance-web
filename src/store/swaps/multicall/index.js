@@ -60,7 +60,10 @@ export default ModelSwap.create({
 
           if (item.target) {
             // 通用 IO
-            item.target.value = item.result
+            // TODO: 
+            item.target.setValue
+              ? item.target.setValue(item.result)
+              : (item.target.value = item.result)
           }
         })
       }

@@ -21,6 +21,7 @@ export default {
         mint: 'Mint',
         swap: 'Swap',
         claim: 'Claim',
+        announcement: 'Announcement'
       },
       wallet: {
         change: 'Change',

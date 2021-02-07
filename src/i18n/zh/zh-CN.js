@@ -21,6 +21,7 @@ export default {
         mint: '获得 UU',
         swap: '稳定币兑换',
         claim: '领取收益',
+        announcement: '新鲜事'
       },
       wallet: {
         change: '切换',

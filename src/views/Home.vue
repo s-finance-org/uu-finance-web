@@ -27,6 +27,7 @@
       </a-layout-content>
     </div>
   </a-layout-content>
+
   <a-layout-content class="container-lg px-0">
     <div class="trait d-flex">
       <div class="d-flex flex-wrap px-2 px-lg-5 mx-lg-4">
@@ -60,7 +61,7 @@
         <a v-for="(item, key) in communityLinks"
           :key="key"
           :href=item.href
-          class="text-reset mx-2 px-3 py-3 d-flex flex-column align-items-center"
+          class="text-reset px-3 py-3 d-flex flex-column align-items-center"
           :target=item.target
           :title=item.name>
           <template v-if=item.popover>

@@ -1,9 +1,15 @@
 <template>
+
   DAI_USDC LPT 添加 <br/>
   <token-select-input codes="DAI" />
   <token-select-input codes="USDT" />
   <a-button @click=onStake>存</a-button>
+-----
 
+{{ test }}
+
+
+---
   <p class="fs-1">.fs-1 text</p><h1>text 24</h1>
   <p class="fs-2">.fs-2 text</p><h2>text 24</h2>
   <p class="fs-3">.fs-3 text</p><h3>text</h3>
@@ -29,12 +35,18 @@ export default {
 
       // await tokens.DAI.approve(tokens.DAI_USDT.address)
       // await tokens.USDT.approve(tokens.DAI_USDT.address)
-
-      await pools.DAI_USDT.onStake([0, 1])
-
     }
   },
   computed: {
+    test () {
+      const { wallet } = this.$store
+      window.imToken || window.ethereum.isImToken
+      const result = window.imToken + '   ' + window.ethereum.isImToken
+// return 'currentProvider' + wallet.web3.currentProvider.isImToken
+// return wallet.infuraWeb3.currentProvider
+return ': ' + result
+
+    }
   }
 };
 </script>

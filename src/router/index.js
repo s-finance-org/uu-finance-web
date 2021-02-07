@@ -5,6 +5,7 @@ import Home from '@/views/Home'
 import Test from '@/views/Test'
 import Mint from '@/views/Mint'
 import Swap from '@/views/Swap'
+import Announcement from '@/views/Announcement'
 import Claim from '@/views/Claim'
 import Coming from '@/views/Coming'
 
@@ -34,6 +35,14 @@ const routes = [
         component: Coming,
         meta: {
           suffix: ' - Swap'
+        }
+      },
+      {
+        path: 'announcement',
+        name: 'Announcement',
+        component: Announcement,
+        meta: {
+          suffix: ' - Announcement'
         }
       },
       {

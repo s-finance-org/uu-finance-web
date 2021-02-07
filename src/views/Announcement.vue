@@ -2,121 +2,18 @@
   <a-layout-content class="container-lg px-4">
     <div class="px-lg-5 mx-lg-3">
       <div class="mt-lg-4 mb-4 mb-lg-5 pb-4">
-        <h2 class="fs-2 mb-1">{{ $t('global.mint.title') }}</h2>
-        <span class="fs-6 pe-5 d-block">{{ $t('global.mint.subtitle') }}</span>
+        <h2 class="fs-2 mb-1">{{ $t('layer.header.nav.announcement') }}</h2>
+        <span class="fs-6 pe-5 d-block"></span>
       </div>
 
-      <a-tabs animated type="card" defaultActiveKey="deposit" v-model:activeKey=tabMintAction>
-        <a-tab-pane
-          v-for="(actionItem, key) of structure.mintActions"
-          :key=key
-          :tab=$t(actionItem.tabI18n)
-          class="d-flex flex-wrap">
-          <div class="d-flex flex-column flex-wrap col-12 col-md-8 pe-md-4">
-            <span class="h5 d-block py-1 pt-4">{{ $t(actionItem.selectAssetesI18n) }}</span>
-            <a-radio-group :defaultValue=structure.selectTokenTypeDefaultValue size="small" class="pb-2">
-              <a-radio-button
-                v-for="(item, idx) in structure.selectTokenTypes"
-                :key="'selectTokenType' + idx"
-                :value=item.value
-                :disabled=item.disabled>
-                {{ $t(item.i18n) }}
-              </a-radio-button>
-            </a-radio-group>
-
-            <token-select-input
-              v-model:current="singleSelectCode"
-              :label="$t(actionItem.labelI18n)"
-              :placeholder="$t(actionItem.placeholderI18n)"
-              v-on:changeAmount=changeAmount
-              :approveToAddress=structure.approveToAddress
-              :codes=structure.singleAssetTokens
-              :balanceOf=maxBalanceOf
-              :useApprove=actionItem.useApprove>
-              <template #extra>
-                <small class="ps-2" v-if=actionItem.hasExtra>
-                  <a :href=ixd.singleToken.acquisitionUrl target="_blank">{{ $t('global.base.acquisitionUrl', [ixd.singleToken.symbol.view]) }}</a>
-                </small>
-              </template>
-            </token-select-input>
-          </div>
-
-          <div class="line-frame-thin d-flex p-3 p-md-4 pb-2 pb-md-3 mt-3 mt-md-0 flex-column col-12 col-md-4">
-            <span class="d-flex flex-wrap text-nowrap pb-2 pb-md-3">
-              {{ $t('global.mint.liquidityPool') }}
-              <span class="h4 col text-end ps-3">UU</span>
-            </span>
-            <span class="d-flex flex-wrap text-nowrap pb-2 pb-md-3 text-color-primary">
-              {{ $t(actionItem.preview.leastI18n) }}
-              <span class="h4 col text-end ps-3">
-                <busy :busying="ixd.preview.leastBusy">
-                  {{ ixd.preview.leastVol }} UU
-                </busy>
-              </span>
-            </span>
-            <iIntersect class="d-none d-md-block" />
-          </div>
-
-          <div class="d-flex flex-wrap col-12 col-md-8 pe-md-4 pt-4 justify-content-between align-items-end">
-            <!-- <a-button type="link" size="small" class="p-0 mt-2 order-1 order-md-12 col-12 col-md-auto">
-              高级选项
-            </a-button> -->
-            <span></span>
-            <button-busy
-              :busying=ixd.mintBtn.busy
-              block
-              class="col-12 col-md-auto order-12 order-md-1"
-              :disabled=ixd.mintBtn.disabled
-              type="primary"
-              @click=actionItem.mintBtnClick
-              >
-              {{ $t(actionItem.mintBtnI18n) }}
-            </button-busy>
-          </div>
-        </a-tab-pane>
-      </a-tabs>
-
-      <div class="flex-wrap row" v-if=false>
-        <div class="col-12 col-md">
-          <h5 class="py-3 mb-0">最大滑点</h5>
-          <a-radio-group v-model:value="value1" size="small" @change="onChange" class="pb-3">
-            <a-radio-button value="a">
-              0.5%
-            </a-radio-button>
-            <a-radio-button value="b">
-              1.0%
-            </a-radio-button>
-            <a-radio-button value="c">
-              2.0%
-            </a-radio-button>
-            <a-radio-button value="d">
-              自定义
-            </a-radio-button>
-          </a-radio-group>
-          <a-input suffix="%" disabled="true" placeholder="输入数值"/>
-        </div>
-        <div class="col-12 col-md">
-          <h5 class="py-3 mb-0">Gas 费用</h5>
-          <a-radio-group v-model:value="value1" size="small" @change="onChange" class="pb-3">
-            <a-radio-button value="a">标准（x）</a-radio-button>
-            <a-radio-button value="b">快速（x）</a-radio-button>
-            <a-radio-button value="c">极速（x）</a-radio-button>
-            <a-radio-button value="d">自定义</a-radio-button>
-          </a-radio-group>
-          <a-input disabled="true" placeholder="输入数值" value="99"/>
-        </div>
+      <div class="mb-5 pb-4">
+        {{ $t('layer.coming.title') }}
+        <!-- <h4 class="mb-1">title</h4>
+        <small class="text-color-secondary d-block py-2">date</small>
+        <p class="h5 mt-1 text-align-justify">
+          cont
+        </p> -->
       </div>
-
-      <h4 class="my-4 pt-2">{{ $t('global.base.reserves') }}</h4>
-      <ul class="d-flex flex-wrap">
-        <li v-for="item in reserves"
-          class="h5 text-color-heading pb-2 col-12 col-sm-4"
-          :key="`${item.code}-balance`"
-          >
-          <span class="d-block text-color-secondary">{{ item.code }}</span>
-          {{ item.balance }} ({{ item.proportion }}%)
-        </li>
-      </ul>
     </div>
   </a-layout-content>
 </template>

@@ -7,7 +7,7 @@ import { ModelToken, ModelValueEther, ModelValueAddress, ModelValueUint8 } from 
 import { getDotenvAddress, listenEvent } from '../../helpers/methods'
 import tokenAddresses from '../token-addresses'
 
-import swaps from '../../swaps'
+import multicall from '../../swaps/multicall'
 import storeWallet from '../../wallet'
 import notify from '../../notify'
 import i18n from '../../../i18n'
@@ -64,7 +64,8 @@ export default (ModelToken.create({
   __root__.totalNetValue = ModelValueEther
     .create(__root__.parameters)
     .init(function () {
-      swaps.multicall.series([
+      // this.setValue('10000000000000000000')
+      multicall.series([
         { call: [address, contract.methods.totalNetValue().encodeABI()], target: this }
       ])
     })
@@ -123,11 +124,11 @@ export default (ModelToken.create({
           })
         }
 
-        swaps.multicall.series(series)
+        multicall.series(series)
       }
     })
     .init(function () {
-      swaps.multicall.series([
+      multicall.series([
         { call: [address, contract.methods.lptN().encodeABI()], target: this }
       ])
     })
@@ -175,11 +176,11 @@ export default (ModelToken.create({
           })
         }
 
-        await swaps.multicall.series(series)
+        await multicall.series(series)
       }
     })
     .init(function () {
-      swaps.multicall.series([
+      multicall.series([
         { call: [address, contract.methods.rewardN().encodeABI()], target: this }
       ])
     })
@@ -284,7 +285,7 @@ export default (ModelToken.create({
     // update
     result.mintGainAmount.state.beforeUpdate()
     // 当短时间内持续查询，会出现异步造成的数据排序混乱（2次请求先获得2再1）
-    swaps.multicall.series([
+    multicall.series([
       { call: [address, contract.methods.lpt2uu(_token.address, _token.amount.ether).encodeABI()], target: result.mintGainAmount }
     ])
   }
@@ -670,7 +671,7 @@ console.error(err)
 }
 
   /**
-    * lpt 在 UU 中的余额
+    * 获取 lpt 在 UU 中的余额
     * - 更新 associatedTokens[].balance
     * @param {Object} _token
     */
@@ -680,8 +681,7 @@ console.error(err)
 
     // update
     result.balance.state.beforeUpdate()
-
-    swaps.multicall.series([
+    multicall.series([
       { call: [address, contract.methods.lptBalance(_token.address).encodeABI()], target: result.balance }
     ])
   }

@@ -19,6 +19,7 @@ import ModelValueError from './base/error'
 import ModelState from './base/state'
 
 import storeWallet from '../store/wallet'
+import swaps from '../store/swaps'
 
 import i18n from '../i18n'
 import notify from '../store/notify'
@@ -28,6 +29,8 @@ import { USD } from '../store/currencies'
 import { floor } from '../utils'
 import ModelValueAddress from './value/address'
 import { listenEvent } from '../store/helpers/methods'
+
+import tokenAddresses from '../store/tokens/token-addresses'
 
 export default {
   /**
@@ -106,7 +109,7 @@ export default {
       viewDecimal,
       viewMethod
     }
-    const minAmount = ModelValueEther.create(parameters).setEther(TOKEN_MIN_AMOUNT_ETHER)
+    const minAmount = ModelValueEther.create(parameters).setValue(TOKEN_MIN_AMOUNT_ETHER)
 
     // TODO: 要排除 0x000 和空字符串
     // TODO: 要让 address Model
@@ -118,7 +121,7 @@ export default {
       return null
     }
 
-    return reactive({
+    const result = reactive({
       /**
        * 链式方法扩展
        * - this 指为根
@@ -201,19 +204,24 @@ export default {
       isLpt,
       poolName,
 
-      get initiateSeries () {
+      /**
+       * 链式方法初始化列队
+       * @return {!Object} this
+       */
+      initiateSeries () {
         const {
           decimals
         } = parameters
         const { address, contract, name, symbol, totalSupply } = this
 
-        // FIXME: 待完善
-        return [
+        swaps.multicall.series([
           { call: [address, contract.methods[decimalsMethodName]().encodeABI()], target: decimals },
           { call: [address, contract.methods[nameMethodName]().encodeABI()], target: name },
           { call: [address, contract.methods[symbolMethodName]().encodeABI()], target: symbol },
           { call: [address, contract.methods[totalSupplyMethodName]().encodeABI()], target: totalSupply }
-        ]
+        ])
+
+        return this
       },
 
       price: ModelValueEther.create(parameters),
@@ -255,13 +263,13 @@ export default {
        * - 等同无限授权量
        * @type {Object}
        */
-      maxAmount: ModelValueEther.create(parameters).setEther(TOKEN_MAX_AMOUNT_ETHER),
+      maxAmount: ModelValueEther.create(parameters).setValue(TOKEN_MAX_AMOUNT_ETHER),
       /**
        * 无限授权量的的最小阈值
        * - 无限授权开启时，当已授权低于该值，将再次授权
        * @type {Object}
        */
-      infiniteMinAmount: ModelValueEther.create(parameters).setEther(TOKEN_INFINITE_MIN_AMOUNT_ETHER),
+      infiniteMinAmount: ModelValueEther.create(parameters).setValue(TOKEN_INFINITE_MIN_AMOUNT_ETHER),
 
       /**
        * 量值
@@ -663,5 +671,9 @@ export default {
       state: ModelState.create(stateParams),
       error: ModelValueError.create(),
     })
+
+    // TODO: temp
+    // TODO: 是否还有很好的方案
+    return (tokenAddresses[result.address] = result.initiateSeries())
   }
 }

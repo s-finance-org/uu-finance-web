@@ -21,6 +21,8 @@ for(let lang in languages) {
   supports[lang] = languages[lang].__lang__
 }
 
+// TODO: 支持由 locale= 控制 i18n
+
 const __store__ = {
   // 缓存 i18n 标识
   locale: localStorage.getItem(cacheLocaleKey)

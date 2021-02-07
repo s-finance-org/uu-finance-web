@@ -1,7 +1,7 @@
 <template>
   <a-layout-header ref="header" class="container-fluid px-0 d-flex justify-content-center align-items-center">
     <div class="header container-lg px-4 px-lg-0 d-flex align-items-center">
-      <router-link to="/" class="d-flex logo-mark pe-2">
+      <router-link to="/" class="d-flex pe-2">
         <iLogo class="me-3" />
       </router-link>
       <a-menu
@@ -185,6 +185,7 @@ export default {
         { id: 'Mint', to: '/mint', i18n: 'layer.header.nav.mint' },
         // { id: 'Swap', to: '/swap', i18n: 'layer.header.nav.swap' },
         { id: 'Claim', to: '/claim', i18n: 'layer.header.nav.claim' },
+        { id: 'Announcement', to: '/announcement', i18n: 'layer.header.nav.announcement' },
       ]
     },
     currentViewName: {

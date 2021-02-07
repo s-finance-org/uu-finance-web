@@ -1,8 +1,5 @@
 import { reactive } from 'vue'
 
-import swaps from '../swaps'
-import tokenAddresses from './token-addresses'
-
 import DAI from './DAI'
 import USDT from './USDT'
 import USDC from './USDC'
@@ -21,7 +18,7 @@ import CURVE_3CRV from './CURVE_3CRV'
  * 以 token code 为 key 的数据集
  * @type {!Object}
  */
-const tokens = reactive({
+export default reactive({
   DAI,
   USDT,
   USDC,
@@ -38,17 +35,3 @@ const tokens = reactive({
   // DAI_USDC, // test
   // DAI_USDT, // test
 })
-
-// FIXME: temp
-let initiateTokens = []
-Object.values(tokens).forEach(token => {
-  if (token && token.address) {
-    tokenAddresses[token.address] = token
-
-    initiateTokens = initiateTokens.concat(token.initiateSeries)
-  }
-
-})
-swaps.multicall.batcher(initiateTokens)
-
-export default tokens

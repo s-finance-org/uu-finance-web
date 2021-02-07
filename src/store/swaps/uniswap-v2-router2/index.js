@@ -1,7 +1,7 @@
 import BN from 'bignumber.js'
 
 import abi from './abi'
-import { ModelSwap } from '../../../models'
+import ModelSwap from '../../../models/swap'
 import { getDotenvAddress } from '../../helpers/methods'
 
 export default ModelSwap.create({
