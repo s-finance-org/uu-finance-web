@@ -65,7 +65,8 @@ export default {
       acquisitionUrl: 'Get {0}',
       totalAPY: 'Total APY',
       account: 'Account',
-      connectedWallet: 'Connected with {0}'
+      connectedWallet: 'Connected with {0}',
+      preview: 'preview'
     },
     msg: {
       resettingApprove: 'Resetting approve',
@@ -88,7 +89,7 @@ export default {
       trait3_t: 'Multi-earnings',
       trait3_c: 'Earnings include fee、APY and other token reward',
       trait4_t: 'Safe & Transparent',
-      trait4_c: 'UU is totally community-oriented, with full safety and transparency of block-chain technology.',
+      trait4_c: 'UU is totally community-oriented, with full safety and transparency of block-chain technology.The UU smart contract has passed the security audit of Armors Labs',
     },
     mint: {
       title: 'Deposit stable coins to get UU',

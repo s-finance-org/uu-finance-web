@@ -65,7 +65,8 @@ export default {
       acquisitionUrl: '获取 {0}',
       totalAPY: '合计 APY',
       account: '账户',
-      connectedWallet: '已连接至 {0}'
+      connectedWallet: '已连接至 {0}',
+      preview: '查看'
     },
     msg: {
       resettingApprove: '正在重置授权',
@@ -88,7 +89,7 @@ export default {
       trait3_t: '多重收益',
       trait3_c: '收益包括交易手续费、存款利率以及其它代币奖励',
       trait4_t: '安全透明',
-      trait4_c: 'UU 完全属于社区，充分利用了区块链技术的安全性与透明性',
+      trait4_c: 'UU 完全属于社区，充分利用了区块链技术的安全性与透明性，智能合约由 Armors Labs 完成安全审计',
     },
     mint: {
       title: '存入稳定币资产，获得 UU',

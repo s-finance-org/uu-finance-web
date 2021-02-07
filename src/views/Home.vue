@@ -38,7 +38,12 @@
             <component :is="item.component"></component>
           </span>
           <h4 class="fs-4 mb-1 mt-3">{{ $t(item.titleI18n) }}</h4>
-          <span class="text-center text-lg-start">{{ $t(item.contI18n) }}</span>
+          <span class="text-center text-lg-start">
+            {{ $t(item.contI18n) }}
+            <span v-if=item.moreHref>
+              <a :href=item.moreHref target="_blank">({{ $t(item.moreI18n) }})</a>
+            </span>
+          </span>
         </div>
       </div>
     </div>
@@ -126,7 +131,7 @@ export default {
         { component: iHomeTrait1, titleI18n: 'global.home.trait1_t', contI18n: 'global.home.trait1_c' },
         { component: iHomeTrait2, titleI18n: 'global.home.trait2_t', contI18n: 'global.home.trait2_c' },
         { component: iHomeTrait3, titleI18n: 'global.home.trait3_t', contI18n: 'global.home.trait3_c' },
-        { component: iHomeTrait4, titleI18n: 'global.home.trait4_t', contI18n: 'global.home.trait4_c' }
+        { component: iHomeTrait4, titleI18n: 'global.home.trait4_t', contI18n: 'global.home.trait4_c', moreHref: '/img/UU_audit.pdf', moreI18n: 'global.base.preview' }
       ]
     },
     communityLinks () {
