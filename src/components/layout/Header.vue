@@ -1,18 +1,8 @@
 <template>
   <a-layout-header ref="header" class="container-fluid px-0 d-flex flex-column justify-content-center align-items-center">
     <div class="statement-banner container-fluid p-1" v-show="statementTitle">
-      {{ statementTitle }}
-      <a @click="onStatement" href="javascript:void(0);">{{ $t('global.base.more') }}</a>
-      <a-modal
-        v-model:visible="statementModalVisible"
-        :title="statementTitle"
-        centered
-        :okText="$t('layer.header.statement.close')"
-        maskClosable
-        :cancelText="$t('layer.header.statement.more')"
-      >
-        12123
-      </a-modal>
+      <span v-html=statementTitle></span>
+      <a class="px-2" @click="onStatement" href="javascript:void(0);">{{ $t('global.base.more') }}</a>
     </div>
     <div ref="headerContent" class="header-content container-lg px-4 px-lg-0 d-flex align-items-center">
       <router-link to="/" class="d-flex pe-2">
@@ -99,6 +89,7 @@
 </template>
 
 <script>
+import { h } from 'vue'
 import { Button, Layout, Menu, Drawer, Modal } from 'ant-design-vue'
 import { iLogo } from '../../components/icons'
 import { parseAntComponent } from '../../utils/helpers'
@@ -113,7 +104,6 @@ export default {
     return {
       menuVisible: false,
       walletAccountInfoVisible: false,
-      statementModalVisible: false,
       copied: false,
     };
   },
@@ -175,8 +165,15 @@ export default {
       const { i18n: { $i18n, locale }, announcements: { statement } } = this.$store
 
       const modal = Modal.confirm({
-        title: statement[locale].title,
-        content: statement[locale].content,
+        title: h('div', {
+          class: ['fs-5', 'pb-3'],
+          innerHTML: statement[locale].title,
+        }),
+        forceRender: true,
+        content: h('p', {
+          class: ['fs-6'],
+          innerHTML: statement[locale].content,
+        }),
         centered: true,
         mask: false,
         okText: $i18n.global.t('layer.header.statement.close'),
