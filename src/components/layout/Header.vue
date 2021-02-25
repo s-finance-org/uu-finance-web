@@ -1,6 +1,6 @@
 <template>
   <a-layout-header ref="header" class="container-fluid px-0 d-flex flex-column justify-content-center align-items-center">
-    <div class="statement-banner container-lg p-1" v-show="statementTitle">
+    <div class="statement-banner container-fluid p-1" v-show="statementTitle">
       {{ statementTitle }}
       <a @click="onStatement" href="javascript:void(0);">{{ $t('global.base.more') }}</a>
       <a-modal
