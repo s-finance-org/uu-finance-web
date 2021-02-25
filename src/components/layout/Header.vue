@@ -169,6 +169,7 @@ export default {
           class: ['fs-5', 'pb-3'],
           innerHTML: statement[locale].title,
         }),
+        width: 720,
         forceRender: true,
         content: h('p', {
           class: ['fs-6'],
