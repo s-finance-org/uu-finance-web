@@ -30,6 +30,10 @@ export default {
         copyAddress: 'Copy Address',
         copiedAddress: 'Copied',
         viewOnEtherscan: 'View on Etherscan'
+      },
+      statement: {
+        more: 'More',
+        close: 'Ok'
       }
     },
     community: {
@@ -67,7 +71,8 @@ export default {
       totalAPY: 'Total APY',
       account: 'Account',
       connectedWallet: 'Connected with {0}',
-      preview: 'preview'
+      preview: 'preview',
+      more: 'More'
     },
     msg: {
       resettingApprove: 'Resetting approve',

@@ -30,6 +30,10 @@ export default {
         copyAddress: '复制地址',
         copiedAddress: '已复制',
         viewOnEtherscan: '在区块浏览器中查看'
+      },
+      statement: {
+        more: '了解更多',
+        close: '知道了'
       }
     },
     community: {
@@ -67,7 +71,8 @@ export default {
       totalAPY: '合计 APY',
       account: '账户',
       connectedWallet: '已连接至 {0}',
-      preview: '查看'
+      preview: '查看',
+      more: '更多',
     },
     msg: {
       resettingApprove: '正在重置授权',

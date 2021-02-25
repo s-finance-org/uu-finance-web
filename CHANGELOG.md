@@ -1,3 +1,8 @@
+## 2020022515
+
+- A 顶部公告
+- C 调整时间格式
+
 ## 2020022511
 
 - A 支持 url param locale= 变更 i18n
@@ -5,6 +10,7 @@
 - C 优化组件按需加载
 - C 调整 ModelValue 中 trigger 的处理流程，使其不依赖异步
 - C 修复图标拼接、样式
+
 ## 2020022503
 
 - F Safari 下无法显示的问题
@@ -14,6 +20,7 @@
 - C 调整 ModelValueEther
 - C 调整 ModelToken 在创建时就触发数据更新，而非 store.tokens 时
 - C 调整移动端适配
+
 ## 2020020410
 
 - C 针对 MetaMask 的 window.web3 淘汰做处理

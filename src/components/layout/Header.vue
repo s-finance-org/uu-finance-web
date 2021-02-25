@@ -1,6 +1,20 @@
 <template>
-  <a-layout-header ref="header" class="container-fluid px-0 d-flex justify-content-center align-items-center">
-    <div class="header container-lg px-4 px-lg-0 d-flex align-items-center">
+  <a-layout-header ref="header" class="container-fluid px-0 d-flex flex-column justify-content-center align-items-center">
+    <div class="statement-banner container-lg p-1" v-show="statementTitle">
+      {{ statementTitle }}
+      <a @click="onStatement" href="javascript:void(0);">{{ $t('global.base.more') }}</a>
+      <a-modal
+        v-model:visible="statementModalVisible"
+        :title="statementTitle"
+        centered
+        :okText="$t('layer.header.statement.close')"
+        maskClosable
+        :cancelText="$t('layer.header.statement.more')"
+      >
+        12123
+      </a-modal>
+    </div>
+    <div ref="headerContent" class="header-content container-lg px-4 px-lg-0 d-flex align-items-center">
       <router-link to="/" class="d-flex pe-2">
         <iLogo class="me-3" />
       </router-link>
@@ -16,19 +30,6 @@
       </a-menu>
 
       <div class="ms-auto">
-        <!-- <a-dropdown v-if=wallet.isValidated placement="bottomRight">
-          <a-button class="d-flex align-items-center" size="small" :title="wallet.address">
-            <span class="point point-primary me-2"></span>
-            {{ wallet.addressShortened }}
-            <span class="icon-downOutlined ms-2"></span>
-          </a-button>
-          <template #overlay>
-            <a-menu @click="onWalletMenuClick">
-              <a-menu-item key="change">{{ $t('layer.header.wallet.change') }}</a-menu-item>
-              <a-menu-item key="reset">{{ $t('layer.header.wallet.disconnect') }}</a-menu-item>
-            </a-menu>
-          </template>
-        </a-dropdown> -->
         <a-button @click="onWalletMenuClick" class="d-flex align-items-center pe-3" size="small">
           <template v-if=wallet.isValidated>
             <span class="point point-primary me-2"></span>
@@ -78,7 +79,7 @@
       </a-button>
     </div>
   </a-layout-header>
-  <div class="header-holder"></div>
+  <div ref="headerHolder" class="header-holder"></div>
 
   <a-drawer
     placement="right"
@@ -112,14 +113,16 @@ export default {
     return {
       menuVisible: false,
       walletAccountInfoVisible: false,
+      statementModalVisible: false,
       copied: false,
     };
   },
-  mounted () {
+  async mounted () {
     window.addEventListener('scroll', this.handleScroll, true) // 监听滚动事件
-    this.handleScroll()
-
     this.copyAddress()
+
+    await this.$store.announcements.update()
+    this.handleScroll()
   },
   beforeUnmount () {
     window.removeEventListener('scroll', this.scrollToTop, true)
@@ -130,7 +133,9 @@ export default {
 
       if (this.$refs.header.$el) {
         this.$refs.header.$el.style.backgroundColor = `rgba(255, 255, 255, ${scrollTop / 333} )`
-        this.$refs.header.$el.style.height = 120 - scrollTop / 5 + 'px'
+        this.$refs.headerContent.style.marginTop = 20 - scrollTop / 10 + 'px'
+        this.$refs.headerContent.style.marginBottom = 20 - scrollTop / 10 + 'px'
+        this.$refs.headerHolder.style.height = this.$refs.header.$el.offsetHeight + 'px'
       }
     },
     showDrawer() {
@@ -164,14 +169,22 @@ export default {
       } else {
         wallet.changeWallet()
       }
+    },
+    onStatement () {
+      const { $router } = this
+      const { i18n: { $i18n, locale }, announcements: { statement } } = this.$store
 
-      // const KEYS = {
-      //   change: () => { wallet.changeWallet() },
-      //   reset: () => { wallet.resetWallet() },
-      // }
-
-      // KEYS[val.key]
-      //   && KEYS[val.key]()
+      const modal = Modal.confirm({
+        title: statement[locale].title,
+        content: statement[locale].content,
+        centered: true,
+        maskClosable: true,
+        okText: $i18n.global.t('layer.header.statement.close'),
+        cancelText: $i18n.global.t('layer.header.statement.more'),
+        onCancel () {
+          $router.push({ name: 'Announcement', path: '/announcement' })
+        }
+      })
     }
   },
   computed: {
@@ -193,6 +206,16 @@ export default {
       const { wallet } = this.$store
 
       return wallet
+    },
+    statementTitle () {
+      const { announcements: { statement }, i18n } = this.$store
+      
+      // this.$i18n.locale = key
+
+      // return this.$store.i18n
+      return statement &&
+        statement[i18n.locale] &&
+        statement[i18n.locale].title
     }
   }
 }
@@ -200,10 +223,31 @@ export default {
 
 <style lang="less">
 .ant-layout-header {
+  height: auto !important;
   position: fixed;
   z-index: 10;
   backdrop-filter: blur(60px);
   // background-color: rgba(255, 255, 255, 0.6);
+  .statement-banner {
+    background-color: #50B2B2;
+    color: rgba(255,255,255,0.85);
+    text-align: center;
+    line-height: 20px;
+    font-size: 12px;
+    a {
+      color: #fff;
+      padding-right: 8px;
+      text-decoration: underline;
+    }
+  }
+  .header-content {
+    padding-top: 20px;
+    padding-bottom: 20px;
+  }
+}
+
+.header-holder {
+  height: 148px;
 }
 
 .navSide {
@@ -231,10 +275,6 @@ export default {
       border-right: 0px;
     }
   }
-}
-
-.header-holder, .ant-layout-header{
-  height: 120px;
 }
 
 .walletAccountInfo {

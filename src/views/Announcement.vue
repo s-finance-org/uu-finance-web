@@ -35,10 +35,6 @@ export default {
     ...parseAntComponent([Layout.Content, List]),
     Busy
   },
-  async mounted () {
-    await this.$store.announcements.update()
-  },
-  methods: {},
   computed: {
     // 结构性
     structure () {

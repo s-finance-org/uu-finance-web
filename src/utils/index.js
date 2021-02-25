@@ -640,7 +640,7 @@ export const request =  {
         var reQueryString = /\?/
         url = originalUrl + (reQueryString.test(originalUrl) ? '&' : '?') + '_=' + now()
     }
-console.log(this._cacheExpire)
+
     // 是否有配置缓存
     if (this._cacheExpire > 0) {
       // NOTE: params 内不应含有带时效性强的时间戳等值
@@ -649,8 +649,6 @@ console.log(this._cacheExpire)
       const ls = localStorage.get(name)
 
       this._cacheName = name
-console.log('name', name)
-console.log(ls , ls&&  ls['__EXPIREDATE__'] > now())
       if (ls && ls['__EXPIREDATE__'] > now()) {
         return new Promise((resolve, reject) => {
           resolve(ls.data)
@@ -663,7 +661,6 @@ console.log(ls , ls&&  ls['__EXPIREDATE__'] > now())
     return fetch(url, opts)
       .then(response => response.json())
       .then(data => {
-  console.log('data      ', isCacheExpired, this._cacheName, this._cacheExpire )
         if (isCacheExpired) {
           const timestamp = now()
 

@@ -1,3 +1,4 @@
+import formatDate from 'date-and-time'
 import { ModelState } from '../models'
 
 import { request, forEach } from '../utils'
@@ -5,6 +6,7 @@ import { request, forEach } from '../utils'
 /**
  * @type {!Object}
  */
+// TODO: 
 const I18N_CONVERT_TAGS = {
   'en': 'en-US',
   'zh-cn': 'zh-CN'
@@ -25,7 +27,7 @@ export default {
             id: item.id,
             title: content.title,
             content: content.content,
-            createAt: item.create_at
+            createAt: formatDate.format(new Date(item.create_at), 'YYYY/MM/DD HH:mm:ss [UTC]Z')
           }
         }
       })
