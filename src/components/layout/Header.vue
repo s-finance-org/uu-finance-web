@@ -178,11 +178,12 @@ export default {
         title: statement[locale].title,
         content: statement[locale].content,
         centered: true,
-        maskClosable: true,
+        mask: false,
         okText: $i18n.global.t('layer.header.statement.close'),
         cancelText: $i18n.global.t('layer.header.statement.more'),
-        onCancel () {
+        onCancel (close) {
           $router.push({ name: 'Announcement', path: '/announcement' })
+          close()
         }
       })
     }
