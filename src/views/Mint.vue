@@ -198,7 +198,7 @@ export default {
             ..._token.parameters,
             async trigger () {
               // TODO: 1e18
-              return BN(UU.walletBalanceOf.ether).div(await UU.getLptPrice(_token)).times(_token.precision).toString()
+              this.setValue(BN(UU.walletBalanceOf.ether).div(await UU.getLptPrice(_token)).times(_token.precision).toString())
             }
             // TODO: temp 临时写法
           }).setValue(BN(UU.walletBalanceOf.ether).div(await UU.getLptPrice(_token)).times(_token.precision).toString())

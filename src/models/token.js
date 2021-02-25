@@ -647,7 +647,6 @@ export default {
       walletBalanceOf: ModelValueWallet.create({
         ...parameters,
         async trigger () {
-console.log('walletBalanceOf', code,  address , this)
           swaps.multicall.series([
             { call: [address, __store__.contract.methods[balanceOfMethodName](this.address).encodeABI()], target: this, result }
           ])
