@@ -1,27 +1,44 @@
 import ModelValueError from './base/error'
 import storeWallet from '../store/wallet'
+import { getDotenvAddress } from '../store/helpers/methods'
 
 export default {
   /**
    * @param {Object} opts
-   * @param {string=} opts.code // TODO: 暂无作用
-   * @param {string=} opts.address
+   * @param {string} opts.code
+   * @param {string=} opts.address 地址，address 选其一
+   * @param {string=} opts.dotenvAddressName 使用 getDotenvAddress() 规则来获取，address 选其一，会替换 address
    * @param {Array=} opts.abi
-   * @param {Object=} opts.methods
    * @return {!Object}
    */
   create ({
     code = '',
     address = '',
-    abi = [],
-    methods = {}
+    dotenvAddressName = '',
+    abi = []
   } = {}) {
     const __store__ = {
       contract: null
     }
 
+    if (dotenvAddressName) {
+      address = getDotenvAddress(dotenvAddressName)
+    }
+
+    // TODO: address 不存在则不应该创建 contract
+
     return {
-      ...methods,
+      /**
+       * 链式方法扩展
+       * - this 指为根
+       * @param {Function} callback(this)
+       * @return {!Object}
+       */
+      extend (callback) {
+        callback.apply(this, [this])
+
+        return this
+      },
 
       /**
        * Base

@@ -298,7 +298,7 @@ export default {
         onboard: { walletName: "imToken", rpcUrl: infura.RPC_URL },
         // NOTE: https://docs.token.im/dapp-sdk/#imtoken
         envFactor: !!window.imToken
-          // NOTE: Safari 下无 window.ethereum
+          // NOTE: 环境内没有钱包时 window.ethereum 不存在
           || window.ethereum && window.ethereum.isImToken,
         envWalletName: 'imToken'
       },

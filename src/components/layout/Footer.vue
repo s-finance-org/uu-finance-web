@@ -23,15 +23,12 @@
 </template>
 
 <script>
-// import { AButton, ALayoutFooter, ADropdown, AMenu, AMenuItem } from 'ant-design-vue'
+import { Button, Layout, Dropdown, Menu } from 'ant-design-vue'
+import { parseAntComponent } from '../../utils/helpers'
 
 export default {
   components: {
-    // AButton,
-    // ALayoutFooter,
-    // ADropdown,
-    // AMenu,
-    // AMenuItem
+    ...parseAntComponent([Button, Layout.Footer, Dropdown, Menu, Menu.Item ])
   },
   methods: {
     changedI18n({ key }) {

@@ -11,57 +11,55 @@ import Coming from '@/views/Coming'
 
 import RootDefault from '@/components/layout/RootDefault'
 
-const routes = [
-  { path: '/',
-    name: 'RootDefault',
-    component: RootDefault,
-    children: [
-      {
-        path: '',
-        name: 'Home',
-        component: Home,
-      },
-      {
-        path: 'mint',
-        name: 'Mint',
-        component: Mint,
-        meta: {
-          suffix: ' - Mint'
-        }
-      },
-      {
-        path: 'swap',
-        name: 'Swap',
-        component: Coming,
-        meta: {
-          suffix: ' - Swap'
-        }
-      },
-      {
-        path: 'announcement',
-        name: 'Announcement',
-        component: Announcement,
-        meta: {
-          suffix: ' - Announcement'
-        }
-      },
-      {
-        path: 'claim',
-        name: 'Claim',
-        component: Claim,
-        meta: {
-          suffix: ' - Claim'
-        }
-      },
-      // TODO:
-      // {
-      //   path: 'test',
-      //   name: 'Test',
-      //   component: Test,
-      // },
-    ]
-  }
-]
+const routes = [{
+  path: '/',
+  name: 'RootDefault',
+  component: RootDefault,
+  children: [
+    {
+      path: '',
+      name: 'Home',
+      component: Home,
+    },
+    {
+      path: 'mint',
+      name: 'Mint',
+      component: Mint,
+      meta: {
+        suffix: ' - Mint'
+      }
+    },
+    {
+      path: 'swap',
+      name: 'Swap',
+      component: Coming,
+      meta: {
+        suffix: ' - Swap'
+      }
+    },
+    {
+      path: 'announcement',
+      name: 'Announcement',
+      component: Announcement,
+      meta: {
+        suffix: ' - Announcement'
+      }
+    },
+    {
+      path: 'claim',
+      name: 'Claim',
+      component: Claim,
+      meta: {
+        suffix: ' - Claim'
+      }
+    },
+    {
+      path: 'test',
+      name: 'Test',
+      component: Test,
+    },
+  ]
+}]
 
 const router = createRouter({
   history: createWebHistory(process.env.BASE_URL),

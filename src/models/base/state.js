@@ -1,7 +1,7 @@
 import { now } from '../../utils'
 
 /*
-              init   beforeUpdate   afterUpdate
+key           init   beforeUpdate   afterUpdate
 updated       false  false          true
 loading       true   true           false
 busy          false  true           false
@@ -11,11 +11,11 @@ initialized   false  true           true
 export default {
   /**
    * @param {Object} opts
-   * @param {number=} expireSec 有效时长（秒）
+   * @param {number=} expire 有效时长（秒）
    * @return {!Object}
    */
   create ({
-    expireSec = 86400
+    expire = 86400
   } = {}) {
     const __default__ = {
       initialized: false,
@@ -94,7 +94,7 @@ export default {
       get expireAt () {
         const { updatedAt } = this
 
-        return updatedAt + expireSec * 1000
+        return updatedAt + expire * 1000
       },
       /**
        * 是否到期

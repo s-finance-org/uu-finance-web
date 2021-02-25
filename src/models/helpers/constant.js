@@ -10,6 +10,9 @@ export const TOKEN_MAX_AMOUNT_ETHER = BN(2).pow(256).minus(1).toFixed(0, 1)
 // TODO: 最大值待定
 export const MAX_INPUT = BN(2).pow(128).minus(1).toFixed(0, 1)
 
+/** @type {number} */
+export const TOKEN_DECIMALS = 18
+
 /**
  * 无限授权量的的最小阈值
  * - 允许最大量的 TOKEN_MAX_AMOUNT_ETHER 减半为目标（已用掉一半授权）

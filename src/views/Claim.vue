@@ -15,11 +15,11 @@
             </small>
             <iIntersect class="d-none d-md-block text-align-justify" />
           </div>
-
           <busy :busying="ixd.own.listLoading" class="col-12 col-md-8 pe-md-4 order-md-12">
             <a-list
               item-layout="vertical"
               :pagination="pagination"
+              :split=false
               :data-source="ixd.own.list"
             >
               <template #header>
@@ -115,6 +115,7 @@
             <a-list
               item-layout="vertical"
               :pagination="pagination"
+              :split=false
               :data-source="ixd.settle.list"
             >
               <template #renderItem="{ item, index }">
@@ -175,12 +176,13 @@
 </template>
 
 <script>
-// import { ALayoutContent, ATabs, ATabPane, AList, AListItem } from 'ant-design-vue'
+import { Layout, Tabs, List } from 'ant-design-vue'
 import {
   iIntersect,
   iYellowinfo
 } from '@/components/icons'
 import ButtonBusy from '../components/button-busy'
+import { parseAntComponent } from '../utils/helpers'
 
 import IconToken from '../components/icon-token'
 import IconLpt from '../components/icon-lpt'
@@ -188,11 +190,7 @@ import Busy from '../components/busy'
 
 export default {
   components: {
-    // ALayoutContent,
-    // ATabs,
-    // ATabPane,
-    // AList,
-    // AListItem,
+    ...parseAntComponent([Layout.Content, Tabs, Tabs.TabPane, List, List.Item]),
     iIntersect,
     iYellowinfo,
     ButtonBusy,
@@ -213,11 +211,6 @@ export default {
       },
     }
   },
-  methods: {
-    aaaaa () {
-      console.log(1111111)
-    }
-  },
   computed: {
     structure () {
       return {
@@ -226,10 +219,24 @@ export default {
     },
     ixd () {
       const { tokens, tokenAddresses } = this.$store
-      const ownList = []
-      const settleList = []
-      let ownListLoading = true
-      let settleListLoading = true
+      const result = {
+        own: {
+          claimAllBtn: {
+            disabled: false,
+            busy: tokens.UU.state.busy,
+            click: () => tokens.UU.claimAllRewards()
+          },
+          list: [],
+          listLoading: true
+        },
+        claimTo: {
+
+        },
+        settle: {
+          list: [],
+          listLoading: true
+        }
+      }
 
       tokens.UU.supportedRewardAddresses.forEach(_address => {
         // TODO: 优化 tokenAddresses 的数据同步
@@ -241,9 +248,9 @@ export default {
         if (!(associatedToken && _token)) return false
 
         // TODO: 
-        ownListLoading = false
+        result.own.listLoading = false
 
-        ownList.push({
+        result.own.list.push({
           code: _token.code,
           coin: _token.icon,
           apy: '?%',
@@ -286,7 +293,7 @@ export default {
 
 if (!_reward) return false
           // TODO: 应该是旗下的所有 reward token 结构完整后才 false
-          settleListLoading = false
+          result.settle.listLoading = false
 
           rewards.push({
             code: _reward.code,
@@ -308,58 +315,40 @@ if (!_reward) return false
           })
         })
 
-        settleList.push({
+        result.settle.list.push({
           lpt: _lpt.code,
           icon: _lpt.icon,
           name: _lpt.poolName,
           rewards
         })
-
       })
 
-      return {
-        own: {
-          claimAllBtn: {
-            disabled: false,
-            busy: tokens.UU.state.busy,
-            click: () => tokens.UU.claimAllRewards()
-          },
-          list: ownList,
-          listLoading: ownListLoading
-        },
-        claimTo: {
-
-        },
-        settle: {
-          list: settleList,
-          listLoading: settleListLoading
-        }
-      }
+      return result
     }
   }
 }
 </script>
 
 <style lang="less" scoped>
-.ant-list-split {
-  .ant-list-header {
-    border-bottom: 0;
-  }
-  .ant-spin-container {
-    .ant-list-items {
-      .ant-list-item {
-        border-bottom-width: 0px;
-        &:last-child {
-          border-bottom-width: 0px;
+.ant-list {
+  &.ant-list-vertical {
+    .ant-list-header {
+      border-bottom: 0;
+    }
+    .ant-spin-container {
+        .ant-list-item {
+          // border-bottom-width: 0px;
+          &:last-child {
+            border-bottom-width: 0px;
+          }
+          .ant-list-item-meta {
+            margin-bottom: 0px;
+          }
+          .content {
+            background: rgba(17, 20, 20, 0.03);
+            border-radius: 4px;
+          }
         }
-        .ant-list-item-meta {
-          margin-bottom: 0px;
-        }
-        .content {
-          background: rgba(17, 20, 20, 0.03);
-          border-radius: 4px;
-        }
-      }
     }
   }
 }

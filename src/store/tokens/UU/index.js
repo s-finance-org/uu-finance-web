@@ -12,7 +12,7 @@ import storeWallet from '../../wallet'
 import notify from '../../notify'
 import i18n from '../../../i18n'
 
-export default (ModelToken.create({
+export default ModelToken.create({
   code: 'UU',
   address: getDotenvAddress('UU_TOKEN'),
   abi,
@@ -775,4 +775,4 @@ __root__.burn = async function (_token) {
   
 }
   
-}))
+})

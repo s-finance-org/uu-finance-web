@@ -12,11 +12,12 @@
 </template>
 
 <script>
-// import { ALayoutContent } from 'ant-design-vue'
+import { Layout } from 'ant-design-vue'
+import { parseAntComponent } from '../utils/helpers'
 
 export default {
   components: {
-    // ALayoutContent
+    ...parseAntComponent([Layout.Content]),
   },
   data () {
     return {

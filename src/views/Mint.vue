@@ -122,11 +122,10 @@
 </template>
 
 <script>
-// import { ATabs, ATabPane, ARadioGroup, ARadioButton, AInput } from 'ant-design-vue'
-import {
-  iIntersect,
-} from '@/components/icons'
+import { Tabs, Radio, Input } from 'ant-design-vue'
+import { iIntersect } from '@/components/icons'
 import BN from 'bignumber.js'
+import { parseAntComponent } from '../utils/helpers'
 
 import { ModelValueWallet } from '../models'
 
@@ -136,11 +135,7 @@ import Busy from '../components/busy'
 
 export default {
   components: {
-    // ATabs,
-    // ATabPane,
-    // ARadioGroup,
-    // ARadioButton,
-    // AInput,
+    ...parseAntComponent([Tabs, Tabs.TabPane, Radio.Group, Radio.Button, Input]),
     iIntersect,
     TokenSelectInput,
     ButtonBusy,
@@ -206,7 +201,7 @@ export default {
               return BN(UU.walletBalanceOf.ether).div(await UU.getLptPrice(_token)).times(_token.precision).toString()
             }
             // TODO: temp 临时写法
-          }).setEther(BN(UU.walletBalanceOf.ether).div(await UU.getLptPrice(_token)).times(_token.precision).toString())
+          }).setValue(BN(UU.walletBalanceOf.ether).div(await UU.getLptPrice(_token)).times(_token.precision).toString())
 
 
         await UU.getUU2LptVol(_token)

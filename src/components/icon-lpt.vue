@@ -58,20 +58,20 @@ export default {
   > .icon-token {
     &:nth-child(1):first-child {
       position: relative;
-      // align-self: flex-start;
     }
     &:nth-child(2):last-child {
-      // align-self: flex-end;
       margin-left: -30%;
+      font-size: 0;
+      line-height: 0;
       &::before {
         content: '';
-        width: 124%;
-        height: 124%;
+        width: 128%;
+        height: 128%;
         display: inline-block;
         background-color: #fff;
         border-radius: 50%;
-        margin-left: -76%;
-        margin-top: -12%;
+        margin-left: -74%;
+        margin-top: -14%;
       }
     }
   }

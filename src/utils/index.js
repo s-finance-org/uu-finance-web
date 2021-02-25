@@ -3,7 +3,15 @@ const MAX_SAFE_PRECISION_LENGTH = 292
 
 export const ObjectProto = Object.prototype
 export const ObjectToString = ObjectProto.toString
-export const hasOwn = ObjectProto.hasOwnProperty
+const hasOwnProperty = ObjectProto.hasOwnProperty
+
+/**
+ * 检查对象是否有该 key
+ * @param {Object} obj
+ * @param {string} key
+ * @return {boolean}
+ */
+export const hasOwn = (obj, key) => hasOwnProperty.call(obj, key)
 
 export const nativeDate = Date
 
@@ -39,6 +47,16 @@ export const isMobile = isIOS || isAndroid || isBlackBerry || isWindowsPhone
  * @type {string}
  */
 export const nativeNavigatorLanguage = nativeNavigator.language
+
+/* Window */
+export const hasWindowSupport = typeof window !== 'undefined'
+
+/**
+ * 原生 window
+ * @type   {Object}
+ */
+export const nativeWindow = hasWindowSupport ? window : {}
+export const nativeLocation = nativeWindow.location || {}
 
 /**
  * 是否为数组类型
@@ -77,12 +95,24 @@ export const forEach = (obj, callback) => {
     }
   } else {
     for (const key in obj) {
-      if (hasOwn.call(obj, key)) {
+      if (hasOwn(obj, key)) {
         callback.call(null, obj[key], key, obj)
       }
     }
   }
 }
+
+export const nativeObjectKeys = Object.keys
+
+/**
+ * 返回由对象自身可枚举属性名的数组
+ * - 如果不符合条件，则返回空数组
+ * @param {*} val
+ * @return {!Array}
+ */
+export const keys = val =>
+  // NOTE: 解决 ES5 中 原生 Object.keys() 不会强制转换为 Object 的现象
+  nativeObjectKeys(Object(val))
 
 /**
  * 字符串脱敏
@@ -128,6 +158,16 @@ export const rsHyphenate = /\B([A-Z])/g
  * @return {string}
  */
 export const kebabCase = str => str.replace(rsHyphenate, '-$1').toLowerCase()
+
+/**
+ * 转为指定小数位数的数字字符串
+ * - 默认 round，而非原生的四舍五入
+ * @param {string|number} num
+ * @param {number=} precision
+ * @return {string}
+ */
+// TODO: 针对超大数的支持
+export const toFixed = (num, precision, method = round) => method(num, precision).toFixed(precision)
 
 /**
  * 格式化千位符
@@ -176,11 +216,11 @@ export const isPlainObject = val => baseTag(val) === '[object Object]'
  * @param {number} [spaces]  指定 JSON 缩进用的空白字符串
  * @return {!string}
  */
-export const toString = (val, spaces = 2) => val == null
-    ? ''
-    : isArray(val) || (isPlainObject(val) && val.toString === ObjectToString)
-      ? JSON.stringify(val, null, spaces)
-      : String(val)
+export const toString = (val, spaces = 2) =>val == null
+  ? ''
+  : isArray(val) || (isPlainObject(val) && val.toString === ObjectToString)
+    ? JSON.stringify(val, null, spaces)
+    : String(val)
 
 /**
  * 移除首尾的空格并返回字符串
@@ -279,7 +319,7 @@ export const baseRound = (methodName) => {
 /**
  * 向上舍入
  * @param {string|number} num
- * @param {number=} [precision=0]
+ * @param {number=} precision
  * @return {number}
  */
 export const ceil = baseRound('ceil')
@@ -287,7 +327,7 @@ export const ceil = baseRound('ceil')
 /**
  * 向下舍入
  * @param {string|number} num
- * @param {number=} [precision]
+ * @param {number=} precision
  * @return {number}
  */
 export const floor = baseRound('floor')
@@ -295,7 +335,379 @@ export const floor = baseRound('floor')
 /**
  * 四舍五入
  * @param {string|number} num
- * @param {number=} [precision=0]
+ * @param {number=} precision
  * @return {number}
  */
 export const round = baseRound('round')
+
+/**
+ * 是否为字符串类型
+ * @param {*} val
+ * @return {boolean}
+ */
+export const isString = val => typeof val === 'string'
+
+/**
+ * 空对象
+ * - 不继承原型
+ * - #TODO: name
+ * @return {!Object}
+ */
+export const emptyObject = () => Object.create(null)
+
+/**
+ * 分割字符
+ * - 必须要有一个分割符
+ * @see split-on-first
+ * @param {*} string
+ * @param {*} separator
+ * @return {!Array}
+ */
+export const splitOnFirst = (string, separator) => {
+  const result = []
+
+  if (!(isString(string) && isString(separator))
+    || string === ''
+    || separator === ''
+  ) return result
+
+  // 是否存在
+  const separatorIndex = string.indexOf(separator)
+
+  if (separatorIndex === -1) return result
+
+  return [
+    string.slice(0, separatorIndex),
+    string.slice(separatorIndex + separator.length)
+  ]
+}
+
+/**
+ * Uri解析
+ * @see query-string
+ * @param {*} query 查询的字符串
+ * @param {Object} opts
+ * @param {boolean=} opts.decode 是否解码
+ * @param {boolean=} opts.parseNumbers 如果 value 是数值类型，则解析为数值类型，而不是字符串类型
+ * @param {boolean=} opts.parseBooleans 如果 value 是布尔类型，则解析为布尔类型，而不是字符串类型
+ * @return {!Object}
+ */
+export const queryUriParse = (query, {
+  decode = true,
+  parseNumbers = false,
+  parseBooleans = false
+} = {}) => {
+  // TODO:
+  function parseValue (value) {
+    if (parseNumbers && !Number.isNaN(Number(value)) && (typeof value === 'string' && value.trim() !== '')) {
+      value = Number(value)
+    } else if (parseBooleans && value !== null && (value.toLowerCase() === 'true' || value.toLowerCase() === 'false')) {
+      value = value.toLowerCase() === 'true'
+    }
+
+    return value
+  }
+
+  const result = emptyObject()
+
+  if (!isString(query)) return result
+
+  query = query.trim().replace(/^[?#&]/, '')
+
+  if (!query) return result
+
+  for (const param of query.split('&')) {
+    if (param === '') continue
+
+    let [key, value] = splitOnFirst(decode ? param.replace(/\+/g, ' ') : param, '=')
+
+    key = decode
+      ? decodeURIComponent(key)
+      : key
+
+    // http://w3.org/TR/2012/WD-url-20120524/#collect-url-parameters
+    value = value === undefined
+      ? null
+      : decode
+        ? decodeURIComponent(value)
+        : value
+
+    if (result[key] === undefined) {
+      result[key] = value
+    } else {
+      result[key] = [].concat(result[key], value)
+    }
+  }
+
+  for (const key of keys(result)) {
+    const value = result[key]
+    // TODO:
+    if (typeof value === 'object' && value !== null) {
+      for (const k of keys(value)) {
+        value[k] = parseValue(value[k])
+      }
+    } else {
+      result[key] = parseValue(value)
+    }
+  }
+
+  return result
+}
+
+/**
+ * 目标对象弥补缺省值
+ * - 浅拷贝
+ * - 目标属性为 null、undefined 才弥补
+ * @param {Object=} target
+ * @param {Object=} defs 缺省对象
+ * @return {!Object}
+ */
+export const defaults = (target = {}, defs = {}) => {
+  var key
+  // TODO: 
+  // 非原型属性
+  for (key in defs) {
+    if (hasOwn(defs, key)) {
+      // 目标属性为 null、undefined
+      if (target[key] == null) target[key] = defs[key]
+    }
+  }
+
+  return target
+}
+
+/**
+ * baseArrayEach
+ * - 可断言的 forEach
+ * @param {Array} arr
+ * @param {!Function} iteratee 迭代器
+ * @return {Array} 返回自身
+ */
+function baseArrayEach (arr, iteratee) {
+  const len = arr.length
+  let idx = 0
+
+  while (idx < len) {
+    if (iteratee(arr[idx], idx++, arr) === false) {
+      break
+    }
+  }
+
+  return arr
+}
+
+
+
+export const nativeSessionStorage = nativeWindow.sessionStorage
+export const nativeLocalStorage = nativeWindow.localStorage
+export const nativeJsonStringify = JSON.stringify
+export const nativeJsonParse = JSON.parse
+
+/**
+ * baseStorage
+ * @param {Object} storage
+ * @return {!Object}
+ */
+function baseStorage (storage) {
+  return {
+    /**
+     * 写入
+     * @param {(Object|string)} key
+     * @param {*} val
+     */
+    set (key, val) {
+      if (typeof key === 'object') {
+        const arr = keys(key)
+        let val = ''
+        let idx = arr.length
+
+        while (idx--) {
+          val = nativeJsonStringify(key[arr[idx]])
+          // 排除 undefined、null
+          storage.setItem(arr[idx], val != null ? val : '')
+        }
+      } else {
+        storage.setItem(key, nativeJsonStringify(val))
+      }
+    },
+
+    /**
+     * 读取
+     * - 需要注意，获取时要 .data 才是最终数据
+     * @param {(Object|string)} key
+     * @return {*}
+     */
+    get (key) {
+      let val = ''
+
+      if (isArray(key)) {
+        const result = {}
+        let idx = key.length
+        let sub = ''
+
+        while (idx--) {
+          sub = key[idx]
+          val = nativeJsonParse(storage.getItem(sub))
+
+          result[sub] = val != null ? val : ''
+        }
+        return result
+      } else {
+        val = nativeJsonParse(storage.getItem(key))
+
+        return val != null ? val : ''
+      }
+    },
+
+    /**
+     * 删除指定的 key
+     * @param {(Array|string)} key
+     */
+    remove (key) {
+      if (Array.isArray(key)) {
+        baseArrayEach(key, storage.removeItem)
+      } else {
+        storage.removeItem(key)
+      }
+    },
+
+    /**
+     * 清掉对应 storage 的所有缓存
+     */
+    clear () {
+      storage.clear()
+    }
+  }
+}
+
+export const localStorage = baseStorage(nativeLocalStorage)
+export const sessionStorage = baseStorage(nativeSessionStorage)
+
+/**
+ * 请求
+ * @type {!Object}
+ */
+export const request =  {
+  // TODO: defaults
+  __req (method, originalUrl, params = {}, {
+    cache = 'no-cache',
+    credentials = 'same-origin',
+    headers = {
+      'content-type': 'application/json'
+    },
+    mode = 'cors',
+    redirect = 'follow',
+    referrer = 'no-referrer'
+  } = {}) {
+    const opts = {
+      /**
+       * - *default, no-cache, reload, force-cache, only-if-cached
+       */
+      cache,
+      /**
+       * - include, same-origin, *omit
+       */
+      credentials,
+      headers: new Headers({
+        'User-Agent': ''
+      }),
+      /**
+       * - *GET, POST, PUT, DELETE, etc
+       */
+      method,
+      /**
+       * - no-cors, cors, *same-origin
+       */
+      mode,
+      /**
+       * - manual, *follow, error
+       */
+      redirect,
+      /**
+       * - *client, no-referrer
+       */
+      referrer
+    }
+    let isCacheExpired = false
+    let url = originalUrl
+
+    switch (method) {
+      case 'POST':
+        opts.body = JSON.stringify(params)
+        break
+      case 'GET':
+      default:
+        var reQueryString = /\?/
+        url = originalUrl + (reQueryString.test(originalUrl) ? '&' : '?') + '_=' + now()
+    }
+console.log(this._cacheExpire)
+    // 是否有配置缓存
+    if (this._cacheExpire > 0) {
+      // NOTE: params 内不应含有带时效性强的时间戳等值
+      // TODO: 未支持语言 locale
+      const name = `__${method}_${JSON.stringify(params)}_${originalUrl}`
+      const ls = localStorage.get(name)
+
+      this._cacheName = name
+console.log('name', name)
+console.log(ls , ls&&  ls['__EXPIREDATE__'] > now())
+      if (ls && ls['__EXPIREDATE__'] > now()) {
+        return new Promise((resolve, reject) => {
+          resolve(ls.data)
+        })
+      } else {
+        isCacheExpired = true
+      }
+    }
+
+    return fetch(url, opts)
+      .then(response => response.json())
+      .then(data => {
+  console.log('data      ', isCacheExpired, this._cacheName, this._cacheExpire )
+        if (isCacheExpired) {
+          const timestamp = now()
+
+          localStorage.set(this._cacheName, {
+            '__EXPIREDATE__': timestamp + this._cacheExpire * 1000,
+            '__CREATEDDATE__': timestamp,
+            data
+          })
+        }
+
+        return data
+      })
+  },
+
+  /**
+   * 配置
+   * - 链式方法
+   * @param {Object} opts
+   * @param {number=} expire 有效时长（秒）
+   * @return {!Object}
+   */
+  settings ({
+    expire = 86400
+  } = {}) {
+    this._cacheExpire = expire
+
+    return this
+  },
+  /**
+   * @type {number}
+   */
+  _cacheExpire: 0,
+  _cacheName: '',
+
+  /**
+   * @param {string} url
+   * @param {Object} params
+   * @return {Promise}
+   */
+  get (url, params, opts) { return this.__req('GET', url, params, opts) },
+  /**
+   * @param {string} url
+   * @param {Object} params
+   * @return {Promise}
+   */
+  post (url, params, opts) { return this.__req('GET', url, params, opts) },
+}

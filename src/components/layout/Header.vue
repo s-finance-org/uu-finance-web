@@ -98,18 +98,14 @@
 </template>
 
 <script>
-// import { Button, LayoutHeader, Menu, MenuItem, AModal, Drawer } from 'ant-design-vue'
+import { Button, Layout, Menu, Drawer, Modal } from 'ant-design-vue'
 import { iLogo } from '../../components/icons'
+import { parseAntComponent } from '../../utils/helpers'
 import ClipboardJS from 'clipboard'
 
 export default {
   components: {
-    // AButton: Button,
-    // ALayoutHeader: LayoutHeader,
-    // AMenu: Menu,
-    // AMenuItem: MenuItem,
-    // AModal: AModal,
-    // ADrawer: Drawer,
+    ...parseAntComponent([Button, Layout.Header, Drawer, Menu, Menu.Item, Modal]),
     iLogo,
   },
   data() {

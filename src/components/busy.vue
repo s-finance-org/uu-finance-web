@@ -7,7 +7,8 @@
 </template>
 
 <script>
-// import { ASpin } from 'ant-design-vue'
+import { Spin } from 'ant-design-vue'
+import { parseAntComponent } from '../utils/helpers'
 import { LoadingOutlined } from '@ant-design/icons-vue';
 
 export default {
@@ -16,7 +17,7 @@ export default {
     busying: Boolean,
   },
   components: {
-    // ASpin,
+    ...parseAntComponent([Spin]),
     LoadingOutlined,
   },
   data() {

@@ -7,12 +7,12 @@
 </template>
 
 <script>
-// import { AConfigProvider, ALayout } from 'ant-design-vue'
+import { Layout, ConfigProvider } from 'ant-design-vue'
+import { parseAntComponent } from './utils/helpers'
 
 export default {
   components: {
-    // AConfigProvider,
-    // ALayout
+    ...parseAntComponent([Layout, ConfigProvider])
   },
   computed: {
     i18n () {

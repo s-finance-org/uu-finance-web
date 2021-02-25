@@ -17,7 +17,7 @@
         >
           <span class="d-flex align-items-center">
 
-            <icon-lpt :code=item.icon size=16 class="me-2" />
+            <icon-lpt :code=item.icon size=30 class="me-2 mb-1" />
             {{ item.symbol.view }}
           </span>
         </a-select-option>
@@ -26,7 +26,7 @@
         </template>
       </a-select>
       <span v-else class="d-flex align-items-center col-4 token-name">
-        <icon-lpt :code=currentToken.icon size=16 class="me-2" />
+        <icon-lpt :code=currentToken.icon size=30 class="me-2 mb-1" />
         {{ currentToken.symbol.view }}
       </span>
       <a-tooltip :visible="isFocus && !!currentToken.amount.inputView" placement="topLeft">
@@ -100,7 +100,8 @@
 </template>
 
 <script>
-// import { AInputGroup, ASelect, ASelectOption, ATooltip, AInput, ACheckbox } from 'ant-design-vue'
+import { Input, Select, Tooltip, Checkbox } from 'ant-design-vue'
+import { parseAntComponent } from '../utils/helpers'
 
 import Busy from '../components/busy'
 import ButtonBusy from '../components/button-busy'
@@ -143,12 +144,7 @@ export default {
     }
   },
   components: {
-    // AInputGroup,
-    // ASelect,
-    // ASelectOption,
-    // ATooltip,
-    // AInput,
-    // ACheckbox,
+    ...parseAntComponent([Input.Group, Select, Select.Option, Tooltip, Input, Checkbox]),
     Busy,
     ButtonBusy,
     IconLpt

@@ -16,14 +16,14 @@ export default {
    * @param {Function=} opts.trigger 触发器
    * @param {Object} opts.stateParams 状态参数
    * @return {!Object}
-   */
+   */ 
   create ({
     decimals = ModelValueUint8.create(),
     viewDecimal = 6,
     viewMethod = floor,
     viewPrefix = '',
     viewSuffix = '',
-    trigger = null,
+    trigger = () => new Promise((resolve, reject) => {}),
     stateParams = {}
   } = {}) {
     const __default__ = {
@@ -113,8 +113,7 @@ export default {
 
         // sync
         __store__.handled = BN(result).div(precision).toString()
-        // TODO: 必须是方法
-        this.trigger && this.trigger()
+        this.trigger()
         state.afterUpdate()
       },
 
@@ -135,7 +134,7 @@ export default {
         // sync
         __store__.ether = BN(result).times(precision).toFixed(0, 1)
         // TODO: 必须是方法
-        this.trigger && this.trigger()
+        this.trigger()
         state.afterUpdate()
       },
       /**

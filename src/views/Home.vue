@@ -81,14 +81,13 @@
             {{ $t(item.i18n) }}
           </template>
         </a>
-
       </div>
     </div>
   </a-layout-content>
 </template>
 
 <script>
-// import { LayoutContent, Button, Popover } from 'ant-design-vue'
+import { Layout, Button, Popover } from 'ant-design-vue'
 import {
   iHomeTrait1,
   iHomeTrait2,
@@ -103,12 +102,11 @@ import {
   iHomeCoverUU,
   iHomeUnion } from '../components/icons';
 import Busy from '../components/busy'
+import { parseAntComponent } from '../utils/helpers'
 
 export default {
   components: {
-    // ALayoutContent: LayoutContent,
-    // AButton: Button,
-    // APopover: Popover,
+    ...parseAntComponent([Layout.Content, Button, Popover]),
     iHomeTrait1,
     iHomeTrait2,
     iHomeTrait3,

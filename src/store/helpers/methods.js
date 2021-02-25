@@ -1,23 +1,21 @@
-import { NETWORK_ID, DEFAULT_NETWORK_ID, NETWORK_NAMES, DEFAULT_ADDRESS } from '../../models/helpers/constant'
+import { NETWORK_ID, DEFAULT_NETWORK_ID, NETWORK_NAMES } from '../../models/helpers/constant'
 import globalMessage from '../../utils/global/message'
 
 /**
  * 从 .env 中获取地址
- * - VUE_APP_MAIN_ + 大写 name
+ * - .env key VUE_APP_ + networkName + name
+ * - networkName 参照 NETWORK_NAMES
  * @param {string} name
- * @return {string}
+ * @return {string} 不存在返回空字符串
  */
 export const getDotenvAddress = name => {
   // 不存在则用缺省，并改为大写
   const networkName = (NETWORK_NAMES[NETWORK_ID] || NETWORK_NAMES[DEFAULT_NETWORK_ID]).toLocaleUpperCase()
   const key = `VUE_APP_${networkName}_${name}`
-  let result = DEFAULT_ADDRESS
+  const result = process.env[key] || ''
 
-  try {
-    result = process.env[key]
-  } catch (e) {
-    globalMessage.error(`No ${key} address found in .env`)
-  }
+  !result
+    && globalMessage.error(`No ${key} address found in .env`)
 
   return result
 }

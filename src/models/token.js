@@ -36,7 +36,7 @@ export default {
   /**
    * @param {Object} opts
    * @param {string} opts.code 内部 token code
-   * @param {string} opts.address
+   * @param {string=} opts.address
    * @param {Array=} opts.abi
    * @param {string=} opts.icon 缺省与 code 相同
    * @param {boolean=} opts.isLpt 是否为 lp token // TODO: 暂无作用
@@ -205,8 +205,7 @@ export default {
       poolName,
 
       /**
-       * 链式方法初始化列队
-       * @return {!Object} this
+       * 初始化列队
        */
       initiateSeries () {
         const {
@@ -220,8 +219,6 @@ export default {
           { call: [address, contract.methods[symbolMethodName]().encodeABI()], target: symbol },
           { call: [address, contract.methods[totalSupplyMethodName]().encodeABI()], target: totalSupply }
         ])
-
-        return this
       },
 
       price: ModelValueEther.create(parameters),
@@ -357,7 +354,7 @@ export default {
           allowance: ModelValueEther.create({
             ...parameters,
             // 更新授权量的间隔
-            stateParams: { expireSec: 10 }
+            stateParams: { expire: 10 }
           }),
           /**
            * 是否需要授权
@@ -650,10 +647,10 @@ export default {
       walletBalanceOf: ModelValueWallet.create({
         ...parameters,
         async trigger () {
-          const { address } = this
-          const result = await __store__.contract.methods[balanceOfMethodName](address).call()
-
-          return result
+console.log('walletBalanceOf', code,  address , this)
+          swaps.multicall.series([
+            { call: [address, __store__.contract.methods[balanceOfMethodName](this.address).encodeABI()], target: this, result }
+          ])
         }
       }),
 
@@ -672,8 +669,10 @@ export default {
       error: ModelValueError.create(),
     })
 
+    
     // TODO: temp
     // TODO: 是否还有很好的方案
-    return (tokenAddresses[result.address] = result.initiateSeries())
+    result.initiateSeries()
+    return (tokenAddresses[result.address] = result)
   }
 }

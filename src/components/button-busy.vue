@@ -12,7 +12,8 @@
 </template>
 
 <script>
-// import { AButton } from 'ant-design-vue'
+import { Button } from 'ant-design-vue'
+import { parseAntComponent } from '../utils/helpers'
 import Busy from './busy'
 
 export default {
@@ -25,7 +26,7 @@ export default {
     block: Boolean
   },
   components: {
-    // AButton,
+    ...parseAntComponent([Button]),
     Busy
   }
 };

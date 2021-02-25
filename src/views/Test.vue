@@ -2,32 +2,48 @@
 
   DAI_USDC LPT 添加 <br/>
   <token-select-input codes="DAI" />
+  {{ $store.tokens.DAI.walletBalanceOf.decimals.handled }}<br/>
+  {{ $store.tokens.DAI.walletBalanceOf.ether }}<br/>
   <token-select-input codes="USDT" />
+  {{ $store.tokens.USDT.walletBalanceOf.decimals.handled }}<br/>
+  {{ $store.tokens.USDT.walletBalanceOf.ether }}<br/>
+  <token-select-input codes="USDC" />
+  {{ $store.tokens.USDC.walletBalanceOf.decimals.handled }}<br/>
+  {{ $store.tokens.USDC.walletBalanceOf.ether }}<br/>
   <a-button @click=onStake>存</a-button>
------
+-----<br/>
+{{ $store.coins.ETH.price1 }}
 
-{{ test }}
-
-
----
-  <p class="fs-1">.fs-1 text</p><h1>text 24</h1>
-  <p class="fs-2">.fs-2 text</p><h2>text 24</h2>
-  <p class="fs-3">.fs-3 text</p><h3>text</h3>
-  <p class="fs-4">.fs-4 text</p><h4>text 16</h4>
-  <p class="fs-5">.fs-5 text</p><h5>text 13.28</h5>
-  <p class="fs-6">.fs-6 text</p><h6>text 12</h6>
 
 </template>
 <script>
+import { Button } from 'ant-design-vue'
 import TokenSelectInput from '../components/token-select-input'
+import { parseAntComponent } from '../utils/helpers'
+import { ceil, floor, round, toFixed } from '../utils'
 
 export default {
   components: {
+    ...parseAntComponent([Button]),
     TokenSelectInput,
   },
   data() {
     return {
     }
+  },
+  async mounted () {
+    await this.$store.coins.ETH.updatePrice()
+console.log('ceil', ceil(1.154, 2), ceil(1.155, 2), ceil(1.159, 2), ceil(1.1, 2) )
+console.log('floor', floor(1.154, 2), floor(1.155, 2), floor(1.159, 2), floor(1.1, 2) )
+console.log('round', round(1.154, 2), round(1.155, 2), round(1.159, 2), round(1.1, 2) )
+console.log('toFixed', toFixed(1.154, 2), toFixed(1.155, 2), toFixed('1231231231231231231231231231231231231.159111111111111111111111111', 2), toFixed(1.1, 2), toFixed(0, 2) )
+
+
+
+    // console.log(
+    //   'price ',
+    //   await this.$store.swaps.uniswapV2Router2.getPrice(this.$store.tokens.CRV, this.$store.tokens.USDT)
+    // )
   },
   methods: {
     async onStake () {
@@ -47,6 +63,7 @@ export default {
 return ': ' + result
 
     }
+
   }
 };
 </script>

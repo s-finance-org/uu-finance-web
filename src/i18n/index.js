@@ -1,5 +1,5 @@
 import { createI18n } from 'vue-i18n'
-import { nativeNavigatorLanguage } from '../utils'
+import { nativeNavigatorLanguage, queryUriParse, nativeLocation } from '../utils'
 
 import enUS from './en/en-US'
 import zhCN from './zh/zh-CN'
@@ -21,11 +21,13 @@ for(let lang in languages) {
   supports[lang] = languages[lang].__lang__
 }
 
-// TODO: 支持由 locale= 控制 i18n
+// 支持由 locale= 控制 i18n
+const urlParams = queryUriParse(nativeLocation.search)
 
 const __store__ = {
   // 缓存 i18n 标识
-  locale: localStorage.getItem(cacheLocaleKey)
+  locale: urlParams.locale
+    || localStorage.getItem(cacheLocaleKey)
     // 浏览器环境标识
     || nativeNavigatorLanguage
     // 项目缺省标识
