@@ -1,12 +1,18 @@
 export default {
+  // TODO: 完善
   create ({
-    name = '__lang__.name',
-    id = '__lang__.id'
+    name = 'name',
+    id = 'id'
   } = {}) {
     return {
       __lang__: {
         name,
         id,
+        /**
+         * id 小写
+         * @type {string}
+         */
+        idLowerCase: id.toLowerCase()
       }
     }
   }

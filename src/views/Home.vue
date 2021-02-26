@@ -136,7 +136,7 @@ export default {
     communityLinks () {
       const { i18n } = this.$store
 
-      const telegramUrl = i18n.locale === 'zh-CN'
+      const telegramUrl = i18n.locale === 'zh-cn'
         ? 'https://t.me/SFinanceCN'
         : 'https://t.me/SFinanceEN'
 

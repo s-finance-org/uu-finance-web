@@ -8,8 +8,8 @@ import { request, forEach } from '../utils'
  */
 // TODO: 
 const I18N_CONVERT_TAGS = {
-  'en': 'en-US',
-  'zh-cn': 'zh-CN'
+  'en': 'en-us',
+  'zh-cn': 'zh-cn'
 }
 
 export default {
@@ -35,13 +35,16 @@ export default {
       this.notices.push(result)
 
       // First item
-      !idx && (this.statement = result)
+      !idx && (this.latest = result)
     })
 
     this.state.afterUpdate()
   },
   notices: [],
-  // TODO:
-  statement: {},
+  /**
+   * 最新的一条
+   * @type {Object}
+   */
+  latest: {},
   state: ModelState.create()
 }

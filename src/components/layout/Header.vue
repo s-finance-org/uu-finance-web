@@ -1,15 +1,15 @@
 <template>
   <a-layout-header ref="header" class="container-fluid px-0 d-flex flex-column justify-content-center align-items-center">
-    <div class="statement-banner container-fluid p-1" v-show="statementTitle">
-      <span v-html=statementTitle></span>
-      <a class="px-2" @click="onStatement" href="javascript:void(0);">{{ $t('global.base.more') }}</a>
+    <div class="latest-banner container-fluid p-1" v-show="ixd.latest">
+      <span v-html=ixd.latest></span>
+      <a class="px-2" @click="onLatest" href="javascript:void(0);">{{ $t('global.base.more') }}</a>
     </div>
     <div ref="headerContent" class="header-content container-lg px-4 px-lg-0 d-flex align-items-center">
       <router-link to="/" class="d-flex pe-2">
         <iLogo class="me-3" />
       </router-link>
       <a-menu
-        v-model:selectedKeys="currentViewName"
+        v-model:selectedKeys="ixd.currentViewName"
         mode="horizontal"
         class="d-flex col-auto d-none d-lg-flex navSide">
         <a-menu-item v-for="item in navs"
@@ -21,9 +21,9 @@
 
       <div class="ms-auto">
         <a-button @click="onWalletMenuClick" class="d-flex align-items-center pe-3" size="small">
-          <template v-if=wallet.isValidated>
+          <template v-if=ixd.wallet.isValidated>
             <span class="point point-primary me-2"></span>
-            {{ wallet.addressShortened }}
+            {{ ixd.wallet.addressShortened }}
           </template>
           <template v-else>
             <span class="h4 icon-wallet pe-2"></span>
@@ -45,18 +45,18 @@
             <span class="icon-cancel"></span>
           </template>
           <span class="d-flex justify-content-between align-items-center">
-            <small>{{ $t('global.base.connectedWallet', [wallet.name] ) }}</small>
+            <small>{{ $t('global.base.connectedWallet', [ixd.wallet.name] ) }}</small>
             <a-button @click="onWalletMenuClick" size="small" type="link">{{ $t('layer.header.wallet.change') }}</a-button>
           </span>
-          <span class="fs-4">{{ wallet.addressShortened }}</span>
+          <span class="fs-4">{{ ixd.wallet.addressShortened }}</span>
           <small class="d-flex align-items-center pt-2">
-            <a href="javascript:void(0);" :data-clipboard-text=wallet.address.handled class="copyAddress d-flex align-items-center">
+            <a href="javascript:void(0);" :data-clipboard-text=ixd.wallet.address.handled class="copyAddress d-flex align-items-center">
               <span class="h4 icon-copy me-1"></span>
               {{ $t(copied
                 ? 'layer.header.wallet.copiedAddress'
                 : 'layer.header.wallet.copyAddress') }}
             </a>
-            <a :href=wallet.getEtherscanUrl target="_blank" class="d-flex align-items-center">
+            <a :href=ixd.wallet.getEtherscanUrl target="_blank" class="d-flex align-items-center">
               <span class="h4 icon-maximize me-1 ms-3"></span>
               {{ $t('layer.header.wallet.viewOnEtherscan') }}
             </a>
@@ -76,7 +76,7 @@
     v-model:visible="menuVisible"
   >
     <a-menu
-      v-model:selectedKeys="currentViewName"
+      v-model:selectedKeys="ixd.currentViewName"
       mode="vertical-right"
       class="mt-4 navSide">
       <a-menu-item v-for="item in navs"
@@ -160,25 +160,25 @@ export default {
         wallet.changeWallet()
       }
     },
-    onStatement () {
-      const { $router } = this
-      const { i18n: { $i18n, locale }, announcements: { statement } } = this.$store
+    onLatest () {
+      const { $router, $store } = this
+      const { i18n: { $i18n, locale }, announcements: { latest } } = $store
 
       const modal = Modal.confirm({
         title: h('div', {
           class: ['fs-5', 'pb-3'],
-          innerHTML: statement[locale].title,
+          innerHTML: latest[locale].title,
         }),
         width: 720,
         forceRender: true,
         content: h('p', {
           class: ['fs-6'],
-          innerHTML: statement[locale].content,
+          innerHTML: latest[locale].content,
         }),
         centered: true,
         mask: false,
-        okText: $i18n.global.t('layer.header.statement.close'),
-        cancelText: $i18n.global.t('layer.header.statement.more'),
+        okText: $i18n.global.t('layer.header.latest.close'),
+        cancelText: $i18n.global.t('layer.header.latest.more'),
         onCancel (close) {
           $router.push({ name: 'Announcement', path: '/announcement' })
           close()
@@ -196,25 +196,17 @@ export default {
         { id: 'Announcement', to: '/announcement', i18n: 'layer.header.nav.announcement' },
       ]
     },
-    currentViewName: {
-      get () {
-        return [this.$route.name]
+    ixd () {
+      const { $route } = this
+      const { wallet, announcements: { latest }, i18n: { locale } } = this.$store
+
+      return {
+        currentViewName: [this.$route.name],
+        wallet,
+        latest: latest
+          && latest[locale]
+          && latest[locale].title
       }
-    },
-    wallet () {
-      const { wallet } = this.$store
-
-      return wallet
-    },
-    statementTitle () {
-      const { announcements: { statement }, i18n } = this.$store
-      
-      // this.$i18n.locale = key
-
-      // return this.$store.i18n
-      return statement &&
-        statement[i18n.locale] &&
-        statement[i18n.locale].title
     }
   }
 }
@@ -227,7 +219,7 @@ export default {
   z-index: 10;
   backdrop-filter: blur(60px);
   // background-color: rgba(255, 255, 255, 0.6);
-  .statement-banner {
+  .latest-banner {
     background-color: #50B2B2;
     color: rgba(255,255,255,0.85);
     text-align: center;

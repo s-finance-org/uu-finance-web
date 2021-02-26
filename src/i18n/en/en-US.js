@@ -31,7 +31,7 @@ export default {
         copiedAddress: 'Copied',
         viewOnEtherscan: 'View on Etherscan'
       },
-      statement: {
+      latest: {
         more: 'More',
         close: 'Ok'
       }

@@ -1,5 +1,8 @@
 <template>
+{{ test1 }}<br/>
+-----<br/>
 
+-----<br/>
   DAI_USDC LPT 添加 <br/>
   <token-select-input codes="DAI" />
   {{ $store.tokens.DAI.walletBalanceOf.decimals.handled }}<br/>
@@ -20,7 +23,9 @@
 import { Button } from 'ant-design-vue'
 import TokenSelectInput from '../components/token-select-input'
 import { parseAntComponent } from '../utils/helpers'
-import { ceil, floor, round, toFixed } from '../utils'
+import { ceil, floor, round, toFixed, request } from '../utils'
+
+import { nativeNavigatorLanguage, queryUriParse, nativeLocation } from '../utils'
 
 export default {
   components: {
@@ -29,9 +34,18 @@ export default {
   },
   data() {
     return {
+      test1: {}
+
     }
   },
   async mounted () {
+        try {
+  const res = await request.settings().get('https://api.s.finance/f/a/uu')
+  this.test1 = res
+        } catch(e) {
+          this.test1 = e
+        }
+
     await this.$store.coins.ETH.updatePrice()
 console.log('ceil', ceil(1.154, 2), ceil(1.155, 2), ceil(1.159, 2), ceil(1.1, 2) )
 console.log('floor', floor(1.154, 2), floor(1.155, 2), floor(1.159, 2), floor(1.1, 2) )
@@ -54,6 +68,15 @@ console.log('toFixed', toFixed(1.154, 2), toFixed(1.155, 2), toFixed('1231231231
     }
   },
   computed: {
+    ixd () {
+      const cacheLocaleKey = '__Global_I18n_locale'
+
+  
+
+      return {
+        
+      }
+    },
     test () {
       const { wallet } = this.$store
       window.imToken || window.ethereum.isImToken

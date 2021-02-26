@@ -31,7 +31,7 @@ export default {
         copiedAddress: '已复制',
         viewOnEtherscan: '在区块浏览器中查看'
       },
-      statement: {
+      latest: {
         more: '了解更多',
         close: '知道了'
       }

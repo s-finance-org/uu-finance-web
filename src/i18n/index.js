@@ -1,5 +1,5 @@
 import { createI18n } from 'vue-i18n'
-import { nativeNavigatorLanguage, queryUriParse, nativeLocation } from '../utils'
+import { nativeNavigatorLanguage, queryUriParse, nativeLocation, localStorage } from '../utils'
 
 import enUS from './en/en-US'
 import zhCN from './zh/zh-CN'
@@ -8,12 +8,13 @@ import zhCN from './zh/zh-CN'
  * 项目拥有的语言包
  * @type {!Object}
  */
+// TODO: 
 const languages = {
-  "en-US": enUS,
-  "zh-CN": zhCN
+  'en-us': enUS,
+  'zh-cn': zhCN
 }
 
-const cacheLocaleKey = '__Global_I18n_locale'
+const cacheLocaleKey = '__Global_i18n_locale'
 
 // TODO:
 let supports = {}
@@ -25,11 +26,12 @@ for(let lang in languages) {
 const urlParams = queryUriParse(nativeLocation.search)
 
 const __store__ = {
-  // 缓存 i18n 标识
+  //  url param 指定
   locale: urlParams.locale
-    || localStorage.getItem(cacheLocaleKey)
+    // 缓存 i18n 标识
+    || localStorage.get(cacheLocaleKey)
     // 浏览器环境标识
-    || nativeNavigatorLanguage
+    || nativeNavigatorLanguage.toLowerCase()
     // 项目缺省标识
     || process.env.VUE_APP_I18N_LOCALE,
   fallbackLocale: process.env.VUE_APP_I18N_FALLBACK_LOCALE,
@@ -54,7 +56,6 @@ export default {
   get locale () {
     // TODO:
     return __store__.locale
-    // return this.$i18n.locale
   },
   /**
    * 变更语言环境
@@ -66,7 +67,7 @@ export default {
       ? val
       : process.env.VUE_APP_I18N_LOCALE
 
-    localStorage.setItem(cacheLocaleKey, result)
+    localStorage.set(cacheLocaleKey, result)
   },
   /**
    * 当前语言的 baseLang 信息
