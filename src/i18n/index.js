@@ -27,7 +27,7 @@ const urlParams = queryUriParse(nativeLocation.search)
 
 const __store__ = {
   //  url param 指定
-  locale: urlParams.locale
+  locale: urlParams.locale.toLowerCase()
     // 缓存 i18n 标识
     || localStorage.get(cacheLocaleKey)
     // 浏览器环境标识

@@ -1,3 +1,8 @@
+## 2020022618
+
+- F 修复非 Chrome 下 nativeNavigatorLanguage 值不统一造成的初始 i18n 问题
+- F修复在一定环境下 request 会造成跨域的问题
+
 ## 2020022515
 
 - A 顶部公告

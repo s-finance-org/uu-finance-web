@@ -53,11 +53,11 @@ const routes = [{
         suffix: ' - Claim'
       }
     },
-    {
-      path: 'test',
-      name: 'Test',
-      component: Test,
-    },
+    // {
+    //   path: 'test',
+    //   name: 'Test',
+    //   component: Test,
+    // },
   ]
 }]
 
