@@ -1,7 +1,8 @@
 import formatDate from 'date-and-time'
 import { ModelState } from '../models'
 
-import { request, forEach } from '../utils'
+import { forEach } from '../utils'
+import axios from 'axios'
 
 /**
  * @type {!Object}
@@ -16,9 +17,9 @@ export default {
   async update () {
     this.state.beforeUpdate()
 
-    const res = await request.settings({ expire: 600 }).get('https://api.s.finance/f/a/uu')
+    const res = await axios.get('https://api.s.finance/f/a/uu')
 
-    res.data.forEach((item, idx) => {
+    res.data.data.forEach((item, idx) => {
       const result = {}
 
       forEach(item.content, (content, key) => {

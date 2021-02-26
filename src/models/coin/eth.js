@@ -1,4 +1,4 @@
-import { request } from '../../utils'
+import axios from 'axios'
 
 export default {
   create () {
@@ -19,10 +19,10 @@ export default {
        */
       async updatePrice () {
         try {
-          const res = await request.get('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd')
-          __store__.ethPrice = res.ethereum.usd
-          console.log(res.ethereum.usd)
-          this.price1 = res.ethereum.usd
+          const res = await axios.get('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd')
+
+          __store__.ethPrice = res.data.ethereum.usd
+          this.price1 = res.data.ethereum.usd
         }
         catch(err) {
           console.error(err)

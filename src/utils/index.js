@@ -583,128 +583,128 @@ function baseStorage (storage) {
 export const localStorage = baseStorage(nativeLocalStorage)
 export const sessionStorage = baseStorage(nativeSessionStorage)
 
-/**
- * 请求
- * @type {!Object}
- */
-export const request =  {
-  // TODO: defaults
-  __req (method, originalUrl, params = {}, {
-    cache = 'no-cache',
-    credentials = 'same-origin',
-    headers = {
-      'content-type': 'application/json'
-    },
-    mode = 'cors',
-    redirect = 'follow',
-    referrer = 'no-referrer'
-  } = {}) {
-    const opts = {
-      /**
-       * - *default, no-cache, reload, force-cache, only-if-cached
-       */
-      cache,
-      /**
-       * - include, same-origin, *omit
-       */
-      credentials,
-      headers: new Headers({
-        'User-Agent': ''
-      }),
-      /**
-       * - *GET, POST, PUT, DELETE, etc
-       */
-      method,
-      /**
-       * - no-cors, cors, *same-origin
-       */
-      mode,
-      /**
-       * - manual, *follow, error
-       */
-      redirect,
-      /**
-       * - *client, no-referrer
-       */
-      referrer
-    }
-    let isCacheExpired = false
-    let url = originalUrl
+// /**
+//  * 请求
+//  * @type {!Object}
+//  */
+// export const request =  {
+//   // TODO: defaults
+//   __req (method, originalUrl, params = {}, {
+//     cache = 'no-cache',
+//     credentials = 'same-origin',
+//     headers = {
+//       'content-type': 'application/json'
+//     },
+//     mode = 'cors',
+//     redirect = 'follow',
+//     referrer = 'no-referrer'
+//   } = {}) {
+//     const opts = {
+//       /**
+//        * - *default, no-cache, reload, force-cache, only-if-cached
+//        */
+//       cache,
+//       /**
+//        * - include, same-origin, *omit
+//        */
+//       credentials,
+//       headers: new Headers({
+//         'Content-Type': 'application/json'
+//       }),
+//       /**
+//        * - *GET, POST, PUT, DELETE, etc
+//        */
+//       method,
+//       /**
+//        * - no-cors, cors, *same-origin
+//        */
+//       mode,
+//       /**
+//        * - manual, *follow, error
+//        */
+//       redirect,
+//       /**
+//        * - *client, no-referrer
+//        */
+//       referrer
+//     }
+//     let isCacheExpired = false
+//     let url = originalUrl
 
-    switch (method) {
-      case 'POST':
-        opts.body = JSON.stringify(params)
-        break
-      case 'GET':
-      default:
-        var reQueryString = /\?/
-        url = originalUrl + (reQueryString.test(originalUrl) ? '&' : '?') + '_=' + now()
-    }
+//     switch (method) {
+//       case 'POST':
+//         opts.body = JSON.stringify(params)
+//         break
+//       case 'GET':
+//       default:
+//         var reQueryString = /\?/
+//         url = originalUrl + (reQueryString.test(originalUrl) ? '&' : '?') + '_=' + now()
+//     }
 
-    // 是否有配置缓存
-    if (this._cacheExpire > 0) {
-      // NOTE: params 内不应含有带时效性强的时间戳等值
-      // TODO: 未支持语言 locale
-      const name = `__${method}_${JSON.stringify(params)}_${originalUrl}`
-      const ls = localStorage.get(name)
+//     // 是否有配置缓存
+//     if (this._cacheExpire > 0) {
+//       // NOTE: params 内不应含有带时效性强的时间戳等值
+//       // TODO: 未支持语言 locale
+//       const name = `__${method}_${JSON.stringify(params)}_${originalUrl}`
+//       const ls = localStorage.get(name)
 
-      this._cacheName = name
-      if (ls && ls['__EXPIREDATE__'] > now()) {
-        return new Promise((resolve, reject) => {
-          resolve(ls.data)
-        })
-      } else {
-        isCacheExpired = true
-      }
-    }
+//       this._cacheName = name
+//       if (ls && ls['__EXPIREDATE__'] > now()) {
+//         return new Promise((resolve, reject) => {
+//           resolve(ls.data)
+//         })
+//       } else {
+//         isCacheExpired = true
+//       }
+//     }
 
-    return fetch(url, opts)
-      .then(response => response.json())
-      .then(data => {
-        if (isCacheExpired) {
-          const timestamp = now()
+//     return fetch(url, opts)
+//       .then(response => response.json())
+//       .then(data => {
+//         if (isCacheExpired) {
+//           const timestamp = now()
 
-          localStorage.set(this._cacheName, {
-            '__EXPIREDATE__': timestamp + this._cacheExpire * 1000,
-            '__CREATEDDATE__': timestamp,
-            data
-          })
-        }
+//           localStorage.set(this._cacheName, {
+//             '__EXPIREDATE__': timestamp + this._cacheExpire * 1000,
+//             '__CREATEDDATE__': timestamp,
+//             data
+//           })
+//         }
 
-        return data
-      })
-  },
+//         return data
+//       })
+//   },
 
-  /**
-   * 配置
-   * - 链式方法
-   * @param {Object} opts
-   * @param {number=} expire 有效时长（秒）
-   * @return {!Object}
-   */
-  settings ({
-    expire = 86400
-  } = {}) {
-    this._cacheExpire = expire
+//   /**
+//    * 配置
+//    * - 链式方法
+//    * @param {Object} opts
+//    * @param {number=} expire 有效时长（秒）
+//    * @return {!Object}
+//    */
+//   settings ({
+//     expire = 86400
+//   } = {}) {
+//     this._cacheExpire = expire
 
-    return this
-  },
-  /**
-   * @type {number}
-   */
-  _cacheExpire: 0,
-  _cacheName: '',
+//     return this
+//   },
+//   /**
+//    * @type {number}
+//    */
+//   _cacheExpire: 0,
+//   _cacheName: '',
 
-  /**
-   * @param {string} url
-   * @param {Object} params
-   * @return {Promise}
-   */
-  get (url, params, opts) { return this.__req('GET', url, params, opts) },
-  /**
-   * @param {string} url
-   * @param {Object} params
-   * @return {Promise}
-   */
-  post (url, params, opts) { return this.__req('GET', url, params, opts) },
-}
+//   /**
+//    * @param {string} url
+//    * @param {Object} params
+//    * @return {Promise}
+//    */
+//   get (url, params, opts) { return this.__req('GET', url, params, opts) },
+//   /**
+//    * @param {string} url
+//    * @param {Object} params
+//    * @return {Promise}
+//    */
+//   post (url, params, opts) { return this.__req('GET', url, params, opts) },
+// }

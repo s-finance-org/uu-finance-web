@@ -20,10 +20,11 @@
 
 </template>
 <script>
+import axios from 'axios'
 import { Button } from 'ant-design-vue'
 import TokenSelectInput from '../components/token-select-input'
 import { parseAntComponent } from '../utils/helpers'
-import { ceil, floor, round, toFixed, request } from '../utils'
+import { ceil, floor, round, toFixed } from '../utils'
 
 import { nativeNavigatorLanguage, queryUriParse, nativeLocation } from '../utils'
 
@@ -40,8 +41,8 @@ export default {
   },
   async mounted () {
         try {
-  const res = await request.settings().get('https://api.s.finance/f/a/uu')
-  this.test1 = res
+  const res = await axios.get('https://api.s.finance/f/a/uu')
+  this.test1 = res.data
         } catch(e) {
           this.test1 = e
         }

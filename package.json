@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "ant-design-vue": "^2.0.0-rc.3",
+    "axios": "^0.21.1",
     "bignumber.js": "^9.0.1",
     "bnc-notify": "^1.5.1",
     "bnc-onboard": "^1.19.0",
