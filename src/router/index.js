@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import globalMessage from '../utils/global/message'
+import { isDevelopmentMode } from '../utils/helpers'
 
 import Home from '@/views/Home'
 import Test from '@/views/Test'
@@ -19,7 +20,7 @@ const routes = [{
     {
       path: '',
       name: 'Home',
-      component: Home,
+      component: Home
     },
     {
       path: 'mint',
@@ -53,11 +54,13 @@ const routes = [{
         suffix: ' - Claim'
       }
     },
-    // {
-    //   path: 'test',
-    //   name: 'Test',
-    //   component: Test,
-    // },
+    isDevelopmentMode
+      ? {
+        path: 'test',
+        name: 'Test',
+        component: Test
+      }
+      : {}
   ]
 }]
 
@@ -76,7 +79,7 @@ router.beforeEach((to, from, next) => {
   } else {
     // 404
     next({ path: '/' })
-    globalMessage.error(`404 NOT FOUND`)
+    globalMessage.error('404 NOT FOUND')
   }
 })
 

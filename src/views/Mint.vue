@@ -122,7 +122,7 @@
 </template>
 
 <script>
-import { Tabs, Radio, Input } from 'ant-design-vue'
+import { Tabs, Radio, Input, Layout } from 'ant-design-vue'
 import { iIntersect } from '@/components/icons'
 import BN from 'bignumber.js'
 import { parseAntComponent } from '../utils/helpers'
@@ -135,7 +135,7 @@ import Busy from '../components/busy'
 
 export default {
   components: {
-    ...parseAntComponent([Tabs, Tabs.TabPane, Radio.Group, Radio.Button, Input]),
+    ...parseAntComponent([Layout.Content, Tabs, Tabs.TabPane, Radio.Group, Radio.Button, Input]),
     iIntersect,
     TokenSelectInput,
     ButtonBusy,
@@ -187,7 +187,7 @@ export default {
                 // 超过上限
         this.maxBalanceOf = null
 
-        await UU.getLpt2UUVol(_token)
+        UU.getLpt2UUVol(_token)
       } else if (mintAction === 'withdraw') {
         // TODO: 恢复最大值 (存入 超出范围，切回取出无问题，再切回存入还是超出的这种触发关系，)
         // TODO: 在初始时，这里 UU 的余额正在 busy，所以 handled 为 0
@@ -204,7 +204,7 @@ export default {
           }).setValue(BN(UU.walletBalanceOf.ether).div(await UU.getLptPrice(_token)).times(_token.precision).toString())
 
 
-        await UU.getUU2LptVol(_token)
+        UU.getUU2LptVol(_token)
       }
     }
   },
@@ -252,8 +252,7 @@ export default {
         },
 
         // TODO: 要由 UU 自动获取列出
-        // TODO: RINKEBY:
-        // singleAssetTokens: ['DAI_USDC', 'DAI_USDT'],
+        // singleAssetTokens: ['DAI_USDC'], // RINKEBY:
         singleAssetTokens: ['SFINANCE_USD5', 'CURVE_3CRV'],
 
         // 授权操作的目标地址

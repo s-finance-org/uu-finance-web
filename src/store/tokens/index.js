@@ -1,48 +1,61 @@
 import { reactive } from 'vue'
 import { ModelToken } from '../../models'
-import { getDotenvAddress } from '../helpers/methods'
 
 import DAI from './DAI'
 import USDT from './USDT'
 import UU from './UU'
 import SFG from './SFG'
-import SWRV from './SWRV'
 
-import DAI_USDC from './DAI_USDC'
-import DAI_USDT from './DAI_USDT'
 import SFINANCE_USD5 from './SFINANCE_USD5'
 import CURVE_3CRV from './CURVE_3CRV'
-
 
 /**
  * 以 token code 为 key 的数据集
  * @type {!Object}
  */
 export default reactive({
-  DAI,
   USDT,
-  USDC: ModelToken.create({
-    code: 'USDC',
-    address: getDotenvAddress('USDC_TOKEN'),
-  }),
   UU,
   CRV: ModelToken.create({
     code: 'CRV',
-    address: getDotenvAddress('CRV_TOKEN'),
+    dotenvAddressName: 'CRV_TOKEN',
     viewDecimal: 2
   }),
   SNX: ModelToken.create({
     code: 'SNX',
-    address: getDotenvAddress('SNX_TOKEN'),
+    dotenvAddressName: 'SNX_TOKEN',
     viewDecimal: 2
   }),
   SFG,
-  SWRV,
+
+  // TODO: Rinkeby 缺失
+  // TODO: 原因未知
+  DAI,
+  // TODO: 缺少 address、要让 ModelValueToken 支持空地址结构
+  SWRV: ModelToken.create({
+    code: 'SWRV',
+    dotenvAddressName: 'SWRV_TOKEN'
+  }),
+  // TODO: 合约缺少
+  USDC: ModelToken.create({
+    code: 'USDC',
+    dotenvAddressName: 'USDC_TOKEN',
+  }),
 
   /* LP token */
   SFINANCE_USD5,
   CURVE_3CRV,
   // TODO: 不存在的 multi call 会卡
-  // DAI_USDC, // test
-  // DAI_USDT, // test
+  // DAI_USDC: ModelToken.create({
+  //   code: 'DAI_USDC',
+  //   dotenvAddressName: 'DAI_USDC_TOKEN',
+  //   isLpt: true,
+  //   isInfiniteAllowance: true
+  // })
+  // DAI_USDT: ModelToken.create({
+  //   code: 'DAI_USDT',
+  //   dotenvAddressName: 'DAI_USDT_TOKEN',
+  //   isLpt: true,
+  //   isInfiniteAllowance: true
+  // })
 })

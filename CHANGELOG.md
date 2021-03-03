@@ -1,3 +1,6 @@
+
+- A 使用 uniswapV2Router2 + multicall 的批量价格查询
+
 ## 2020022618
 
 - F 修复非 Chrome 下 nativeNavigatorLanguage 值不统一造成的初始 i18n 问题

@@ -24,7 +24,6 @@ app.mixin(
       }
     }
   })
-  // TODO: 不使用全局加载的方式
   // .use(Antd)
   .use(store.i18n.$i18n)
   .use(router)

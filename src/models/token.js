@@ -1,8 +1,8 @@
 import { reactive } from 'vue'
 import BN from 'bignumber.js'
-import Web3 from 'web3'
 
 import { ERC20 } from './helpers/abi'
+import { getDotenvAddress } from '../store/helpers/methods'
 import {
   TOKEN_MIN_AMOUNT_ETHER,
   TOKEN_MAX_AMOUNT_ETHER,
@@ -12,6 +12,7 @@ import {
 import ModelValueEther from './value/ether'
 import ModelValueInput from './value/input'
 import ModelValueWallet from './value/wallet'
+import ModelValuePrice from './value/price'
 import ModelValueString from './value/string'
 import ModelValueBytes32 from './value/bytes32'
 import ModelValueUint8 from './value/uint8'
@@ -36,13 +37,15 @@ export default {
   /**
    * @param {Object} opts
    * @param {string} opts.code 内部 token code
-   * @param {string=} opts.address
+   * @param {string=} opts.address 地址，address 选其一
+   * @param {string=} opts.dotenvAddressName 使用 getDotenvAddress() 规则来获取，address 选其一，会替换 address
    * @param {Array=} opts.abi
    * @param {string=} opts.icon 缺省与 code 相同
    * @param {boolean=} opts.isLpt 是否为 lp token // TODO: 暂无作用
    * @param {string=} opts.poolName TODO: 限 lpt
    * @param {Object=} opts.customAssociatedTokenModel 追加 associatedToken 数据集的单元 Modal
    * 
+   * @param {string=} opts.priceSource 价格来源
    * 
    * @param {string=} opts.acquisitionUrl 获取该币种的 url
    * @param {number=} opts.viewDecimal 显示内容的显示精度
@@ -50,9 +53,7 @@ export default {
    * @param {Object} opts.stateParams 状态参数
    * 
    * @param {boolean=} opts.isInfiniteAllowance
-   * @param {Object=} opts.moneyOfAccount
-   * @param {Object=} opts.getPrice
-   * @param {Object=} opts.symbol
+   * @param {Object=} opts.chargeToken
    * @param {string=} opts.symbolMethodName
    * @param {string=} opts.balanceOfMethodName
    * @param {string=} opts.totalSupplyMethodName
@@ -61,6 +62,7 @@ export default {
   create ({
     code = '',
     address = '',
+    dotenvAddressName = '',
     abi = ERC20,
     icon = '',
     isLpt = false,
@@ -70,11 +72,11 @@ export default {
     viewDecimal = 4,
     viewMethod = floor,
 
-    stateParams = {},
+    priceSource = undefined,
 
-    moneyOfAccount = USD,
-    // XXX: default
-    getPrice = null,
+    stateParams = {},
+    // TODO: 
+    chargeToken = {},
     isInfiniteAllowance = false,
     // ERC20
     nameMethodName = 'name',
@@ -111,17 +113,18 @@ export default {
     }
     const minAmount = ModelValueEther.create(parameters).setValue(TOKEN_MIN_AMOUNT_ETHER)
 
-    // TODO: 要排除 0x000 和空字符串
-    // TODO: 要让 address Model
-    address = Web3.utils.toChecksumAddress(address)
-
-    // TODO: 不正确则不创建
-    if (address === '0x0000000000000000000000000000000000000000') {
-      // TODO: 要保留结构，不能 null
-      return null
+    if (dotenvAddressName) {
+      address = getDotenvAddress(dotenvAddressName)
     }
 
+
+    // TODO: 要让 address Model
+
     const result = reactive({
+      // 有效的 token
+    // TODO: 加更多判定
+      isValidated: !!address,
+
       /**
        * 链式方法扩展
        * - this 指为根
@@ -170,26 +173,29 @@ export default {
 
       /** @type {Object} */
       get contract () {
-        const { abi, address } = this
+        const { isValidated, abi, address } = this
 
         // TODO: 待优化
-        // storeWallet.web3 在钱包失效、链接时已经变更了目标值
-        if (storeWallet.isValidated) {
-          if (!__store__.isContractWallet) {
-            console.log('------- wallet web3')
-            __store__.contract = new storeWallet.web3.eth.Contract(abi, address)
-            __store__.isCcontractBase = false
-            __store__.isContractWallet = true
-          }
-        } else {
-          if (!__store__.isCcontractBase) {
-            console.log('------- default web3')
-            __store__.contract = new storeWallet.web3.eth.Contract(abi, address)
-            // 可能会换钱包，因此重置
-            __store__.isContractWallet = false
-            __store__.isCcontractBase = true
+        if (isValidated) {
+          // storeWallet.web3 在钱包失效、链接时已经变更了目标值
+          if (storeWallet.isValidated) {
+            if (!__store__.isContractWallet) {
+              console.log('------- wallet web3')
+              __store__.contract = new storeWallet.web3.eth.Contract(abi, address)
+              __store__.isCcontractBase = false
+              __store__.isContractWallet = true
+            }
+          } else {
+            if (!__store__.isCcontractBase) {
+              console.log('------- default web3')
+              __store__.contract = new storeWallet.web3.eth.Contract(abi, address)
+              // 可能会换钱包，因此重置
+              __store__.isContractWallet = false
+              __store__.isCcontractBase = true
+            }
           }
         }
+
         return __store__.contract
       },
 
@@ -211,7 +217,9 @@ export default {
         const {
           decimals
         } = parameters
-        const { address, contract, name, symbol, totalSupply } = this
+        const { isValidated, address, contract, name, symbol, totalSupply } = this
+
+        if (!isValidated) return false
 
         swaps.multicall.series([
           { call: [address, contract.methods[decimalsMethodName]().encodeABI()], target: decimals },
@@ -220,17 +228,8 @@ export default {
           { call: [address, contract.methods[totalSupplyMethodName]().encodeABI()], target: totalSupply }
         ])
       },
-
-      price: ModelValueEther.create(parameters),
-      // XXX: this.getPriceMethod 为合约方法，getPrice为自定义方法，取其一
-      // this.getPrice && await this.getPrice()
-      getPrice,
-      /* 计价货币 */
-      moneyOfAccount,
-      // XXX: 未设定
-      // getPriceMethod,
-
-
+      /* 计价 token */
+      chargeToken,
 
 
 
@@ -668,7 +667,15 @@ export default {
       error: ModelValueError.create(),
     })
 
-    
+
+    // TODO: 
+    result.price = ModelValuePrice.create({
+      source: priceSource,
+      ...parameters,
+      targetToken: result,
+      chargeToken: result.chargeToken
+    })
+
     // TODO: temp
     // TODO: 是否还有很好的方案
     result.initiateSeries()

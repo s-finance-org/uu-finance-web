@@ -2,6 +2,7 @@ import BN from 'bignumber.js'
 
 import abi from './abi'
 import ModelSwap from '../../../models/swap'
+import multicall from '../multicall'
 
 export default ModelSwap.create({
   code: 'uniswapV2Router2',
@@ -27,25 +28,29 @@ export default ModelSwap.create({
   }
 
   /**
-   * @param {Object} targetTokenObj
-   * @param {Object} unitTokenObj
+   * @param {Object} targetPrice ModelValue
+   * @param {Object} targetToken 目标 token
+   * @param {Object} chargeToken 计价 token
    * @param {string=} amount
-   * @return {string}
    */
-  this.getPrice = async (targetTokenObj, unitTokenObj, amount = 1) => {
-    const amountIn = BN(amount).times(targetTokenObj.precision).toString()
-    const amounts = await this.getAmountsOut(
-      amountIn,
-      [targetTokenObj.address, unitTokenObj.address]
-    )
+  this.getPrice = (targetPrice, targetToken, chargeToken, amount = 1) => {
+    const { contract, address } = this
+    const amountInWei = BN(amount).times(targetToken.precision).toString()
+    const path = [targetToken.address, chargeToken.address]
 
-    let result = '0'
-    try {
-      result = BN(amounts[1]).dividedBy(amount).dividedBy(unitTokenObj.precision).toString()
-    } catch (err) {
-      console.error('uniswapV2Router2 getPrice()', err)
-    }
-
-    return result
+    multicall.series([{
+      decodeType: 'uint256[]',
+      call: [
+        address,
+        // 卖出资产，得到的中间资产和最终资产的数量
+        contract.methods.getAmountsOut(amountInWei, path).encodeABI()
+      ],
+      target: {
+        // 解构 uniswapV2Router2 数据结构
+        setValue (val) {
+          targetPrice.setValue(BN(val[1]).dividedBy(amount).toString())
+        }
+      }
+    }])
   }
 })

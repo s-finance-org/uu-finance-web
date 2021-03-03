@@ -79,6 +79,11 @@ export default ModelSwap.create({
   this.series = async arr => {
     const { seriesWaitingTime } = this
 
+    // TODO: 要让所有的都支持
+    // arr.forEach(item => {
+    //   item.target.state.beforeUpdate()
+    // })
+
     // 合并更新
     this.serieData = this.serieData.concat(arr)
 

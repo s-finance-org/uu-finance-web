@@ -12,3 +12,9 @@ export const parseAntComponent = arr => {
 
   return result
 }
+
+/**
+ * 是否在 development Mode
+ * @type {boolean}
+ */
+export const isDevelopmentMode = process.env.NODE_ENV === 'development'

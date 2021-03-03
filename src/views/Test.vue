@@ -1,24 +1,27 @@
 <template>
-{{ test1 }}<br/>
------<br/>
-
------<br/>
-  DAI_USDC LPT 添加 <br/>
-  <token-select-input codes="DAI" />
-  {{ $store.tokens.DAI.walletBalanceOf.decimals.handled }}<br/>
-  {{ $store.tokens.DAI.walletBalanceOf.ether }}<br/>
-  <token-select-input codes="USDT" />
-  {{ $store.tokens.USDT.walletBalanceOf.decimals.handled }}<br/>
-  {{ $store.tokens.USDT.walletBalanceOf.ether }}<br/>
-  <token-select-input codes="USDC" />
-  {{ $store.tokens.USDC.walletBalanceOf.decimals.handled }}<br/>
-  {{ $store.tokens.USDC.walletBalanceOf.ether }}<br/>
-  <a-button @click=onStake>存</a-button>
------<br/>
-{{ $store.coins.ETH.price1 }}
-
-
+  <div>
+    {{ ixd.tokens.SFG.price }}<br/>
+    -----<br/>
+    {{ ixd.tokens.DAI.price }}<br/>
+    -----<br/>
+    {{ ixd.tokens.UU.UPPrice.view }}
+    -----<br/>
+      DAI_USDC LPT 添加 <br/>
+      <token-select-input codes="DAI" />
+      {{ $store.tokens.DAI.walletBalanceOf.decimals.handled }}<br/>
+      {{ $store.tokens.DAI.walletBalanceOf.ether }}<br/>
+      <token-select-input codes="USDT" />
+      {{ $store.tokens.USDT.walletBalanceOf.decimals.handled }}<br/>
+      {{ $store.tokens.USDT.walletBalanceOf.ether }}<br/>
+      <token-select-input codes="USDC" />
+      {{ $store.tokens.USDC.walletBalanceOf.decimals.handled }}<br/>
+      {{ $store.tokens.USDC.walletBalanceOf.ether }}<br/>
+      <a-button @click=onStake>存</a-button>
+    -----<br/>
+    {{ $store.coins.ETH.price1 }}
+  </div>
 </template>
+
 <script>
 import axios from 'axios'
 import { Button } from 'ant-design-vue'
@@ -40,12 +43,6 @@ export default {
     }
   },
   async mounted () {
-        try {
-  const res = await axios.get('https://api.s.finance/f/a/uu')
-  this.test1 = res.data
-        } catch(e) {
-          this.test1 = e
-        }
 
     await this.$store.coins.ETH.updatePrice()
 console.log('ceil', ceil(1.154, 2), ceil(1.155, 2), ceil(1.159, 2), ceil(1.1, 2) )
@@ -55,10 +52,6 @@ console.log('toFixed', toFixed(1.154, 2), toFixed(1.155, 2), toFixed('1231231231
 
 
 
-    // console.log(
-    //   'price ',
-    //   await this.$store.swaps.uniswapV2Router2.getPrice(this.$store.tokens.CRV, this.$store.tokens.USDT)
-    // )
   },
   methods: {
     async onStake () {
@@ -70,12 +63,13 @@ console.log('toFixed', toFixed(1.154, 2), toFixed(1.155, 2), toFixed('1231231231
   },
   computed: {
     ixd () {
+      const { tokens } = this.$store
       const cacheLocaleKey = '__Global_I18n_locale'
 
-  
+
 
       return {
-        
+        tokens
       }
     },
     test () {

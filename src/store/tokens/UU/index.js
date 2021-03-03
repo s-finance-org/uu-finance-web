@@ -12,6 +12,7 @@ import storeWallet from '../../wallet'
 import notify from '../../notify'
 import i18n from '../../../i18n'
 
+
 export default ModelToken.create({
   code: 'UU',
   address: getDotenvAddress('UU_TOKEN'),
@@ -26,20 +27,44 @@ export default ModelToken.create({
     }
     const __root__parameters = __root__.parameters
 
-    return {
+    const result = {
       // 待领取奖励数
-      claimableReward: ModelValueEther.create(parameters),
+      claimableReward: ModelValueEther.create({
+        ...parameters,
+        trigger () {
+          result.totalReward.referrer()
+        }
+      }),
       // 已领取奖励数
-      claimedReward: ModelValueEther.create(parameters),
+      claimedReward: ModelValueEther.create({
+        ...parameters,
+        trigger () {
+          result.totalReward.referrer()
+        }
+      }),
       // 合计奖励数
-      totalReward: ModelValueEther.create(parameters),
+      totalReward: ModelValueEther.create({
+        ...parameters,
+        referrer () {
+          const { state } = this
+          const { claimableReward, claimedReward } = result
+
+          // claimableReward、claimedReward 相加的值
+          claimableReward.state.updated && claimedReward.state.updated
+            ? this.setValue(BN(result.claimableReward.ether).plus(result.claimedReward.ether).toString())
+            : state.beforeUpdate()
+        }
+      }),
 
       // 铸造 UU 可获得的量（由不同 token address 区分）
       mintGainAmount: ModelValueEther.create(__root__parameters),
       // 取回将销毁 UU 的量（由不同 token address 区分）
       burnGainAmount: ModelValueEther.create(__root__parameters),
 
-
+      // lpt 净值
+      netValue: ModelValueEther.create(__root__parameters),
+      // lpt 总净值
+      totalNetValue: ModelValueEther.create(__root__parameters),
 
 
       // TODO: temp lpt 对应的奖励 token
@@ -51,27 +76,56 @@ export default ModelToken.create({
       // TODO: 目前只用在反计算的可销毁最大的
       // maxBurnBalanceOf: ModelValueWallet.create(parameters),
     }
+
+    return result
   }
 }).extend(function (__root__) {
-  // 只用于 init()
-  const { address, contract } = __root__
-
   /**
-   * 总净值
+   * UU 总净值
    * - DAI 计价
    * @type {Object}
    */
   __root__.totalNetValue = ModelValueEther
     .create(__root__.parameters)
     .init(function () {
-      // this.setValue('10000000000000000000')
+      const { address, contract } = __root__
+
       multicall.series([
         { call: [address, contract.methods.totalNetValue().encodeABI()], target: this }
       ])
     })
 
+  /**
+   * UP 价格
+   * - 如果使用 UU 的数量,价格用 1
+   * - 如果使用 UP 的数量,价格用 calcPrice
+   * @type {Object}
+   */
+  __root__.UPPrice = ModelValueEther
+    .create(__root__.parameters)
+    .init(function () {
+      const { address, contract } = __root__
+
+      multicall.series([
+        { call: [address, contract.methods.calcPrice().encodeABI()], target: this }
+      ])
+    })
 
 
+
+
+
+
+// const Modeladdad = {
+  
+// }
+
+//   __root__.supportedLpts = []
+
+//   __root__.supportedLpts.add({
+//     address: ''
+//   })
+  
 
 
   /**
@@ -95,39 +149,30 @@ export default ModelToken.create({
         // TODO: 
         const series = []
 
-        for (let i =0; i < +handled; i++ ) {
+        for (let i = 0; i < +handled; i++ ) {
           const _address = ModelValueAddress.create({
             async trigger () {
               const { handled } = this
               // XXX: 目前无法得知 lpt 对应多少奖励币种
-              // TODO: temp
               // TODO: 应该先知道 lpt 对应哪些奖励 token
             //  TODO: 目前两个池子都只有一个奖励
-                await __root__.settleableReward(tokenAddresses[handled], 0)
-                // await __root__.settleableReward(tokenAddresses[handled], 1) // 0x0000000000000000000000000000000000000000
-                // await __root__.settleableReward(tokenAddresses[handled], 2)
-              
+                __root__.settleableReward(tokenAddresses[handled], 0)
+
               // XXX: 如果没有在 tokenAddresses 内的，则应该自动创建
               // TODO: 考虑如何 multi
-              // await __root__.settleableReward(tokenAddresses[handled], i)
+              // TODO: 这里是 lpt 在 UU 内的，而不是 lpt 自身
                 __root__.lptBalance(tokenAddresses[handled])
             }
           })
           __root__.supportedLptAddresses[i] = _address
 
-          series.push({
-            call: [
-              address,
-              contract.methods.lpts(i).encodeABI()
-            ],
-            target: __root__.supportedLptAddresses[i]
-          })
+          __root__.getLptAddress(i)
         }
-
-        multicall.series(series)
       }
     })
     .init(function () {
+      const { address, contract } = __root__
+
       multicall.series([
         { call: [address, contract.methods.lptN().encodeABI()], target: this }
       ])
@@ -142,7 +187,7 @@ export default ModelToken.create({
   __root__.supportedRewardAddresses = []
 
   /**
-   * 支持的奖励 token 数量
+   * 支持奖励 token 的数量
    * - supportedRewardNum -> supportedRewardAddresses
    * @type {Object}
    */
@@ -166,7 +211,8 @@ export default ModelToken.create({
             }
           })
           __root__.supportedRewardAddresses[i] = _address
-
+          // TODO: 枚举所有奖励地址合约地址
+          // TODO: 支持调用、multi
           series.push({
             call: [
               address,
@@ -180,6 +226,8 @@ export default ModelToken.create({
       }
     })
     .init(function () {
+      const { address, contract } = __root__
+
       multicall.series([
         { call: [address, contract.methods.rewardN().encodeABI()], target: this }
       ])
@@ -206,7 +254,7 @@ export default ModelToken.create({
     const { update, dismiss } = notify.notification({ message: i18n.$i18n.global.t('global.msg.mintingUU') })
     // TODO: 是否有必要
     // update mintGainAmount
-    await this.getLpt2UUVol(_token)
+    this.getLpt2UUVol(_token)
 
     const sendOpts = {
       from: walletAddress,
@@ -278,40 +326,72 @@ export default ModelToken.create({
    * lpt 可铸造的 UU 量
    * @param {Object} _token
    */
-  __root__.getLpt2UUVol = async function (_token) {
-    const { contract } = this
+  __root__.getLpt2UUVol = function (_token) {
+    const { address, contract } = this
     const result = __root__.getAssociatedToken(_token)
 
     // update
     result.mintGainAmount.state.beforeUpdate()
-    // 当短时间内持续查询，会出现异步造成的数据排序混乱（2次请求先获得2再1）
     multicall.series([
       { call: [address, contract.methods.lpt2uu(_token.address, _token.amount.ether).encodeABI()], target: result.mintGainAmount }
     ])
   }
 
+  /**
+   * 销毁 uu 获得 lpt 数量
+   * @param {Object} _token
+   */
+  __root__.getUU2LptVol = function (_token) {
+    const { address, contract } = this
+    const result = __root__.getAssociatedToken(_token)
+
+    // update
+    result.burnGainAmount.state.beforeUpdate()
+    // TODO: 不能超过 lpt 余额
+    // const lptBalance = await contract.methods.lptBalance(_token.address).call()
+    multicall.series([
+      { call: [address, contract.methods.uu2lpt(_token.amount.ether, _token.address).encodeABI()], target: result.burnGainAmount }
+    ])
+  }
+
+  /**
+   * lpt 净值
+   * - DAI 计价
+   * @param {Object} _token
+   * @return {Promise}
+   */
+  // TODO: vol?
+  __root__.getLptNetValue = async function (_token, vol) {
+    const { address, contract } = this
+    const result = __root__.getAssociatedToken(_token)
+
+    // update
+    result.netValue.state.beforeUpdate()
+    multicall.series([
+      { call: [address, contract.methods.netvalue(_token.address, vol).encodeABI()], target: result.netValue }
+    ])
+  }
+
+  /**
+   * lpt 总净值
+   * - DAI 计价
+   * @param {Object} token
+   * @return {Promise}
+   */
+  __root__.getLptTotalNetValue = function (_token) {
+    const { address, contract } = this
+    const result = __root__.getAssociatedToken(_token)
+
+    // update
+    result.totalNetValue.state.beforeUpdate()
+    multicall.series([
+      { call: [address, contract.methods.netvalue(_token.address).encodeABI()], target: result.totalNetValue }
+    ])
+  }
+
+
 /**
- * 取回 lpt 将销毁 UU 的量
- * @param {Object} _token
- * @return {Promise}
- */
-__root__.getUU2LptVol = async function (_token) {
-  const { contract } = this
-  const associatedToken = __root__.getAssociatedToken(_token)
-
-  // TODO: multi
-  associatedToken.burnGainAmount.state.beforeUpdate()
-  const result = associatedToken.burnGainAmount.ether = await contract.methods.uu2lpt(_token.amount.ether, _token.address).call()
-  // TODO: 在 multi 未使用之前暂不使用
-  // const lptBalance = await contract.methods.lptBalance(_token.address).call()
-
-  // // TODO: why?
-
-  return result
-}
-
-/**
- * 获取 lpt 价格
+ * lpt 相对 UU 的价格
  * @param {Object} _token
  * @return {Promise}
  */
@@ -340,7 +420,7 @@ __root__.getLptPrice = async function (_token) {
  * TODO:
  */
 __root__.claimAllRewards = async () => {
-  const { contract, state } = __root__
+  const { contract, state } = this
   const walletAddress = storeWallet.address.handled
 
   // 限制当前提交待确认的交易只有一份
@@ -447,14 +527,14 @@ __root__.claimAllRewards = async () => {
 /**
  * 领取奖励
  * - 钱包地址
- * TODO: 与 claimRewards 类似，可合成一个
+ * #TODO: 与 claimRewards 类似，可合成一个
  */
 __root__.claimReward = async (_token) => {
-  const { contract, state } = __root__
+  const { address, contract, state } = this
   const walletAddress = storeWallet.address.handled
 
   const associatedToken = __root__.getAssociatedToken(_token)
-  console.log('11111')
+
   // 限制当前提交待确认的交易只有一份
   associatedToken.state.beforeUpdate()
 
@@ -526,49 +606,51 @@ __root__.claimReward = async (_token) => {
       })
 }
 
-/**
-  * 获取待领取奖励数
-  * - 钱包地址
-  * @param {Object} _token 奖励代币对象
-  */
-__root__.claimableReward = async function (_token) {
-  // TODO: 应该自动批量处理
-  const { contract } = this
-  const result = this.getAssociatedToken(_token)
+  /**
+   * 查询待领取奖励数
+   * - 钱包地址
+   * @param {Object} _token 奖励代币对象
+   */
+  __root__.claimableReward = async function (_token) {
+    const { address, contract } = this
+    const result = this.getAssociatedToken(_token)
 
-  // update
-  result.claimableReward.state.beforeUpdate()
-  result.claimableReward.ether = await contract.methods.claimable(storeWallet.address.handled, _token.address).call()
+    if (!storeWallet.isValidated) return false
 
-  // TODO: 待考虑合并
-  result.totalReward.ether = BN(result.claimableReward.ether).plus(result.claimedReward.ether).toFixed(0, 1)
-}
+    // update
+    result.claimableReward.state.beforeUpdate()
+    multicall.series([
+      { call: [address, contract.methods.claimable(storeWallet.address.handled, _token.address).encodeABI()], target: result.claimableReward }
+    ])
+  }
 
-/**
-  * 获取已领取奖励数
-  * - 钱包地址
-  * @param {Object} _token 奖励代币对象
-  */
-__root__.claimedReward = async function (_token) {
-  // TODO: 应该自动批量处理
-  const { contract } = this
-  const result = this.getAssociatedToken(_token)
+  /**
+   * 查询已领取奖励数
+   * - 钱包地址
+   * @param {Object} _token 奖励代币对象
+   */
+  __root__.claimedReward = async function (_token) {
+    const { address, contract } = this
+    const result = this.getAssociatedToken(_token)
 
-  // update
-  result.claimedReward.state.beforeUpdate()
-  result.claimedReward.ether = await contract.methods.claimed(storeWallet.address.handled, _token.address).call()
+    if (!storeWallet.isValidated) return false
 
-  result.totalReward.ether = BN(result.claimableReward.ether).plus(result.claimedReward.ether).toFixed(0, 1)
-}
+    // update
+    result.claimedReward.state.beforeUpdate()
+    multicall.series([
+      { call: [address, contract.methods.claimed(storeWallet.address.handled, _token.address).encodeABI()], target: result.claimedReward }
+    ])
+  }
 
 /**
   * 获取待结算奖励数
   * - 查询用户在某矿池中可以领取的奖励
   * @param {Object} _lpt 奖励代币对象
+  * @param {number} idx 奖励代币内的奖励 token 索引
   */
  __root__.settleableReward = async function (_lpt, idx) {
   // TODO: 应该自动批量处理
-  const { contract } = this
+  const { address, contract } = this
 
   const associatedToken = this.getAssociatedToken(_lpt)
   /* data
@@ -671,7 +753,20 @@ console.error(err)
 }
 
   /**
-    * 获取 lpt 在 UU 中的余额
+   * 获取 UU 内支持的 lpt adress
+   * @param {number} idx
+   */
+  __root__.getLptAddress = function (idx) {
+    const { address, contract } = this
+
+    // TODO: beforeUpdate
+    multicall.series([
+      { call: [address, contract.methods.lpts(idx).encodeABI()], target: __root__.supportedLptAddresses[idx] }
+    ])
+  }
+
+  /**
+    * 获取 lpt 在 UU 池中的数量
     * - 更新 associatedTokens[].balance
     * @param {Object} _token
     */
@@ -701,7 +796,7 @@ __root__.burn = async function (_token) {
   const { update, dismiss } = notify.notification({ message: i18n.$i18n.global.t('global.msg.burningUU') })
 
   // update burnGainAmount
-  await this.getUU2LptVol(_token)
+  this.getUU2LptVol(_token)
 
   const sendOpts = {
     from: walletAddress,
@@ -774,5 +869,4 @@ __root__.burn = async function (_token) {
   })
   
 }
-  
 })

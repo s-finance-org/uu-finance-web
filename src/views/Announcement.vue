@@ -12,7 +12,7 @@
           :data-source="structure.notices"
         >
           <template #renderItem="{ item, index }">
-            <div :key="'item-' + index" class="mb-5 pb-4">
+            <div :key="'item-' + index" class="announcement-item mb-5 pb-4">
               <h4 class="mb-1">{{ item[$i18n.locale].title }}</h4>
               <small class="text-color-secondary d-block py-2">{{ item[$i18n.locale].createAt }}</small>
               <p class="h5 mt-1 text-align-justify" v-html="item[$i18n.locale].content"></p>
@@ -56,5 +56,12 @@ export default {
 }
 </script>
 
-<style lang="less" scoped>
+<style lang="less">
+.announcement-item {
+  p {
+    p {
+      margin-bottom: 8px;
+    }
+  }
+}
 </style>

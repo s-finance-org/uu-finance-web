@@ -5,27 +5,27 @@ import { formatNumber, floor } from '../../utils'
 import ModelState from '../base/state'
 import ModelValueUint8 from './uint8'
 
+import swaps from '../../store/swaps'
+
 export default {
   /**
-   * - 数据关联 value -> ether <-> handled -> view
-   * @param {Object=} opts.decimals 原数据的设定精度
-   * @param {number=} opts.viewDecimal 显示内容的显示精度
-   * @param {Function=} opts.viewMethod 显示内容的舍入方法
-   * @param {string=} opts.viewPrefix 显示内容的前缀
-   * @param {string=} opts.viewSuffix 显示内容的后缀
-   * @param {Function=} opts.trigger 触发器
-   * @param {Function=} opts.referrer 引用器
-   * @param {Object} opts.stateParams 状态参数
-   * @return {!Object}
-   */ 
+   * @param {number=} opts.amount 查询时的参考数量
+   * @param {string=} opts.source 价格来源，默认 coingecko
+   *                  - coingecko API 查询 TODO: 需找到对应 key
+   *                  - uniswapV2Router2 合约查询，需在 uniswap 上有
+   * @return {@Object}
+   */
   create ({
+    targetToken = {},
+    chargeToken = null,
+    amount = 1,
+    source = 'coingecko',
     decimals = ModelValueUint8.create(),
     viewDecimal = 6,
     viewMethod = floor,
     viewPrefix = '',
     viewSuffix = '',
     trigger = () => new Promise((resolve, reject) => {}),
-    referrer = () => new Promise((resolve, reject) => {}),
     stateParams = {}
   } = {}) {
     const __default__ = {
@@ -43,7 +43,29 @@ export default {
       handled: __default__.handled
     }
 
-    return reactive({
+    // TODO: 1DAI = x.xx USDT 这里换算精度是 计价币
+    decimals = chargeToken.decimals
+
+    const result = ({
+      /**
+       * 初始化列队
+       */
+      initiateSeries () {
+        switch (source) {
+          case 'uniswapV2Router2':
+            swaps.uniswapV2Router2.getPrice(
+              this,
+              targetToken,
+              chargeToken
+            )
+            break
+            // TODO: 要支持 coingecko
+            // case 'coingecko':
+
+          default:
+        }
+      },
+
       /**
        * 链式方法初始事件
        * - this 指为根
@@ -80,31 +102,12 @@ export default {
         return result
       },
 
-      /**
-       * IO
-       * - 对应 ether
-       * @type {(string|number)}
-       */
-      get value () {
-        return this.ether
-      },
-      set value (val) {
-        this.setValue(val)
-      },
-      /**
-       * value 链式方法赋值
-       * @param {string} val
-       * @return {Object}
-       */
       setValue (val) {
         this.ether = val
-
-        return this
       },
 
       /**
        * - ether、handled 数据同步
-       * - state 管理
        * @type {string}
        */
       get ether () {
@@ -116,13 +119,13 @@ export default {
 
         // sync
         __store__.handled = BN(result).div(precision).toString()
-        state.afterUpdate()
         this.trigger()
+        state.afterUpdate()
       },
 
       /**
        * - ether、handled 数据同步
-       * - state 管理
+       * - 允许
        * @type {string}
        */
       get handled () {
@@ -136,33 +139,16 @@ export default {
 
         // sync
         __store__.ether = BN(result).times(precision).toFixed(0, 1)
+        // TODO: 必须是方法
         this.trigger()
         state.afterUpdate()
-      },
-      /**
-       * handled 链式方法赋值
-       * @param {string} val
-       * @type {Function}
-       */
-      setHandled (val) {
-        this.handled = val
-
-        return this
       },
 
       /**
        * 触发器
-       * - value 更新后会触发的
        * @type {Function}
        */
       trigger,
-
-      /**
-       * 引用器
-       * - 调用后会检查条件，再改写自身
-       * @type {Function}
-       */
-      referrer,
 
       viewDecimal,
       viewMethod,
@@ -194,5 +180,9 @@ export default {
 
       state: ModelState.create(stateParams)
     })
+
+    // TODO: 是否还有很好的方案
+    result.initiateSeries()
+    return result
   }
 }
