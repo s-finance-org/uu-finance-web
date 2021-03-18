@@ -1,18 +1,23 @@
+## 20200301811
+- F 临时修复 销毁 UU 时需设定滑点
+- F 修复 routes 因 isDevelopmentMode 产生的错误
 
+## 2020030322
+- C 完善、调整 UU 的自定义方法
 - A 使用 uniswapV2Router2 + multicall 的批量价格查询
+- C 调整样式
+- F 修复 Component 警告问题
+- C ModelValueEther 
 
 ## 2020022618
-
 - F 修复非 Chrome 下 nativeNavigatorLanguage 值不统一造成的初始 i18n 问题
 - F修复在一定环境下 request 会造成跨域的问题
 
 ## 2020022515
-
 - A 顶部公告
 - C 调整时间格式
 
 ## 2020022511
-
 - A 支持 url param locale= 变更 i18n
 - A 新鲜事由 API 更新
 - C 优化组件按需加载
@@ -20,7 +25,6 @@
 - C 修复图标拼接、样式
 
 ## 2020022503
-
 - F Safari 下无法显示的问题
 - A 审计报告、新鲜事
 - F 修复铸造 UU 时快速输入，会造成显示的收到uu数目不一致现象
@@ -30,7 +34,6 @@
 - C 调整移动端适配
 
 ## 2020020410
-
 - C 针对 MetaMask 的 window.web3 淘汰做处理
 - F 修复 components、globalMessage 警告，添加 MetaMask 中文提示
 - C 优化 ModelToken 的 extend 方案，减少自定义 token 的代码复杂度

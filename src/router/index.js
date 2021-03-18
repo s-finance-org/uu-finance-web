@@ -53,16 +53,16 @@ const routes = [{
       meta: {
         suffix: ' - Claim'
       }
-    },
-    isDevelopmentMode
-      ? {
-        path: 'test',
-        name: 'Test',
-        component: Test
-      }
-      : {}
+    }
   ]
 }]
+
+isDevelopmentMode
+  && routes[0].children.push({
+    path: 'test',
+    name: 'Test',
+    component: Test
+  })
 
 const router = createRouter({
   history: createWebHistory(process.env.BASE_URL),

@@ -805,7 +805,8 @@ __root__.burn = async function (_token) {
   const method = await contract.methods.burn(
     _token.amount.ether,
     _token.address,
-    this.getAssociatedToken(_token).burnGainAmount.ether
+    // TODO: 设定滑点，临时写死值为 0.5%
+    BN(this.getAssociatedToken(_token).burnGainAmount.ether).times(0.995).toString()
   )
 
   try {
