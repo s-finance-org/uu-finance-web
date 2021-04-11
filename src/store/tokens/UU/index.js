@@ -59,7 +59,11 @@ export default ModelToken.create({
       // 铸造 UU 可获得的量（由不同 token address 区分）
       mintGainAmount: ModelValueEther.create(__root__parameters),
       // 取回将销毁 UU 的量（由不同 token address 区分）
-      burnGainAmount: ModelValueEther.create(__root__parameters),
+      burnGainAmount: ModelValueEther.create({
+        ...__root__parameters,
+        // TODO: 设定滑点，临时写死值为 0.5%
+        addition: 0.995
+      }),
 
       // lpt 净值
       netValue: ModelValueEther.create(__root__parameters),
@@ -802,14 +806,12 @@ __root__.burn = async function (_token) {
     from: walletAddress,
   }
 
-  // TODO: 设定滑点，临时写死值为 0.5%
-  // TODO: 要在 burnGainAmount 在合约返回时就加成 滑点，而不是在这里，会造成点击后可赎回的变少
-  this.getAssociatedToken(_token).burnGainAmount.handled = BN(this.getAssociatedToken(_token).burnGainAmount.handled).times(0.995).toString()
-
+  
+console.log(this.getAssociatedToken(_token).burnGainAmount.ether, this.getAssociatedToken(_token).burnGainAmount.handled, this.getAssociatedToken(_token).burnGainAmount.additionEther)
   const method = await contract.methods.burn(
     _token.amount.ether,
     _token.address,
-    this.getAssociatedToken(_token).burnGainAmount.ether
+    this.getAssociatedToken(_token).burnGainAmount.additionEther
   )
 
   try {

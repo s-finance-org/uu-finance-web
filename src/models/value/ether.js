@@ -9,6 +9,7 @@ export default {
   /**
    * - 数据关联 value -> ether <-> handled -> view
    * @param {Object=} opts.decimals 原数据的设定精度
+   * @param {number=} opts.addition 加成
    * @param {number=} opts.viewDecimal 显示内容的显示精度
    * @param {Function=} opts.viewMethod 显示内容的舍入方法
    * @param {string=} opts.viewPrefix 显示内容的前缀
@@ -17,9 +18,10 @@ export default {
    * @param {Function=} opts.referrer 引用器
    * @param {Object} opts.stateParams 状态参数
    * @return {!Object}
-   */ 
+   */
   create ({
     decimals = ModelValueUint8.create(),
+    addition = 1,
     viewDecimal = 6,
     viewMethod = floor,
     viewPrefix = '',
@@ -103,6 +105,24 @@ export default {
       },
 
       /**
+       * 加成
+       * TODO: 所有 addition 相关的做重复处理
+       * @type {number}
+       */
+      addition,
+      get additionEther () {
+        const { addition } = this
+
+        return BN(__store__.ether).times(addition).toFixed(0)
+      },
+      get additionHandled () {
+        const { addition } = this
+
+        return BN(__store__.handled).times(addition).toString()
+      },
+
+
+      /**
        * - ether、handled 数据同步
        * - state 管理
        * @type {string}
@@ -178,6 +198,12 @@ export default {
 
         return viewMethod(handled, viewDecimal)
       },
+      get additionHandledView () {
+        const { additionHandled, viewDecimal } = this
+
+        return viewMethod(additionHandled, viewDecimal)
+      },
+
       /**
        * 视觉格式化的数据
        * - 格式化
@@ -189,6 +215,14 @@ export default {
         return state.updated
         // TODO: 淘汰 toFixed
           ? viewPrefix + formatNumber(BN(handledView).toFixed(viewDecimal)) + viewSuffix
+          : __default__.view
+      },
+      get additionView () {
+        const { additionHandledView, viewDecimal, state } = this
+
+        return state.updated
+        // TODO: 淘汰 toFixed
+          ? viewPrefix + formatNumber(BN(additionHandledView).toFixed(viewDecimal)) + viewSuffix
           : __default__.view
       },
 

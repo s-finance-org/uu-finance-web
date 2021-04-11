@@ -319,7 +319,7 @@ export default {
           // TODO: 
           const foo = tokens.UU.getAssociatedToken(singleToken)
 
-          leastVol = foo.burnGainAmount.view
+          leastVol = foo.burnGainAmount.additionView
           leastBusy = foo.burnGainAmount.state.busy
         }
       }
