@@ -328,7 +328,8 @@ export default {
         singleToken,
         mintBtn: {
           // TODO: 操作的币种
-          disabled: mintBtnDisabled,
+          // disabled: mintBtnDisabled,
+          disabled: false,
           busy: tokens.UU.state.busy
         },
         preview: {

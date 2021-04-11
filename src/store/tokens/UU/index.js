@@ -802,11 +802,14 @@ __root__.burn = async function (_token) {
     from: walletAddress,
   }
 
+  // TODO: 设定滑点，临时写死值为 0.5%
+  // TODO: 要在 burnGainAmount 在合约返回时就加成 滑点，而不是在这里，会造成点击后可赎回的变少
+  this.getAssociatedToken(_token).burnGainAmount.handled = BN(this.getAssociatedToken(_token).burnGainAmount.handled).times(0.995).toString()
+
   const method = await contract.methods.burn(
     _token.amount.ether,
     _token.address,
-    // TODO: 设定滑点，临时写死值为 0.5%
-    BN(this.getAssociatedToken(_token).burnGainAmount.ether).times(0.995).toString()
+    this.getAssociatedToken(_token).burnGainAmount.ether
   )
 
   try {
